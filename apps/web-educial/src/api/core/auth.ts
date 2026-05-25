@@ -3,6 +3,7 @@ import { baseRequestClient, requestClient } from '#/api/request';
 export namespace AuthApi {
   export interface LoginParams {
     password?: string;
+    turnstileToken?: string;
     username?: string;
   }
 
@@ -17,7 +18,7 @@ export namespace AuthApi {
 /**
  * 登录
  * POST /sys/login
- * Body: { username, password }
+ * Body: { username, password, turnstileToken }
  * Returns: { code: 0, msg: 'success', token: '...', expire: 604800 }
  */
 export async function loginApi(data: AuthApi.LoginParams) {
