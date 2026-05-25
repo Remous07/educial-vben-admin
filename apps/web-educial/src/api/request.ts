@@ -61,11 +61,15 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
     },
   });
 
-  // Response interceptor: handle standard format {code: 0, msg: 'success'}
+  // Response interceptor: strip code/msg, return remaining data.
+  // Error responses (code !== 0) will throw, triggering errorMessageResponseInterceptor.
   client.addResponseInterceptor(
     defaultResponseInterceptor({
       codeField: 'code',
-      dataField: 'data',
+      dataField: (response: any) => {
+        const { code: _code, msg: _msg, ...rest } = response;
+        return rest;
+      },
       successCode: 0,
     }),
   );

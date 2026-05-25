@@ -74,5 +74,5 @@ defineExpose({ reset });
 </script>
 
 <template>
-  <div ref="containerRef" class="flex justify-center"></div>
+  <div ref="containerRef" class="flex w-full justify-center"></div>
 </template>

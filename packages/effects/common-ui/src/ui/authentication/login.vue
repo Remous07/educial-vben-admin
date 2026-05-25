@@ -132,6 +132,7 @@ defineExpose({
         {{ $t('authentication.forgetPassword') }}
       </span>
     </div>
+    <slot name="turnstile"></slot>
     <VbenButton
       :class="{
         'cursor-wait': loading,
