@@ -1,0 +1,8 @@
+{
+  "authentication": {
+    "pageTitle": "Educial 管理系统",
+    "pageDesc": "教育理念交流平台管理后台",
+    "loginSuccess": "登录成功",
+    "loginSuccessDesc": "欢迎回来"
+  }
+}
