@@ -33,7 +33,7 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
     ) {
       accessStore.setLoginExpired(true);
     } else {
-      await authStore.logout();
+      await authStore.logout(false);
     }
   }
 
@@ -85,11 +85,19 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
     }),
   );
 
-  // Generic error handling
+  // Generic error handling, including token expiration
   client.addResponseInterceptor(
     errorMessageResponseInterceptor((msg: string, error) => {
       const responseData = error?.response?.data ?? {};
       const errorMessage = responseData?.msg ?? responseData?.message ?? '';
+
+      // Check for token expiration (backend returns code 401 in body)
+      if (responseData?.code === 401 || errorMessage?.includes('token')) {
+        message.error(errorMessage || msg);
+        doReAuthenticate();
+        return;
+      }
+
       message.error(errorMessage || msg);
     }),
   );

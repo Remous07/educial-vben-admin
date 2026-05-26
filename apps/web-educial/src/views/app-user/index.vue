@@ -4,6 +4,7 @@ import { h, ref } from 'vue';
 import { Page } from '@vben/common-ui';
 
 import {
+  Avatar,
   Button,
   Card,
   Descriptions,
@@ -33,25 +34,42 @@ const tableData = ref<any[]>([]);
 const total = ref(0);
 const page = ref(1);
 const pageSize = ref(10);
-const searchForm = ref({ username: '' });
+const searchForm = ref({ key: '' });
 const modalVisible = ref(false);
 const formData = ref<Record<string, any>>({});
 
 const columns = [
-  { title: 'ID', dataIndex: 'uid', width: 60 },
-  { title: '用户名', dataIndex: 'username' },
-  { title: '昵称', dataIndex: 'nickname' },
-  { title: '邮箱', dataIndex: 'email' },
+  {
+    title: 'ID',
+    dataIndex: 'uid',
+    width: 50,
+    sorter: (a: any, b: any) => a.uid - b.uid,
+  },
+  {
+    title: '头像',
+    dataIndex: 'avatar',
+    width: 60,
+    customRender: ({ text }: any) => h(Avatar, { size: 32, src: text }),
+  },
+  { title: '用户名', dataIndex: 'username', width: 120 },
+  { title: '手机号', dataIndex: 'mobile', width: 130 },
   {
     title: '状态',
     dataIndex: 'status',
     width: 80,
+    sorter: (a: any, b: any) => a.status - b.status,
     customRender: ({ text }: any) =>
       text === 1
-        ? h(Tag, { color: 'green' }, () => '正常')
-        : h(Tag, { color: 'red' }, () => '封禁'),
+        ? h(Tag, { color: 'red' }, () => '封禁')
+        : h(Tag, { color: 'green' }, () => '正常'),
   },
-  { title: '创建时间', dataIndex: 'createTime', width: 170 },
+  {
+    title: '创建时间',
+    dataIndex: 'createTime',
+    width: 170,
+    sorter: (a: any, b: any) =>
+      (a.createTime || '').localeCompare(b.createTime || ''),
+  },
   {
     title: '操作',
     width: 200,
@@ -66,17 +84,17 @@ const columns = [
         record.status === 1
           ? h(
               Button,
+              { size: 'small', onClick: () => handleUnban(record.uid) },
+              () => '解封',
+            )
+          : h(
+              Button,
               {
                 size: 'small',
                 danger: true,
                 onClick: () => handleBan(record.uid),
               },
               () => '封禁',
-            )
-          : h(
-              Button,
-              { size: 'small', onClick: () => handleUnban(record.uid) },
-              () => '解封',
             ),
         h(
           Popconfirm,
@@ -111,6 +129,12 @@ async function loadData() {
 }
 
 function onSearch() {
+  page.value = 1;
+  loadData();
+}
+
+function onClearSearch() {
+  searchForm.value.key = '';
   page.value = 1;
   loadData();
 }
@@ -165,8 +189,14 @@ loadData();
   <Page description="管理App端用户" title="App用户管理">
     <Card class="mb-4">
       <Form layout="inline" :model="searchForm">
-        <Form.Item label="用户名">
-          <Input v-model:value="searchForm.username" placeholder="用户名" />
+        <Form.Item label="关键词">
+          <Input
+            v-model:value="searchForm.key"
+            allow-clear
+            placeholder="用户名/手机号"
+            @clear="onClearSearch"
+            @press-enter="onSearch"
+          />
         </Form.Item>
         <Form.Item>
           <Button type="primary" @click="onSearch">搜索</Button>
@@ -195,20 +225,19 @@ loadData();
     </Card>
 
     <Modal v-model:open="modalVisible" title="用户详情" :footer="null">
+      <div class="mb-4 flex justify-center">
+        <Avatar :size="64" :src="formData.avatar" />
+      </div>
       <Descriptions :column="1" bordered size="small">
         <Descriptions.Item label="UID">{{ formData.uid }}</Descriptions.Item>
         <Descriptions.Item label="用户名">
           {{ formData.username }}
         </Descriptions.Item>
-        <Descriptions.Item label="昵称">
-          {{ formData.nickname }}
-        </Descriptions.Item>
-        <Descriptions.Item label="邮箱">{{ formData.email }}</Descriptions.Item>
         <Descriptions.Item label="手机">
           {{ formData.mobile }}
         </Descriptions.Item>
         <Descriptions.Item label="状态">
-          {{ formData.status === 1 ? '正常' : '封禁' }}
+          {{ formData.status === 1 ? '封禁' : '正常' }}
         </Descriptions.Item>
         <Descriptions.Item label="注册时间">
           {{ formData.createTime }}
