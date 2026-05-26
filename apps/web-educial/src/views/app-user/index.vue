@@ -1,5 +1,7 @@
 <script lang="ts" setup>
-import { h, ref } from 'vue';
+import type { Key } from 'ant-design-vue/es/_util/type';
+
+import { computed, h, ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
 
@@ -21,6 +23,8 @@ import {
 
 import {
   banAppUserApi,
+  batchBanAppUserApi,
+  batchUnbanAppUserApi,
   deleteAppUserApi,
   getAppUserApi,
   getAppUserListApi,
@@ -37,6 +41,18 @@ const pageSize = ref(10);
 const searchForm = ref({ key: '' });
 const modalVisible = ref(false);
 const formData = ref<Record<string, any>>({});
+const selectedRowKeys = ref<Key[]>([]);
+const selectedRows = ref<any[]>([]);
+
+const hasSelected = computed(() => selectedRowKeys.value.length > 0);
+
+const rowSelection = computed(() => ({
+  onChange: (keys: Key[], rows: any[]) => {
+    selectedRowKeys.value = keys;
+    selectedRows.value = rows;
+  },
+  selectedRowKeys: selectedRowKeys.value,
+}));
 
 const columns = [
   {
@@ -176,10 +192,79 @@ async function handleDelete(ids: number[]) {
   try {
     await deleteAppUserApi(ids);
     message.success('删除成功');
+    selectedRowKeys.value = [];
     loadData();
   } catch {
     /* */
   }
+}
+
+function handleBatchBan() {
+  if (!hasSelected.value) {
+    message.warning('请先选择用户');
+    return;
+  }
+  const ids = selectedRowKeys.value as number[];
+  Modal.confirm({
+    content: `确认封禁选中的 ${ids.length} 个用户吗？`,
+    title: '批量封禁',
+    onOk: async () => {
+      try {
+        await batchBanAppUserApi(ids);
+        message.success('批量封禁成功');
+        selectedRowKeys.value = [];
+        loadData();
+      } catch {
+        /* */
+      }
+    },
+  });
+}
+
+function handleBatchUnban() {
+  if (!hasSelected.value) {
+    message.warning('请先选择用户');
+    return;
+  }
+  const ids = selectedRowKeys.value as number[];
+  Modal.confirm({
+    content: `确认解除封禁选中的 ${ids.length} 个用户吗？`,
+    title: '批量解封',
+    onOk: async () => {
+      try {
+        await batchUnbanAppUserApi(ids);
+        message.success('批量解封成功');
+        selectedRowKeys.value = [];
+        loadData();
+      } catch {
+        /* */
+      }
+    },
+  });
+}
+
+function handleBatchDelete() {
+  if (!hasSelected.value) {
+    message.warning('请先选择用户');
+    return;
+  }
+  const ids = selectedRowKeys.value as number[];
+  Modal.confirm({
+    content: `确认删除选中的 ${ids.length} 个用户吗？此操作不可恢复。`,
+    title: '批量删除',
+    okType: 'danger',
+    okText: '确认删除',
+    onOk: async () => {
+      try {
+        await deleteAppUserApi(ids);
+        message.success('删除成功');
+        selectedRowKeys.value = [];
+        loadData();
+      } catch {
+        /* */
+      }
+    },
+  });
 }
 
 loadData();
@@ -204,11 +289,40 @@ loadData();
       </Form>
     </Card>
     <Card title="用户列表">
+      <template #extra>
+        <Space>
+          <Button
+            :disabled="!hasSelected"
+            danger
+            size="small"
+            @click="handleBatchBan"
+          >
+            批量封禁
+          </Button>
+          <Button
+            :disabled="!hasSelected"
+            size="small"
+            @click="handleBatchUnban"
+          >
+            批量解封
+          </Button>
+          <Button
+            :disabled="!hasSelected"
+            danger
+            size="small"
+            type="dashed"
+            @click="handleBatchDelete"
+          >
+            批量删除
+          </Button>
+        </Space>
+      </template>
       <Table
         :columns="columns"
         :data-source="tableData"
         :loading="loading"
         :pagination="false"
+        :row-selection="rowSelection"
         row-key="uid"
         size="middle"
         :scroll="{ x: 900 }"
