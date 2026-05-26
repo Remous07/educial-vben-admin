@@ -4,6 +4,7 @@ import { h, ref } from 'vue';
 import { Page } from '@vben/common-ui';
 
 import {
+  Avatar,
   Button,
   Card,
   Form,
@@ -41,9 +42,17 @@ const formData = ref<Record<string, any>>({});
 const formRef = ref();
 
 const columns = [
-  { title: 'ID', dataIndex: 'id', width: 60 },
-  { title: '标题', dataIndex: 'title', ellipsis: true },
-  { title: '作者', dataIndex: 'authorName' },
+  { title: 'ID', dataIndex: 'id', width: 50 },
+  { title: '标题', dataIndex: 'title', width: 200, ellipsis: true },
+  {
+    title: '作者',
+    width: 140,
+    customRender: ({ record }: any) =>
+      h(Space, () => [
+        h(Avatar, { size: 24, src: record?.userInfo?.avatar }),
+        h('span', record?.userInfo?.username ?? ''),
+      ]),
+  },
   {
     title: '状态',
     dataIndex: 'status',
