@@ -65,6 +65,12 @@ async function handleLogin(values: Record<string, any>) {
   <AuthenticationLogin
     :form-schema="formSchema"
     :loading="authStore.loginLoading"
+    :show-code-login="false"
+    :show-forget-password="false"
+    :show-qrcode-login="false"
+    :show-register="false"
+    :show-remember-me="false"
+    :show-third-party-login="false"
     login-button-text="登录"
     @submit="handleLogin"
   >

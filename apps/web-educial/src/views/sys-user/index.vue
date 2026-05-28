@@ -103,6 +103,11 @@ function onSearch() {
   page.value = 1;
   loadData();
 }
+function onClearSearch() {
+  searchForm.value.username = '';
+  page.value = 1;
+  loadData();
+}
 
 function onPageChange(p: number, ps: number) {
   page.value = p;
@@ -175,7 +180,10 @@ loadData();
           <Input v-model:value="searchForm.username" placeholder="用户名" />
         </Form.Item>
         <Form.Item>
-          <Button type="primary" @click="onSearch">搜索</Button>
+          <Space>
+            <Button type="primary" @click="onSearch">搜索</Button>
+            <Button @click="onClearSearch">重置</Button>
+          </Space>
         </Form.Item>
       </Form>
     </Card>

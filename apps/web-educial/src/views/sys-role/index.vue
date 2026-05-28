@@ -113,6 +113,11 @@ function onSearch() {
   page.value = 1;
   loadData();
 }
+function onClearSearch() {
+  searchForm.value.roleName = '';
+  page.value = 1;
+  loadData();
+}
 
 function onPageChange(p: number, ps: number) {
   page.value = p;
@@ -126,7 +131,8 @@ async function openModal() {
   checkedMenuKeys.value = [];
   try {
     const menus = await getSysMenuListApi();
-    menuTree.value = buildMenuTree(menus ?? []);
+    const list = Array.isArray(menus) ? menus : (menus?.list ?? []);
+    menuTree.value = buildMenuTree(list);
   } catch {
     /* */
   }
@@ -140,7 +146,8 @@ async function handleEdit(roleId: number) {
       getSysRoleApi(roleId),
       getSysMenuListApi(),
     ]);
-    menuTree.value = buildMenuTree(menus ?? []);
+    const list2 = Array.isArray(menus) ? menus : (menus?.list ?? []);
+    menuTree.value = buildMenuTree(list2);
     formData.value = roleRes?.role ?? {};
     checkedMenuKeys.value = formData.value.menuIdList ?? [];
   } catch {
@@ -191,7 +198,10 @@ loadData();
           <Input v-model:value="searchForm.roleName" placeholder="角色名称" />
         </Form.Item>
         <Form.Item>
-          <Button type="primary" @click="onSearch">搜索</Button>
+          <Space>
+            <Button type="primary" @click="onSearch">搜索</Button>
+            <Button @click="onClearSearch">重置</Button>
+          </Space>
         </Form.Item>
       </Form>
     </Card>

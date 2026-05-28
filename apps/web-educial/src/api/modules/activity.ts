@@ -15,3 +15,11 @@ export async function updateActivityApi(data: any) {
 export async function deleteActivityApi(ids: number[]) {
   return requestClient.post('/admin/activity/delete', ids);
 }
+
+export async function upActivityApi(ids: number[]) {
+  return requestClient.post('/admin/activity/up', ids);
+}
+
+export async function downActivityApi(ids: number[]) {
+  return requestClient.post('/admin/activity/down', ids);
+}

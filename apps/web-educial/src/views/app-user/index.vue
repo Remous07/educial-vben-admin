@@ -11,11 +11,13 @@ import {
   Card,
   Descriptions,
   Form,
+  Image,
   Input,
   message,
   Modal,
   Pagination,
   Popconfirm,
+  Select,
   Space,
   Table,
   Tag,
@@ -38,7 +40,9 @@ const tableData = ref<any[]>([]);
 const total = ref(0);
 const page = ref(1);
 const pageSize = ref(10);
-const searchForm = ref({ key: '' });
+const searchForm = ref({ key: '', status: undefined as number | undefined });
+const sortField = ref('');
+const sortOrder = ref('');
 const modalVisible = ref(false);
 const formData = ref<Record<string, any>>({});
 const selectedRowKeys = ref<Key[]>([]);
@@ -59,7 +63,7 @@ const columns = [
     title: 'ID',
     dataIndex: 'uid',
     width: 50,
-    sorter: (a: any, b: any) => a.uid - b.uid,
+    sorter: true,
   },
   {
     title: '头像',
@@ -73,7 +77,7 @@ const columns = [
     title: '状态',
     dataIndex: 'status',
     width: 80,
-    sorter: (a: any, b: any) => a.status - b.status,
+    sorter: true,
     customRender: ({ text }: any) =>
       text === 1
         ? h(Tag, { color: 'red' }, () => '封禁')
@@ -83,8 +87,7 @@ const columns = [
     title: '创建时间',
     dataIndex: 'createTime',
     width: 170,
-    sorter: (a: any, b: any) =>
-      (a.createTime || '').localeCompare(b.createTime || ''),
+    sorter: true,
   },
   {
     title: '操作',
@@ -131,17 +134,35 @@ const columns = [
 async function loadData() {
   loading.value = true;
   try {
-    const res = await getAppUserListApi({
+    const params: Record<string, any> = {
       page: page.value,
       limit: pageSize.value,
       ...searchForm.value,
-    });
+    };
+    if (searchForm.value.status !== undefined)
+      params.status = String(searchForm.value.status);
+    if (sortField.value) {
+      params.sidx = sortField.value;
+      params.order = sortOrder.value;
+    }
+    const res = await getAppUserListApi(params);
     const data = res?.page;
     tableData.value = data?.list ?? [];
     total.value = data?.totalCount ?? 0;
   } finally {
     loading.value = false;
   }
+}
+
+function handleTableChange(_p: any, _f: any, s: any) {
+  if (s.order) {
+    sortField.value = s.field;
+    sortOrder.value = s.order === 'ascend' ? 'asc' : 'desc';
+  } else {
+    sortField.value = '';
+    sortOrder.value = '';
+  }
+  loadData();
 }
 
 function onSearch() {
@@ -151,6 +172,7 @@ function onSearch() {
 
 function onClearSearch() {
   searchForm.value.key = '';
+  searchForm.value.status = undefined;
   page.value = 1;
   loadData();
 }
@@ -271,7 +293,7 @@ loadData();
 </script>
 
 <template>
-  <Page description="管理App端用户" title="App用户管理">
+  <Page description="管理App端用户" title="用户管理">
     <Card class="mb-4">
       <Form layout="inline" :model="searchForm">
         <Form.Item label="关键词">
@@ -283,8 +305,24 @@ loadData();
             @press-enter="onSearch"
           />
         </Form.Item>
+        <Form.Item label="状态">
+          <Select
+            v-model:value="searchForm.status"
+            allow-clear
+            placeholder="用户状态"
+            style="width: 110px"
+            @change="onSearch"
+            @clear="onSearch"
+          >
+            <Select.Option :value="0">正常</Select.Option>
+            <Select.Option :value="1">封禁</Select.Option>
+          </Select>
+        </Form.Item>
         <Form.Item>
-          <Button type="primary" @click="onSearch">搜索</Button>
+          <Space>
+            <Button type="primary" @click="onSearch">搜索</Button>
+            <Button @click="onClearSearch">重置</Button>
+          </Space>
         </Form.Item>
       </Form>
     </Card>
@@ -326,6 +364,7 @@ loadData();
         row-key="uid"
         size="middle"
         :scroll="{ x: 900 }"
+        @change="handleTableChange"
       />
       <div class="mt-4 flex justify-end">
         <Pagination
@@ -340,7 +379,14 @@ loadData();
 
     <Modal v-model:open="modalVisible" title="用户详情" :footer="null">
       <div class="mb-4 flex justify-center">
-        <Avatar :size="64" :src="formData.avatar" />
+        <Image
+          v-if="formData.avatar"
+          :src="formData.avatar"
+          :width="64"
+          :preview="true"
+          :style="{ borderRadius: '50%', height: '64px', objectFit: 'cover' }"
+        />
+        <Avatar v-else :size="64" />
       </div>
       <Descriptions :column="1" bordered size="small">
         <Descriptions.Item label="UID">{{ formData.uid }}</Descriptions.Item>

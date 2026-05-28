@@ -7,4 +7,7 @@ export const overridesPreferences = defineOverridesPreferences({
     loginExpiredMode: 'page',
     name: import.meta.env.VITE_APP_TITLE,
   },
+  copyright: {
+    enable: false,
+  },
 });

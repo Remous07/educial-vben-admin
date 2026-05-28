@@ -7,11 +7,14 @@ import {
   Button,
   Card,
   Form,
+  Image,
   Input,
+  InputNumber,
   message,
   Modal,
   Pagination,
   Popconfirm,
+  Select,
   Space,
   Table,
 } from 'ant-design-vue';
@@ -31,17 +34,30 @@ const tableData = ref<any[]>([]);
 const total = ref(0);
 const page = ref(1);
 const pageSize = ref(10);
-const searchForm = ref({ name: '' });
+const searchForm = ref({ title: '' });
 const modalVisible = ref(false);
-const modalTitle = ref('新增友链');
-const formData = ref<Record<string, any>>({});
+const modalTitle = ref('新增轮播图');
+const formData = ref<Record<string, any>>({ type: 3 });
 const formRef = ref();
+
+const typeOptions = [{ label: '轮播图', value: 3 }];
 
 const columns = [
   { title: 'ID', dataIndex: 'id', width: 60 },
-  { title: '网站名', dataIndex: 'name' },
-  { title: 'URL', dataIndex: 'url' },
-  { title: '描述', dataIndex: 'description', ellipsis: true },
+  { title: '标题', dataIndex: 'title', width: 140, ellipsis: true },
+  {
+    title: '图片',
+    dataIndex: 'img',
+    width: 120,
+    customRender: ({ text }: any) =>
+      text
+        ? h(Image, {
+            src: text,
+            width: 80,
+            style: { height: '48px', objectFit: 'cover', borderRadius: '4px' },
+          })
+        : h('span', { class: 'text-gray-400' }, '无图片'),
+  },
   { title: '创建时间', dataIndex: 'createTime', width: 170 },
   {
     title: '操作',
@@ -69,11 +85,12 @@ const columns = [
 async function loadData() {
   loading.value = true;
   try {
-    const res = await getLinkListApi({
+    const params: Record<string, any> = {
       page: page.value,
       limit: pageSize.value,
-      ...searchForm.value,
-    });
+    };
+    if (searchForm.value.title) params.title = searchForm.value.title;
+    const res = await getLinkListApi(params);
     const data = res?.page;
     tableData.value = data?.list ?? [];
     total.value = data?.totalCount ?? 0;
@@ -86,19 +103,25 @@ function onSearch() {
   page.value = 1;
   loadData();
 }
+function onClearSearch() {
+  searchForm.value.title = '';
+  page.value = 1;
+  loadData();
+}
 function onPageChange(p: number, ps: number) {
   page.value = p;
   pageSize.value = ps;
   loadData();
 }
+
 function openModal() {
-  modalTitle.value = '新增友链';
-  formData.value = {};
+  modalTitle.value = '新增轮播图';
+  formData.value = { type: 3 };
   modalVisible.value = true;
 }
 
 async function handleEdit(id: number) {
-  modalTitle.value = '编辑友链';
+  modalTitle.value = '编辑轮播图';
   try {
     const res = await getLinkApi(id);
     formData.value = res?.link ?? {};
@@ -136,20 +159,29 @@ loadData();
 </script>
 
 <template>
-  <Page description="管理友情链接" title="友链管理">
+  <Page description="管理社区轮播图" title="轮播图管理">
     <Card class="mb-4">
       <Form layout="inline" :model="searchForm">
-        <Form.Item label="网站名">
-          <Input v-model:value="searchForm.name" placeholder="网站名称" />
+        <Form.Item label="标题">
+          <Input
+            v-model:value="searchForm.title"
+            allow-clear
+            placeholder="轮播图标题"
+            @clear="onClearSearch"
+            @press-enter="onSearch"
+          />
         </Form.Item>
         <Form.Item>
-          <Button type="primary" @click="onSearch">搜索</Button>
+          <Space>
+            <Button type="primary" @click="onSearch">搜索</Button>
+            <Button @click="onClearSearch">重置</Button>
+          </Space>
         </Form.Item>
       </Form>
     </Card>
-    <Card title="友链列表">
+    <Card title="轮播图列表">
       <template #extra>
-        <Button type="primary" @click="openModal">新增友链</Button>
+        <Button type="primary" @click="openModal">新增轮播图</Button>
       </template>
       <Table
         :columns="columns"
@@ -158,6 +190,7 @@ loadData();
         :pagination="false"
         row-key="id"
         size="middle"
+        :scroll="{ x: 900 }"
       />
       <div class="mt-4 flex justify-end">
         <Pagination
@@ -177,14 +210,38 @@ loadData();
       @ok="handleSubmit"
     >
       <Form ref="formRef" :model="formData" layout="vertical">
-        <Form.Item label="网站名" name="name" :rules="[{ required: true }]">
-          <Input v-model:value="formData.name" />
+        <Form.Item
+          label="标题"
+          name="title"
+          :rules="[{ required: true, message: '请输入标题' }]"
+        >
+          <Input v-model:value="formData.title" placeholder="轮播图标题" />
         </Form.Item>
-        <Form.Item label="URL" name="url" :rules="[{ required: true }]">
-          <Input v-model:value="formData.url" />
+        <Form.Item
+          label="图片地址"
+          name="img"
+          :rules="[{ required: true, message: '请输入图片地址' }]"
+        >
+          <Input
+            v-model:value="formData.img"
+            placeholder="https://example.com/banner.jpg"
+          />
         </Form.Item>
-        <Form.Item label="描述" name="description">
-          <Input.TextArea v-model:value="formData.description" />
+        <Form.Item v-if="formData.img" label="图片预览">
+          <Image
+            :src="formData.img"
+            style="max-height: 200px; border-radius: 6px"
+          />
+        </Form.Item>
+        <Form.Item label="排序" name="id">
+          <InputNumber
+            v-model:value="formData.id"
+            placeholder="越小越靠前（仅编辑时生效）"
+            class="w-full"
+          />
+        </Form.Item>
+        <Form.Item label="类型" name="type" :rules="[{ required: true }]">
+          <Select v-model:value="formData.type" :options="typeOptions" />
         </Form.Item>
       </Form>
     </Modal>
