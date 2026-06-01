@@ -24,6 +24,23 @@ export async function upPostApi(ids: number[]) {
   return requestClient.post('/admin/post/up', ids);
 }
 
-export async function downPostApi(ids: number[]) {
-  return requestClient.post('/admin/post/down', ids);
+export async function downPostApi(data: { ids: number[]; reason?: string }) {
+  return requestClient.post('/admin/post/down', data);
+}
+
+export async function topPostApi(id: number) {
+  return requestClient.post(`/admin/post/top/${id}`);
+}
+
+export async function untopPostApi(id: number) {
+  return requestClient.post(`/admin/post/untop/${id}`);
+}
+
+// 批量置顶 / 取消置顶 (后端支持)
+export async function batchTopPostApi(ids: number[]) {
+  return requestClient.post('/admin/post/top', ids);
+}
+
+export async function batchUntopPostApi(ids: number[]) {
+  return requestClient.post('/admin/post/untop', ids);
 }

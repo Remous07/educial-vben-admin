@@ -2,6 +2,7 @@ export * from './activity';
 export * from './app-user';
 export * from './comment';
 export * from './link';
+export * from './moderation';
 export * from './oss';
 export * from './post';
 export * from './recommend';

@@ -17,6 +17,7 @@ import {
   Select,
   Space,
   Table,
+  Upload,
 } from 'ant-design-vue';
 
 import {
@@ -26,6 +27,7 @@ import {
   getLinkListApi,
   updateLinkApi,
 } from '#/api/modules/link';
+import { uploadOssFileApi } from '#/api/modules/oss';
 
 defineOptions({ name: 'LinkManage' });
 
@@ -108,10 +110,27 @@ function onClearSearch() {
   page.value = 1;
   loadData();
 }
+
+function onRefresh() {
+  loadData();
+}
+
 function onPageChange(p: number, ps: number) {
   page.value = p;
   pageSize.value = ps;
   loadData();
+}
+
+const imageUploading = ref(false);
+
+async function handleImageUpload({ file, onSuccess, onError }: any) {
+  try {
+    const res = await uploadOssFileApi(file);
+    formData.value.img = res?.url ?? '';
+    onSuccess(res, file);
+  } catch (err) {
+    onError(err);
+  }
 }
 
 function openModal() {
@@ -175,6 +194,7 @@ loadData();
           <Space>
             <Button type="primary" @click="onSearch">搜索</Button>
             <Button @click="onClearSearch">重置</Button>
+            <Button @click="onRefresh">刷新</Button>
           </Space>
         </Form.Item>
       </Form>
@@ -222,10 +242,20 @@ loadData();
           name="img"
           :rules="[{ required: true, message: '请输入图片地址' }]"
         >
-          <Input
-            v-model:value="formData.img"
-            placeholder="https://example.com/banner.jpg"
-          />
+          <Space>
+            <Input
+              v-model:value="formData.img"
+              placeholder="https://example.com/banner.jpg"
+              style="width: 360px"
+            />
+            <Upload
+              :show-upload-list="false"
+              :custom-request="handleImageUpload"
+              accept="image/*"
+            >
+              <Button :loading="imageUploading">上传</Button>
+            </Upload>
+          </Space>
         </Form.Item>
         <Form.Item v-if="formData.img" label="图片预览">
           <Image

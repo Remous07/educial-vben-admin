@@ -19,3 +19,11 @@ export async function updateCommentApi(data: any) {
 export async function deleteCommentApi(ids: number[]) {
   return requestClient.post('/admin/comment/delete', ids);
 }
+
+export async function upCommentApi(ids: number[]) {
+  return requestClient.post('/admin/comment/up', ids);
+}
+
+export async function downCommentApi(ids: number[]) {
+  return requestClient.post('/admin/comment/down', ids);
+}

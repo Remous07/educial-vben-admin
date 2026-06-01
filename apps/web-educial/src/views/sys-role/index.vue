@@ -119,6 +119,10 @@ function onClearSearch() {
   loadData();
 }
 
+function onRefresh() {
+  loadData();
+}
+
 function onPageChange(p: number, ps: number) {
   page.value = p;
   pageSize.value = ps;
@@ -201,6 +205,7 @@ loadData();
           <Space>
             <Button type="primary" @click="onSearch">搜索</Button>
             <Button @click="onClearSearch">重置</Button>
+            <Button @click="onRefresh">刷新</Button>
           </Space>
         </Form.Item>
       </Form>

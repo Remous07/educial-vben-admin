@@ -12,12 +12,12 @@ export async function updateAppUserApi(data: any) {
   return requestClient.post('/admin/user/update', data);
 }
 
-export async function banAppUserApi(id: number) {
-  return requestClient.get(`/admin/user/ban/${id}`);
+export async function banAppUserApi(id: number, reason?: string) {
+  return requestClient.get(`/admin/user/ban/${id}`, { params: { reason } });
 }
 
-export async function batchBanAppUserApi(ids: number[]) {
-  return requestClient.post('/admin/user/ban', ids);
+export async function batchBanAppUserApi(ids: number[], reason?: string) {
+  return requestClient.post('/admin/user/ban', ids, { params: { reason } });
 }
 
 export async function unbanAppUserApi(id: number) {

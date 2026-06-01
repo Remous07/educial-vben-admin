@@ -19,6 +19,7 @@ import {
   Space,
   Table,
   Tag,
+  Upload,
 } from 'ant-design-vue';
 
 import {
@@ -30,6 +31,7 @@ import {
   updateRecommendApi,
   upRecommendApi,
 } from '#/api/modules/recommend';
+import { uploadOssFileApi } from '#/api/modules/oss';
 
 defineOptions({ name: 'RecommendManage' });
 
@@ -175,6 +177,11 @@ function onClearSearch() {
   page.value = 1;
   loadData();
 }
+
+function onRefresh() {
+  loadData();
+}
+
 function onPageChange(p: number, ps: number) {
   page.value = p;
   pageSize.value = ps;
@@ -259,6 +266,17 @@ const modalVisible = ref(false);
 const modalTitle = ref('新增推荐');
 const formData = ref<Record<string, any>>({ type: 1, status: 1 });
 const formRef = ref();
+const imageUploading = ref(false);
+
+async function handleImageUpload({ file, onSuccess, onError }: any) {
+  try {
+    const res = await uploadOssFileApi(file);
+    formData.value.coverImage = res?.url ?? '';
+    onSuccess(res, file);
+  } catch (err) {
+    onError(err);
+  }
+}
 
 function openModal() {
   modalTitle.value = '新增推荐';
@@ -355,6 +373,7 @@ loadData();
           <Space>
             <Button type="primary" @click="onSearch">搜索</Button>
             <Button @click="onClearSearch">重置</Button>
+            <Button @click="onRefresh">刷新</Button>
           </Space>
         </Form.Item>
       </Form>
@@ -430,7 +449,16 @@ loadData();
           <Input v-model:value="formData.author" />
         </Form.Item>
         <Form.Item label="封面图" name="coverImage">
-          <Input v-model:value="formData.coverImage" placeholder="图片URL" />
+          <Space>
+            <Input v-model:value="formData.coverImage" placeholder="图片URL" style="width: 360px" />
+            <Upload
+              :show-upload-list="false"
+              :custom-request="handleImageUpload"
+              accept="image/*"
+            >
+              <Button :loading="imageUploading">上传</Button>
+            </Upload>
+          </Space>
         </Form.Item>
         <div v-if="formData.coverImage" class="mb-4">
           <Image

@@ -20,6 +20,6 @@ export async function upActivityApi(ids: number[]) {
   return requestClient.post('/admin/activity/up', ids);
 }
 
-export async function downActivityApi(ids: number[]) {
-  return requestClient.post('/admin/activity/down', ids);
+export async function downActivityApi(data: { ids: number[]; reason?: string }) {
+  return requestClient.post('/admin/activity/down', data);
 }

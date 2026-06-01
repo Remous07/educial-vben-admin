@@ -13,7 +13,11 @@ import {
   Pagination,
   Popconfirm,
   Radio,
+  Modal,
+  Select,
+  Space,
   Table,
+  Tag,
   Upload,
 } from 'ant-design-vue';
 
@@ -62,11 +66,21 @@ async function loadConfig() {
 
 async function handleSaveConfig() {
   configSaving.value = true;
+  const submitted = { ...configForm.value, type: storageType.value };
   try {
-    await saveOssConfigApi({ ...configForm.value, type: storageType.value });
+    await saveOssConfigApi(submitted);
     message.success('配置已保存');
-  } catch {
-    /* */
+    // 重新拉取服务器配置进行校验
+    await loadConfig();
+    const loaded = configForm.value;
+    // 简单对比关键字段（type + 常用字段）
+    const keysToCheck = ['type', 'r2Domain', 'r2BucketName', 'cloudreveUrl'];
+    const mismatch = keysToCheck.some(key => submitted[key] !== loaded[key]);
+    if (mismatch) {
+      message.warning('保存成功，但服务器返回值与提交的不一致，建议刷新页面确认');
+    }
+  } catch (err: any) {
+    message.error(err?.message || '保存失败，请重试');
   } finally {
     configSaving.value = false;
   }
@@ -84,20 +98,77 @@ const filePage = ref(1);
 const filePageSize = ref(10);
 const uploading = ref(false);
 
+// 文件类型筛选
+const fileSearchForm = ref({
+  fileType: '' as string, // 图片 | 视频 | 音频 | 文档 | 其他
+});
+
+// 视频站内预览
+const videoPreviewVisible = ref(false);
+const currentVideoUrl = ref('');
+
 const fileColumns = [
   { title: 'ID', dataIndex: 'id', width: 60 },
   {
     title: '预览',
     dataIndex: 'url',
     width: 100,
-    customRender: ({ text }: any) =>
-      text && /\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i.test(text)
-        ? h(Image, {
-            src: text,
-            width: 64,
-            style: { height: '48px', objectFit: 'cover', borderRadius: '4px' },
-          })
-        : h('span', { class: 'text-gray-400' }, '-'),
+    customRender: ({ text }: any) => {
+      if (!text) return h('span', { class: 'text-gray-400' }, '-');
+
+      const isImage = /\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i.test(text);
+      const isVideo = /\.(mp4|mov|avi|mkv|webm|flv|wmv|m3u8)(\?|$)/i.test(text);
+
+      if (isImage) {
+        return h(Image, {
+          src: text,
+          width: 64,
+          style: { height: '48px', objectFit: 'cover', borderRadius: '4px' },
+        });
+      }
+
+      if (isVideo) {
+        // 视频使用深色背景占位（站内预览）
+        return h(
+          'div',
+          {
+            class: 'flex items-center justify-center bg-gray-800 hover:bg-gray-700 transition-colors rounded cursor-pointer',
+            style: { width: '64px', height: '48px' },
+            onClick: () => {
+              currentVideoUrl.value = text;
+              videoPreviewVisible.value = true;
+            },
+            title: '点击站内预览视频',
+          },
+          [
+            h(
+              'div',
+              {
+                class: 'w-6 h-6 flex items-center justify-center rounded-full bg-white/25',
+              },
+              [h('span', { class: 'text-white text-xs ml-0.5' }, '▶')]
+            ),
+          ]
+        );
+      }
+
+      return h('span', { class: 'text-gray-400' }, '-');
+    },
+  },
+  {
+    title: '文件类型',
+    width: 90,
+    customRender: ({ record }: any) => {
+      const type = getFileType(record.url);
+      const colorMap: Record<string, string> = {
+        图片: 'blue',
+        视频: 'purple',
+        音频: 'green',
+        文档: 'orange',
+        其他: 'default',
+      };
+      return h(Tag, { color: colorMap[type] || 'default' }, () => type);
+    },
   },
   { title: '文件地址', dataIndex: 'url', ellipsis: true },
   { title: '上传时间', dataIndex: 'createDate', width: 170 },
@@ -127,9 +198,15 @@ async function loadFiles() {
       page: filePage.value,
       limit: filePageSize.value,
     });
-    const data = res?.page;
-    fileData.value = data?.list ?? [];
-    fileTotal.value = data?.totalCount ?? 0;
+    let list = res?.page?.list ?? [];
+
+    // 客户端类型筛选（后端暂不支持时生效）
+    if (fileSearchForm.value.fileType) {
+      list = list.filter((item: any) => getFileType(item.url) === fileSearchForm.value.fileType);
+    }
+
+    fileData.value = list;
+    fileTotal.value = res?.page?.totalCount ?? list.length;
   } finally {
     fileLoading.value = false;
   }
@@ -174,6 +251,33 @@ async function customUpload({ file, onSuccess, onError }: any) {
   } catch (error) {
     onError(error);
   }
+}
+
+function onFileSearch() {
+  filePage.value = 1;
+  loadFiles();
+}
+
+function onFileReset() {
+  fileSearchForm.value.fileType = '';
+  filePage.value = 1;
+  loadFiles();
+}
+
+function onFileRefresh() {
+  loadFiles();
+}
+
+// 根据 URL 判断文件类型
+function getFileType(url: string): string {
+  if (!url) return '其他';
+  const ext = url.split('?')[0].split('.').pop()?.toLowerCase() || '';
+
+  if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(ext)) return '图片';
+  if (['mp4', 'mov', 'avi', 'mkv', 'webm', 'flv', 'wmv', 'm3u8'].includes(ext)) return '视频';
+  if (['mp3', 'wav', 'flac', 'aac', 'ogg'].includes(ext)) return '音频';
+  if (['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'md', 'zip', 'rar'].includes(ext)) return '文档';
+  return '其他';
 }
 
 // --- 初始化 ---
@@ -269,6 +373,34 @@ loadFiles();
       </Form>
     </Card>
 
+    <!-- 文件类型筛选 -->
+    <Card class="mb-4">
+      <Form layout="inline" :model="fileSearchForm">
+        <Form.Item label="文件类型">
+          <Select
+            v-model:value="fileSearchForm.fileType"
+            @change="onFileSearch"
+            style="width: 120px"
+            allow-clear
+          >
+            <Select.Option value="">全部</Select.Option>
+            <Select.Option value="图片">图片</Select.Option>
+            <Select.Option value="视频">视频</Select.Option>
+            <Select.Option value="音频">音频</Select.Option>
+            <Select.Option value="文档">文档</Select.Option>
+            <Select.Option value="其他">其他</Select.Option>
+          </Select>
+        </Form.Item>
+        <Form.Item>
+          <Space>
+            <Button type="primary" @click="onFileSearch">搜索</Button>
+            <Button @click="onFileReset">重置</Button>
+            <Button @click="onFileRefresh">刷新</Button>
+          </Space>
+        </Form.Item>
+      </Form>
+    </Card>
+
     <!-- 文件管理 -->
     <Card title="文件管理">
       <template #extra>
@@ -280,6 +412,7 @@ loadFiles();
           <Button type="primary" :loading="uploading">上传文件</Button>
         </Upload>
       </template>
+
       <Table
         :columns="fileColumns"
         :data-source="fileData"
@@ -299,5 +432,26 @@ loadFiles();
         />
       </div>
     </Card>
+
+    <!-- 视频站内预览弹窗 -->
+    <Modal
+      v-model:open="videoPreviewVisible"
+      title="视频预览"
+      :footer="null"
+      width="800px"
+      destroy-on-close
+      @cancel="currentVideoUrl = ''"
+    >
+      <div v-if="currentVideoUrl" style=" padding: 8px 0;background: #000;">
+        <video
+          :src="currentVideoUrl"
+          controls
+          autoplay
+          style=" display: block;width: 100%; max-height: 70vh; margin: 0 auto;"
+        >
+          您的浏览器不支持 video 标签。
+        </video>
+      </div>
+    </Modal>
   </Page>
 </template>
