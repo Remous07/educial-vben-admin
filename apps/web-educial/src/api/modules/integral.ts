@@ -3,6 +3,12 @@ import { requestClient } from '#/api/request';
 export interface TitleTier {
   title: string;
   min: number;
+  /** 标签颜色，Ant Design 预设色名如 green/red/blue/purple/orange */
+  color?: string;
+  /** 积分达到该档位时自动封禁 */
+  banOnReach?: boolean;
+  /** 自动封禁时同步冻结积分收益（默认 true） */
+  banFreezeIntegral?: boolean;
 }
 
 /** 积分配置接口 */
@@ -19,6 +25,16 @@ export interface IntegralConfig {
   globalFrozen?: boolean;
   /** 头衔档位列表（从高到低） */
   titles?: TitleTier[];
+  /** 帖子审核不通过扣分 */
+  postRejectPenalty?: number;
+  /** 评论审核不通过扣分 */
+  commentRejectPenalty?: number;
+  /** 活动审核不通过扣分 */
+  activityRejectPenalty?: number;
+  /** 人工审核驳回时是否扣分（使用与 AI 相同的扣分值） */
+  manualRejectDeductEnabled?: boolean;
+  /** 人工审核驳回时是否自动封禁用户 */
+  manualRejectAutoBanEnabled?: boolean;
 }
 
 /** 获取积分规则配置 */

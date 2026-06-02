@@ -12,6 +12,7 @@ import {
   Form,
   Image,
   Input,
+  InputNumber,
   message,
   Modal,
   Pagination,
@@ -38,6 +39,11 @@ import {
   setModerationConfigApi,
 } from '#/api/modules/moderation';
 import { getAppUserApi } from '#/api/modules/app-user';
+import {
+  getIntegralConfigApi,
+  saveIntegralConfigApi,
+  type IntegralConfig,
+} from '#/api/modules/integral';
 
 defineOptions({ name: 'ModerationManage' });
 
@@ -184,6 +190,40 @@ async function handleSaveTencentConfig() {
 
 loadAiConfig();
 loadTencentConfig();
+loadPenaltyConfig();
+
+// --- 审核扣分配置 ---
+const penaltySaving = ref(false);
+const penaltyForm = ref({ postRejectPenalty: 0, commentRejectPenalty: 0, activityRejectPenalty: 0, manualRejectDeductEnabled: false, manualRejectAutoBanEnabled: false });
+
+async function loadPenaltyConfig() {
+  try {
+    const res = await getIntegralConfigApi();
+    const cfg = res?.integralConfig ?? {};
+    penaltyForm.value = {
+      postRejectPenalty: cfg.postRejectPenalty ?? 0,
+      commentRejectPenalty: cfg.commentRejectPenalty ?? 0,
+      activityRejectPenalty: cfg.activityRejectPenalty ?? 0,
+      manualRejectDeductEnabled: cfg.manualRejectDeductEnabled ?? false,
+      manualRejectAutoBanEnabled: cfg.manualRejectAutoBanEnabled ?? false,
+    };
+  } catch { /* */ }
+}
+
+async function handleSavePenalty() {
+  penaltySaving.value = true;
+  try {
+    // 先拉取完整配置，将扣分字段合并进去，避免覆盖其他积分规则
+    const full = await getIntegralConfigApi();
+    const cfg = { ...(full?.integralConfig ?? {}), ...penaltyForm.value };
+    await saveIntegralConfigApi(cfg as IntegralConfig);
+    message.success('审核扣分配置已保存，并已同步到全局积分规则');
+    // 重新加载，确保与积分管理面板显示一致
+    await loadPenaltyConfig();
+  } catch { /* */ } finally {
+    penaltySaving.value = false;
+  }
+}
 
 // --- 审核日志 ---
 const logLoading = ref(false);
@@ -211,6 +251,7 @@ const currentLog = ref<any>(null);
 // 用户详情模态框（复用用户管理风格）
 const violatorModalVisible = ref(false);
 const violatorFormData = ref<Record<string, any>>({});
+const violatorTags = ref<string[]>([]);
 
 // 审核配置弹窗
 const configModalVisible = ref(false);
@@ -431,6 +472,7 @@ async function handleViewViolator(uid: number) {
   try {
     const res = await getAppUserApi(uid);
     violatorFormData.value = res?.user ?? {};
+    violatorTags.value = res?.tags ?? [];
   } catch {
     /* */
   }
@@ -679,6 +721,15 @@ loadLogs(true);
             {{ violatorFormData.status === 1 ? '已封禁' : '正常' }}
           </Tag>
         </Descriptions.Item>
+        <Descriptions.Item label="积分">
+          <Tag color="blue">{{ violatorFormData.integral ?? 0 }}</Tag>
+        </Descriptions.Item>
+        <Descriptions.Item label="头衔">
+          <template v-if="violatorTags.length">
+            <Tag v-for="t in violatorTags" :key="t" size="small" class="mr-1">{{ t }}</Tag>
+          </template>
+          <span v-else class="text-gray-400">-</span>
+        </Descriptions.Item>
         <Descriptions.Item label="注册时间">{{ violatorFormData.createTime }}</Descriptions.Item>
       </Descriptions>
     </Modal>
@@ -788,6 +839,38 @@ loadLogs(true);
             </div>
             <Button type="primary" :loading="tencentConfigSaving" @click="handleSaveTencentConfig">
               保存腾讯云配置
+            </Button>
+          </div>
+        </TabPane>
+
+        <!-- 审核扣分配置 -->
+        <TabPane key="5" tab="审核扣分">
+          <div class="py-2 space-y-3">
+            <div class="text-xs text-gray-400">
+              与「积分管理」面板共享配置，保存后全局生效。0 = 不扣分。
+            </div>
+            <div class="flex items-center gap-3 flex-wrap">
+              <div>
+                <div class="text-xs text-gray-500 mb-1">帖子违规扣分</div>
+                <InputNumber v-model:value="penaltyForm.postRejectPenalty" :min="0" size="small" style="width: 140px" />
+              </div>
+              <div>
+                <div class="text-xs text-gray-500 mb-1">评论违规扣分</div>
+                <InputNumber v-model:value="penaltyForm.commentRejectPenalty" :min="0" size="small" style="width: 140px" />
+              </div>
+              <div>
+                <div class="text-xs text-gray-500 mb-1">活动违规扣分</div>
+                <InputNumber v-model:value="penaltyForm.activityRejectPenalty" :min="0" size="small" style="width: 140px" />
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <Switch v-model:checked="penaltyForm.manualRejectDeductEnabled" size="small" />
+              <span class="text-xs">人工驳回时扣分</span>
+              <Switch v-model:checked="penaltyForm.manualRejectAutoBanEnabled" size="small" class="ml-4" />
+              <span class="text-xs">人工驳回时封禁</span>
+            </div>
+            <Button type="primary" :loading="penaltySaving" @click="handleSavePenalty" size="small">
+              保存扣分设置
             </Button>
           </div>
         </TabPane>

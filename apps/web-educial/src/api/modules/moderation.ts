@@ -32,6 +32,6 @@ export async function getTencentConfigApi() {
   return requestClient.get('/admin/moderation/config/tencent');
 }
 
-export async function saveTencentConfigApi(data: { secretId?: string; secretKey?: string; region?: string }) {
+export async function saveTencentConfigApi(data: { secretId?: string; secretKey?: string; region?: string; bizType?: string }) {
   return requestClient.post('/admin/moderation/config/tencent', data);
 }

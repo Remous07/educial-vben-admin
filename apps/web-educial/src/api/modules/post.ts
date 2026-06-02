@@ -44,3 +44,35 @@ export async function batchTopPostApi(ids: number[]) {
 export async function batchUntopPostApi(ids: number[]) {
   return requestClient.post('/admin/post/untop', ids);
 }
+
+export interface PostStats {
+  postId: number;
+  likeCount: number;
+  commentCount: number;
+  favoriteCount: number;
+  readCount: number;
+}
+
+export async function getPostStatsApi(id: number) {
+  return requestClient.get(`/admin/post/stats/${id}`);
+}
+
+export async function batchPostStatsApi(ids: number[]) {
+  return requestClient.post('/admin/post/stats/batch', ids);
+}
+
+// --- 热门配置 ---
+export interface HotConfig {
+  readThreshold: number;
+  likeThreshold: number;
+  commentThreshold: number;
+  favoriteThreshold: number;
+}
+
+export async function getHotConfigApi() {
+  return requestClient.get('/admin/post/config/hot');
+}
+
+export async function saveHotConfigApi(config: HotConfig) {
+  return requestClient.post('/admin/post/config/hot', config);
+}

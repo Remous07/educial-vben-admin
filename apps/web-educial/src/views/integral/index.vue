@@ -8,6 +8,7 @@ import {
   Button,
   Card,
   DatePicker,
+  Drawer,
   Form,
   Input,
   InputNumber,
@@ -57,20 +58,36 @@ const sortOrder = ref('');
 const editingUid = ref<number | null>(null);
 const editingValue = ref<number>(0);
 
-// 积分类型中文映射
+// 积分类型中文映射（覆盖所有 grant/deduct 调用 + 管理操作）
 const logTypeMap: Record<string, string> = {
   post_create: '发布帖子',
   comment_create: '发布评论',
-  post_liked: '帖子被赞',
+  post_liked: '帖子被点赞',
+  post_unliked: '帖子点赞被取消',
   post_favorited: '帖子被收藏',
-  comment_liked: '评论被赞',
+  post_unfavorited: '帖子收藏被取消',
+  comment_liked: '评论被点赞',
+  comment_unliked: '评论点赞被取消',
   admin_adjust: '管理员调整',
+  moderation_reject: '审核不通过扣分',
 };
 
 function getLogTypeLabel(type: string) {
   return logTypeMap[type] || type || '-';
 }
 
+// 从档位配置中查找头衔对应的颜色
+const titleColorMap = ref<Record<string, string>>({});
+function buildTitleColorMap(titles?: TitleTier[]) {
+  const map: Record<string, string> = {};
+  for (const t of titles || []) {
+    if (t.color) map[t.title] = t.color;
+  }
+  titleColorMap.value = map;
+}
+function getTagColor(tag: string): string | undefined {
+  return titleColorMap.value[tag];
+}
 const columns = computed(() => [
   {
     title: 'UID',
@@ -90,11 +107,11 @@ const columns = computed(() => [
   {
     title: '头衔',
     dataIndex: 'tags',
-    width: 140,
+    width: 160,
     customRender: ({ text }: any) => {
       if (!text || !Array.isArray(text) || text.length === 0) return '-';
       return h(Space, { size: 2, wrap: true }, () =>
-        text.slice(0, 3).map((t: string) => h(Tag, { size: 'small' }, () => t)),
+        text.slice(0, 3).map((t: string) => h(Tag, { size: 'small', color: getTagColor(t) }, () => t)),
       );
     },
   },
@@ -109,10 +126,10 @@ const columns = computed(() => [
         return h('div', { class: 'flex items-center gap-1' }, [
           h(InputNumber, {
             value: editingValue.value,
-            min: 0,
             style: { width: '90px' },
-            onChange: (val: number) => { editingValue.value = val ?? 0; }
-          }),
+            // 支持负积分
+            onChange: (val: any) => { editingValue.value = val ?? 0; }
+          } as any),
           h(Button, {
             size: 'small',
             type: 'primary',
@@ -222,31 +239,19 @@ async function loadData() {
       page: page.value,
       limit: pageSize.value,
     };
-    if (searchForm.value.keyword) params.keyword = searchForm.value.keyword; // 后端支持用户名/手机号模糊
+    // 匹配后端 queryPage 的 key 参数（用户名/手机号模糊搜索），注意不是 keyword
+    if (searchForm.value.keyword) params.key = searchForm.value.keyword;
     if (sortField.value) {
       params.sidx = sortField.value;
       params.order = sortOrder.value;
     }
+    // 透传积分范围和冻结状态到后端（已支持服务端过滤 + 分页）
+    if (searchForm.value.minIntegral !== undefined) params.minIntegral = String(searchForm.value.minIntegral);
+    if (searchForm.value.maxIntegral !== undefined) params.maxIntegral = String(searchForm.value.maxIntegral);
+    if (searchForm.value.frozenStatus !== undefined) params.integralFrozen = String(searchForm.value.frozenStatus);
+
     const res = await getAppUserListApi(params);
-    let list = res?.page?.list ?? [];
-
-    // 客户端二次过滤（积分范围 + 冻结状态）
-    if (
-      searchForm.value.minIntegral !== undefined ||
-      searchForm.value.maxIntegral !== undefined ||
-      searchForm.value.frozenStatus !== undefined
-    ) {
-      list = list.filter((u: any) => {
-        const integral = u.integral ?? 0;
-        const frozen = u.integralFrozen ?? 0;
-
-        if (searchForm.value.minIntegral !== undefined && integral < searchForm.value.minIntegral) return false;
-        if (searchForm.value.maxIntegral !== undefined && integral > searchForm.value.maxIntegral) return false;
-        if (searchForm.value.frozenStatus !== undefined && frozen !== searchForm.value.frozenStatus) return false;
-
-        return true;
-      });
-    }
+    const list = res?.page?.list ?? [];
 
     tableData.value = list;
     total.value = res?.page?.totalCount ?? list.length;
@@ -309,9 +314,57 @@ function openAdjustModal(record: any) {
   adjustVisible.value = true;
 }
 
-function applyQuickAdjust(delta: number) {
-  const current = adjustingUser.value?.integral ?? 0;
-  targetPoints.value = Math.max(0, current + delta);
+/**
+ * 快捷 +/- 直接走相对调整接口（adjustUserIntegralApi）
+ * 这会真正使用到相对调整端点
+ */
+async function quickAdjustByApi(delta: number) {
+  if (!adjustingUser.value) return;
+
+  const reason = prompt(`请输入调整原因（${delta > 0 ? '+' : ''}${delta} 分）`);
+  if (reason === null) return; // 用户点击了取消
+  if (!reason.trim()) {
+    message.warning('调整原因不能为空');
+    return;
+  }
+
+  try {
+    await adjustUserIntegralApi({
+      uid: adjustingUser.value.uid,
+      amount: delta,
+      reason: reason.trim(),
+    });
+    message.success(`已${delta > 0 ? '增加' : '扣除'} ${Math.abs(delta)} 分`);
+    adjustVisible.value = false;
+    loadData();
+  } catch {
+    /* error handled by interceptor */
+  }
+}
+
+/** 清零：使用绝对设置接口将积分设为 0 */
+async function quickClearIntegral() {
+  if (!adjustingUser.value) return;
+
+  const reason = prompt('请输入清零原因（必填）');
+  if (reason === null) return; // 用户点击了取消
+  if (!reason.trim()) {
+    message.warning('清零原因不能为空');
+    return;
+  }
+
+  try {
+    await setUserIntegralApi({
+      uid: adjustingUser.value.uid,
+      targetValue: 0,
+      reason: reason.trim(),
+    });
+    message.success('积分已清零');
+    adjustVisible.value = false;
+    loadData();
+  } catch {
+    /* error handled by interceptor */
+  }
 }
 
 // ==================== 行内编辑积分 ====================
@@ -326,13 +379,15 @@ function cancelInlineEdit() {
 }
 
 async function saveInlineEdit(record: any) {
-  if (editingValue.value < 0) {
-    message.warning('积分不能为负');
+  // 允许负积分（对应头衔系统中的「问题用户」「违规禁用」等档位）
+  if (editingValue.value <= -100_000) {
+    message.warning('积分值过低，请确认是否输入错误');
     return;
   }
 
   const reason = prompt('请输入调整原因（必填）');
-  if (!reason || !reason.trim()) {
+  if (reason === null) return; // 用户点击了取消
+  if (!reason.trim()) {
     message.warning('调整原因不能为空');
     return;
   }
@@ -441,7 +496,7 @@ function onLogTimeRangeChange() {
   loadUserLogs();
 }
 
-function onLogCustomRangeChange(dates: any) {
+function onLogCustomRangeChange() {
   logPage.value = 1;
   logTimeRange.value = ''; // 清空快捷范围
   loadUserLogs();
@@ -482,7 +537,9 @@ async function openConfigModal() {
   try {
     const res = await getIntegralConfigApi();
     const cfg = res?.integralConfig ?? {};
-    configForm.value = { ...cfg };
+    // 确保 boolean 字段有明确的默认值，避免 Switch 组件收到 undefined
+    configForm.value = { globalFrozen: false, ...cfg };
+    buildTitleColorMap(cfg.titles);
     configVisible.value = true;
   } catch {
     /* */
@@ -506,8 +563,11 @@ async function saveConfig() {
     const keys: (keyof IntegralConfig)[] = [
       'postCreate', 'commentCreate', 'postLiked', 'postFavorited', 'commentLiked',
       'dailyPostLimit', 'dailyCommentLimit', 'dailyTotalLimit',
+      'postRejectPenalty', 'commentRejectPenalty', 'activityRejectPenalty',
+      'globalFrozen', 'manualRejectDeductEnabled', 'manualRejectAutoBanEnabled',
     ];
-    const mismatch = keys.some(k => submitted[k] !== server[k]);
+    // 使用 ?? 将 undefined 和 0/false 都规范化为 null，避免新字段 undefined vs 0 的误报
+    const mismatch = keys.some(k => (submitted[k] ?? null) !== (server[k] ?? null));
 
     if (mismatch) {
       message.warning('配置已保存，但服务端返回与提交值存在差异，请检查');
@@ -528,16 +588,16 @@ const tierSaving = ref(false);
 const tierForm = ref<TitleTier[]>([]);
 
 async function openTierModal() {
-  configLoading.value = true;
+  // 从后端拉取最新配置，确保获取到 titles
   try {
     const res = await getIntegralConfigApi();
-    configForm.value = res?.integralConfig ?? {};
-    tierForm.value = (configForm.value.titles || []).map((t: TitleTier) => ({ ...t }));
-  } catch {
-    /* */
-  } finally {
-    configLoading.value = false;
-  }
+    const cfg = res?.integralConfig ?? {};
+    configForm.value = { ...configForm.value, ...cfg };
+  } catch { /* */ }
+  tierForm.value = (configForm.value.titles || []).map((t: TitleTier) => ({
+    ...t,
+    banFreezeIntegral: t.banFreezeIntegral ?? true,
+  }));
   tierVisible.value = true;
 }
 
@@ -549,6 +609,7 @@ async function saveTiers() {
     const payload = { ...configForm.value, titles: tierForm.value };
     await saveIntegralConfigApi(payload as IntegralConfig);
     configForm.value.titles = [...tierForm.value];
+    buildTitleColorMap(tierForm.value);
     message.success('头衔档位已保存');
     tierVisible.value = false;
   } catch {
@@ -559,12 +620,22 @@ async function saveTiers() {
 }
 
 function addTier() {
-  tierForm.value.push({ title: '', min: 0 });
+  tierForm.value.push({ title: '', min: 0, color: 'blue', banOnReach: false, banFreezeIntegral: true });
 }
 
 function removeTier(index: number) {
   tierForm.value.splice(index, 1);
 }
+
+// 页面初始化时加载头衔颜色映射
+(async () => {
+  try {
+    const res = await getIntegralConfigApi();
+    const cfg = res?.integralConfig ?? {};
+    buildTitleColorMap(cfg.titles);
+    configForm.value = { globalFrozen: false, ...cfg };
+  } catch { /* */ }
+})();
 
 loadData();
 </script>
@@ -587,15 +658,13 @@ loadData();
         <Form.Item label="积分范围">
           <InputNumber
             v-model:value="searchForm.minIntegral"
-            :min="0"
-            placeholder="最小"
+            placeholder="最小（支持负）"
             style="width: 100px"
             @change="onSearch"
           />
           <span class="mx-1">-</span>
           <InputNumber
             v-model:value="searchForm.maxIntegral"
-            :min="0"
             placeholder="最大"
             style="width: 100px"
             @change="onSearch"
@@ -664,7 +733,8 @@ loadData();
     <Modal
       v-model:open="adjustVisible"
       title="设置用户积分"
-      :footer="null"
+      :confirm-loading="adjustLoading"
+      @ok="confirmAdjust"
       @cancel="adjustVisible = false"
     >
       <div class="py-2 space-y-4">
@@ -679,7 +749,7 @@ loadData();
 
         <div>
           <div class="text-sm text-gray-500 mb-1">当前积分</div>
-          <Tag color="blue" style=" padding: 2px 12px;font-size: 16px;">
+          <Tag color="blue" style="font-size: 16px; padding: 2px 12px;">
             {{ adjustingUser?.integral ?? 0 }}
           </Tag>
         </div>
@@ -687,20 +757,21 @@ loadData();
         <div>
           <div class="text-sm text-gray-500 mb-1">快捷操作</div>
           <div class="flex flex-wrap gap-2 mb-2">
-            <Button size="small" @click="applyQuickAdjust(0)">清零</Button>
-            <Button size="small" @click="applyQuickAdjust(-100)">-100</Button>
-            <Button size="small" @click="applyQuickAdjust(-500)">-500</Button>
-            <Button size="small" @click="applyQuickAdjust(100)">+100</Button>
-            <Button size="small" @click="applyQuickAdjust(500)">+500</Button>
-            <Button size="small" @click="applyQuickAdjust(1000)">+1000</Button>
+            <Button size="small" @click="quickClearIntegral">清零（设为 0）</Button>
+            <Button size="small" @click="quickAdjustByApi(-100)">-100（相对调整）</Button>
+            <Button size="small" @click="quickAdjustByApi(-500)">-500（相对调整）</Button>
+            <Button size="small" @click="quickAdjustByApi(100)">+100（相对调整）</Button>
+            <Button size="small" @click="quickAdjustByApi(500)">+500（相对调整）</Button>
+            <Button size="small" @click="quickAdjustByApi(1000)">+1000（相对调整）</Button>
           </div>
+
+          <div class="text-xs text-gray-400 mb-2">以上按钮直接调用相对调整接口（adjust），下方的「设置目标值」使用绝对设置接口（set）</div>
 
           <div class="text-sm text-gray-500 mb-1">设置积分值为</div>
           <InputNumber
             v-model:value="targetPoints"
-            :min="0"
             style="width: 200px"
-            placeholder="直接输入目标积分值"
+            placeholder="直接输入目标积分值（支持负分）"
           />
           <div class="mt-1 text-xs">
             <span class="text-gray-500">本次变动：</span>
@@ -724,19 +795,15 @@ loadData();
         <div class="text-xs text-gray-400">
           提示：直接设置目标积分值，系统会自动计算变动数量并记录到流水中。
         </div>
-        <div class="flex justify-end gap-2 pt-3 border-t">
-          <Button @click="adjustVisible = false">取消</Button>
-          <Button type="primary" :loading="adjustLoading" @click="confirmAdjust">确认设置</Button>
-        </div>
       </div>
     </Modal>
 
-    <!-- 积分流水 -->
-    <Modal
+    <!-- 积分流水 Drawer -->
+    <Drawer
       v-model:open="logDrawerVisible"
       :title="`积分流水 - ${logUser?.username ?? ''}`"
-      width="720px"
-      :footer="null"
+      width="620px"
+      placement="right"
     >
       <div v-if="logUser" class="mb-3 text-sm text-gray-500">
         当前积分：<Tag color="blue">{{ logUser.integral ?? 0 }}</Tag>
@@ -786,75 +853,51 @@ loadData();
           @change="onLogPageChange"
         />
       </div>
-    </Modal>
+    </Drawer>
 
     <!-- 积分规则配置弹窗 -->
     <Modal
       v-model:open="configVisible"
       title="积分规则配置"
-      width="620px"
-      :footer="null"
+      width="700px"
+      :confirm-loading="configLoading"
+      @ok="saveConfig"
       @cancel="configVisible = false"
     >
-      <div class="space-y-6 py-2">
-        <!-- 发放规则 -->
+      <div class="space-y-5 py-2">
+        <!-- 积分规则：发放值 + 每日限制 -->
         <div>
-          <div class="font-semibold mb-3 text-base">发放积分值</div>
-          <div class="grid grid-cols-2 gap-x-6 gap-y-4">
-            <div>
-              <div class="text-sm text-gray-500 mb-1">发布帖子</div>
-              <InputNumber v-model:value="configForm.postCreate" :min="0" />
-            </div>
-            <div>
-              <div class="text-sm text-gray-500 mb-1">发布评论</div>
-              <InputNumber v-model:value="configForm.commentCreate" :min="0" />
-            </div>
-            <div>
-              <div class="text-sm text-gray-500 mb-1">帖子被点赞</div>
-              <InputNumber v-model:value="configForm.postLiked" :min="0" />
-            </div>
-            <div>
-              <div class="text-sm text-gray-500 mb-1">帖子被收藏</div>
-              <InputNumber v-model:value="configForm.postFavorited" :min="0" />
-            </div>
-            <div>
-              <div class="text-sm text-gray-500 mb-1">评论被点赞</div>
-              <InputNumber v-model:value="configForm.commentLiked" :min="0" />
-            </div>
+          <div class="font-semibold mb-3 text-base">积分规则</div>
+          <div class="grid grid-cols-4 gap-x-4 gap-y-2">
+            <div><div class="text-xs text-gray-500 mb-1">发布帖子</div><InputNumber v-model:value="configForm.postCreate" :min="0" size="small" style="width:100%" /></div>
+            <div><div class="text-xs text-gray-500 mb-1">发布评论</div><InputNumber v-model:value="configForm.commentCreate" :min="0" size="small" style="width:100%" /></div>
+            <div><div class="text-xs text-gray-500 mb-1">帖子被点赞</div><InputNumber v-model:value="configForm.postLiked" :min="0" size="small" style="width:100%" /></div>
+            <div><div class="text-xs text-gray-500 mb-1">帖子被收藏</div><InputNumber v-model:value="configForm.postFavorited" :min="0" size="small" style="width:100%" /></div>
+            <div><div class="text-xs text-gray-500 mb-1">评论被点赞</div><InputNumber v-model:value="configForm.commentLiked" :min="0" size="small" style="width:100%" /></div>
+            <div><div class="text-xs text-gray-500 mb-1">每日发帖上限</div><InputNumber v-model:value="configForm.dailyPostLimit" :min="0" size="small" style="width:100%" /></div>
+            <div><div class="text-xs text-gray-500 mb-1">每日评论上限</div><InputNumber v-model:value="configForm.dailyCommentLimit" :min="0" size="small" style="width:100%" /></div>
+            <div><div class="text-xs text-gray-500 mb-1">每日总分上限</div><InputNumber v-model:value="configForm.dailyTotalLimit" :min="0" size="small" style="width:100%" /></div>
           </div>
+          <div class="text-xs text-gray-400 mt-2">上限设为 0 表示不限制，每日总积分仅统计系统发放部分</div>
         </div>
 
-        <!-- 限制规则 -->
+        <!-- 审核与惩罚 -->
         <div>
-          <div class="font-semibold mb-3 text-base">每日限制</div>
-          <div class="grid grid-cols-2 gap-x-6 gap-y-4">
-            <div>
-              <div class="text-sm text-gray-500 mb-1">每日发帖上限（0=不限）</div>
-              <InputNumber v-model:value="configForm.dailyPostLimit" :min="0" />
-            </div>
-            <div>
-              <div class="text-sm text-gray-500 mb-1">每日评论上限（0=不限）</div>
-              <InputNumber v-model:value="configForm.dailyCommentLimit" :min="0" />
-            </div>
-            <div class="col-span-2">
-              <div class="text-sm text-gray-500 mb-1">每日总积分上限（0=不限）</div>
-              <InputNumber v-model:value="configForm.dailyTotalLimit" :min="0" style="width: 200px" />
-              <div class="text-xs text-gray-400 mt-1">限制用户每天通过系统操作获得的积分总量（管理员调整不受影响）</div>
-            </div>
+          <div class="font-semibold mb-3 text-base text-orange-600">审核与惩罚</div>
+          <div class="grid grid-cols-3 gap-x-4 gap-y-2 mb-3">
+            <div><div class="text-xs text-gray-500 mb-1">帖子违规扣分</div><InputNumber v-model:value="configForm.postRejectPenalty" :min="0" size="small" style="width:100%" /></div>
+            <div><div class="text-xs text-gray-500 mb-1">评论违规扣分</div><InputNumber v-model:value="configForm.commentRejectPenalty" :min="0" size="small" style="width:100%" /></div>
+            <div><div class="text-xs text-gray-500 mb-1">活动违规扣分</div><InputNumber v-model:value="configForm.activityRejectPenalty" :min="0" size="small" style="width:100%" /></div>
           </div>
-        </div>
-
-        <!-- 全局冻结 -->
-        <div>
-          <div class="font-semibold mb-3 text-base text-red-600">全局控制</div>
-          <div class="flex items-center gap-3">
-            <span class="text-sm">全局冻结所有人积分收益</span>
-            <Switch
-              v-model:checked="configForm.globalFrozen"
-              checked-children="已冻结"
-              un-checked-children="正常"
-            />
-            <span class="text-xs text-gray-400">开启后，所有用户将无法通过日常操作获得积分（管理员调整仍生效）</span>
+          <div class="flex items-center gap-2 mb-2">
+            <Switch v-model:checked="configForm.manualRejectDeductEnabled" size="small" />
+            <span class="text-xs">人工驳回时扣除积分</span>
+            <Switch v-model:checked="configForm.manualRejectAutoBanEnabled" size="small" class="ml-4" />
+            <span class="text-xs">人工驳回时自动封禁</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <Switch v-model:checked="configForm.globalFrozen" size="small" />
+            <span class="text-xs text-red-500">全局冻结积分收益</span>
           </div>
         </div>
       </div>
@@ -874,13 +917,13 @@ loadData();
     <Modal
       v-model:open="tierVisible"
       title="头衔档位管理"
-      width="560px"
+      width="700px"
       :footer="null"
       @cancel="tierVisible = false"
     >
       <div class="space-y-3">
         <div class="text-xs text-gray-400">
-          头衔按积分从高到低匹配，积分达到对应分数线自动更换。修改后已拥有头衔的用户在下次积分变动时自动更新。
+          头衔按积分从高到低匹配，积分达到对应分数线自动更换。右键色块可快速选择颜色。修改后已拥有头衔的用户在下次积分变动时自动更新。
         </div>
         <div
           v-for="(tier, index) in tierForm"
@@ -897,9 +940,35 @@ loadData();
             <span class="text-sm text-gray-500">≥</span>
             <InputNumber
               v-model:value="tier.min"
-              :min="0"
               placeholder="分数线"
-              style="width: 100px"
+              style="width: 90px"
+            />
+          </div>
+          <Select v-model:value="tier.color" style="width: 110px" size="small">
+            <Select.Option v-for="c in ['magenta','red','volcano','orange','gold','lime','green','cyan','blue','geekblue','purple']" :key="c" :value="c">
+              <div class="flex items-center gap-1">
+                <span :style="{ display:'inline-block', width:'14px', height:'14px', borderRadius:'2px', backgroundColor: c }" />
+                {{ c }}
+              </div>
+            </Select.Option>
+          </Select>
+          <div class="flex items-center gap-1" style="flex-shrink: 0;">
+            <Switch
+              v-model:checked="tier.banOnReach"
+              size="small"
+              checked-children="封"
+              un-checked-children="封"
+              :title="tier.banOnReach ? '开启自动封禁' : '关闭自动封禁'"
+              :style="tier.banOnReach ? '' : 'opacity: 0.4'"
+            />
+            <Switch
+              v-if="tier.banOnReach"
+              v-model:checked="tier.banFreezeIntegral"
+              size="small"
+              checked-children="冻"
+              un-checked-children="冻"
+              :title="tier.banFreezeIntegral ? '冻结积分收益' : '不冻结积分收益'"
+              :style="tier.banFreezeIntegral ? '' : 'opacity: 0.4'"
             />
           </div>
           <Button size="small" danger @click="removeTier(index)">删除</Button>

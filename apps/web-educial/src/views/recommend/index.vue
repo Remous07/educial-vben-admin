@@ -2,6 +2,7 @@
 import type { Key } from 'ant-design-vue/es/_util/type';
 
 import { computed, h, ref } from 'vue';
+import dayjs from 'dayjs';
 
 import { Page } from '@vben/common-ui';
 
@@ -91,7 +92,13 @@ const columns = [
         ? h(Tag, { color: 'default' }, () => '下架')
         : h(Tag, { color: 'green' }, () => '上架'),
   },
-  { title: '创建时间', dataIndex: 'createTime', width: 170 },
+  {
+    title: '创建时间',
+    dataIndex: 'createTime',
+    width: 170,
+    customRender: ({ text }: any) =>
+      text ? dayjs(text).format('YYYY-MM-DD HH:mm:ss') : '-',
+  },
   {
     title: '操作',
     width: 260,
@@ -511,7 +518,7 @@ loadData();
               {{ detailData.status === 0 ? '下架' : '上架' }}
             </div>
             <div>
-              <strong>创建时间：</strong>{{ detailData.createTime || '-' }}
+              <strong>创建时间：</strong>{{ detailData.createTime ? dayjs(detailData.createTime).format('YYYY-MM-DD HH:mm:ss') : '-' }}
             </div>
             <div v-if="detailData.url" class="col-span-2">
               <strong>链接：</strong>{{ detailData.url }}

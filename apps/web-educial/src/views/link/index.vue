@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { h, ref } from 'vue';
+import dayjs from 'dayjs';
 
 import { Page } from '@vben/common-ui';
 
@@ -60,7 +61,13 @@ const columns = [
           })
         : h('span', { class: 'text-gray-400' }, '无图片'),
   },
-  { title: '创建时间', dataIndex: 'createTime', width: 170 },
+  {
+    title: '创建时间',
+    dataIndex: 'createTime',
+    width: 170,
+    customRender: ({ text }: any) =>
+      text ? dayjs(text).format('YYYY-MM-DD HH:mm:ss') : '-',
+  },
   {
     title: '操作',
     width: 150,
