@@ -11,6 +11,7 @@ import {
   Button,
   Card,
   DatePicker,
+  Descriptions,
   Form,
   Image,
   Input,
@@ -32,6 +33,7 @@ import {
   getCategoryListApi,
   updateCategoryApi,
 } from '#/api/modules/category';
+import { getAppUserApi } from '#/api/modules/app-user';
 import {
   deleteCommentApi,
   downCommentApi,
@@ -185,7 +187,10 @@ const columns = [
     customRender: ({ record }: any) =>
       h(Space, () => [
         h(Avatar, { size: 24, src: record?.userInfo?.avatar }),
-        h('span', record?.userInfo?.username ?? ''),
+        h('span', {
+          style: { color: '#1890ff', cursor: 'pointer' },
+          onClick: () => handleViewUser(record?.userInfo?.uid ?? record?.uid),
+        }, record?.userInfo?.username ?? ''),
       ]),
   },
   {
@@ -728,6 +733,21 @@ async function handleSaveDetailStats() {
   } catch { /* */ } finally {
     detailStatSaving.value = false;
   }
+}
+
+// --- 用户详情 ---
+const userDetailVisible = ref(false);
+const userDetailData = ref<Record<string, any>>({});
+const userDetailTags = ref<string[]>([]);
+
+async function handleViewUser(uid: number) {
+  if (!uid) return;
+  try {
+    const res = await getAppUserApi(uid);
+    userDetailData.value = res?.user ?? {};
+    userDetailTags.value = res?.tags ?? [];
+  } catch { /* */ }
+  userDetailVisible.value = true;
 }
 
 // --- 热门配置 ---
@@ -1337,6 +1357,30 @@ loadCategories();
           <InputNumber v-model:value="hotConfigForm.favoriteThreshold" :min="0" style="width: 100%" />
         </div>
       </div>
+    </Modal>
+
+    <!-- 用户详情弹窗 -->
+    <Modal v-model:open="userDetailVisible" title="用户详情" :footer="null" width="480px">
+      <div class="mb-4 flex justify-center">
+        <Image v-if="userDetailData.avatar" :src="userDetailData.avatar" :width="64" :preview="true" :style="{ borderRadius: '50%', height: '64px', objectFit: 'cover' }" />
+        <Avatar v-else :size="64" />
+      </div>
+      <Descriptions :column="1" bordered size="small">
+        <Descriptions.Item label="UID">{{ userDetailData.uid }}</Descriptions.Item>
+        <Descriptions.Item label="用户名">{{ userDetailData.username }}</Descriptions.Item>
+        <Descriptions.Item label="手机号">{{ userDetailData.mobile || '-' }}</Descriptions.Item>
+        <Descriptions.Item label="状态">
+          <Tag :color="userDetailData.status === 1 ? 'red' : 'green'">{{ userDetailData.status === 1 ? '已封禁' : '正常' }}</Tag>
+        </Descriptions.Item>
+        <Descriptions.Item label="积分"><Tag color="blue">{{ userDetailData.integral ?? 0 }}</Tag></Descriptions.Item>
+        <Descriptions.Item label="头衔">
+          <template v-if="userDetailTags.length">
+            <Tag v-for="t in userDetailTags" :key="t" size="small" class="mr-1">{{ t }}</Tag>
+          </template>
+          <span v-else class="text-gray-400">-</span>
+        </Descriptions.Item>
+        <Descriptions.Item label="注册时间">{{ userDetailData.createTime }}</Descriptions.Item>
+      </Descriptions>
     </Modal>
   </Page>
 </template>
