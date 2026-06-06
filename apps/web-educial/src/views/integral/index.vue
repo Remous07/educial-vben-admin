@@ -916,7 +916,7 @@ loadData();
             <Switch v-model:checked="configForm.manualRejectAutoBanEnabled" size="small" class="ml-4" />
             <span class="text-xs">人工驳回时自动封禁</span>
             <Switch v-model:checked="configForm.rejectFreezeIntegralEnabled" size="small" class="ml-4" />
-            <span class="text-xs">封禁时冻结积分收益</span>
+            <span class="text-xs">冻结积分收益</span>
           </div>
           <div class="flex items-center gap-2">
             <Switch v-model:checked="configForm.globalFrozen" size="small" />

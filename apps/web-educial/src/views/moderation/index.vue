@@ -870,7 +870,7 @@ loadLogs(true);
               <Switch v-model:checked="penaltyForm.manualRejectAutoBanEnabled" size="small" class="ml-4" />
               <span class="text-xs">人工驳回时封禁</span>
               <Switch v-model:checked="penaltyForm.rejectFreezeIntegralEnabled" size="small" class="ml-4" />
-              <span class="text-xs">封禁时冻结积分</span>
+              <span class="text-xs">冻结积分收益</span>
             </div>
             <Button type="primary" :loading="penaltySaving" @click="handleSavePenalty" size="small">
               保存扣分设置
