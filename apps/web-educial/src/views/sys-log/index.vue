@@ -3,7 +3,7 @@ import { ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
 
-import { Button, Card, Form, Input, Pagination, Table } from 'ant-design-vue';
+import { Button, Card, Form, Input, Pagination, Space, Table } from 'ant-design-vue';
 
 import { getSysLogListApi } from '#/api/modules/sys-log';
 
@@ -15,32 +15,50 @@ const total = ref(0);
 const page = ref(1);
 const pageSize = ref(10);
 const searchForm = ref({ key: '' });
+const sortField = ref('');
+const sortOrder = ref('');
 
 const columns = [
-  { title: 'ID', dataIndex: 'id', width: 60 },
-  { title: '用户名', dataIndex: 'username' },
-  { title: '操作', dataIndex: 'operation' },
-  { title: '方法', dataIndex: 'method' },
-  { title: '参数', dataIndex: 'params', ellipsis: true },
+  { title: 'ID', dataIndex: 'id', width: 70, sorter: true },
+  { title: '用户名', dataIndex: 'username', width: 100 },
+  { title: '操作', dataIndex: 'operation', width: 130 },
+  { title: '方法', dataIndex: 'method', ellipsis: true },
+  { title: '参数', dataIndex: 'params', ellipsis: true, width: 200 },
   { title: 'IP', dataIndex: 'ip', width: 130 },
-  { title: '耗时(ms)', dataIndex: 'time', width: 90 },
-  { title: '创建时间', dataIndex: 'createDate', width: 170 },
+  { title: '耗时(ms)', dataIndex: 'time', width: 80 },
+  { title: '创建时间', dataIndex: 'createDate', width: 170, sorter: true },
 ];
 
 async function loadData() {
   loading.value = true;
   try {
-    const res = await getSysLogListApi({
+    const params: Record<string, any> = {
       page: page.value,
       limit: pageSize.value,
       ...searchForm.value,
-    });
+    };
+    if (sortField.value) {
+      params.sidx = sortField.value;
+      params.order = sortOrder.value;
+    }
+    const res = await getSysLogListApi(params);
     const data = res?.page;
     tableData.value = data?.list ?? [];
     total.value = data?.totalCount ?? 0;
   } finally {
     loading.value = false;
   }
+}
+
+function handleTableChange(_p: any, _f: any, s: any) {
+  if (s.order) {
+    sortField.value = s.field;
+    sortOrder.value = s.order === 'ascend' ? 'asc' : 'desc';
+  } else {
+    sortField.value = '';
+    sortOrder.value = '';
+  }
+  loadData();
 }
 
 function onSearch() {
@@ -90,7 +108,8 @@ loadData();
         :pagination="false"
         row-key="id"
         size="middle"
-        :scroll="{ x: 900 }"
+        :scroll="{ x: 1000 }"
+        @change="handleTableChange"
       />
       <div class="mt-4 flex justify-end">
         <Pagination
