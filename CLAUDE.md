@@ -77,3 +77,17 @@ Uses Angular convention: `feat`, `fix`, `style`, `perf`, `refactor`, `revert`, `
 In app code (`apps/*`), `#/` maps to `src/` (configured via `imports` in each app's `package.json`). For example, `import { $t } from '#/locales'` resolves to `apps/web-antd/src/locales`.
 
 Internal packages use `workspace:*` protocol. Dependencies use `catalog:` protocol defined in `pnpm-workspace.yaml`.
+
+## Agent skills
+
+### Issue tracker
+
+Issues are tracked in GitHub Issues at `Remous07/educial-vben-admin`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default role labels: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context layout — one `CONTEXT.md` at repo root, ADRs in `docs/adr/`. See `docs/agents/domain.md`.
