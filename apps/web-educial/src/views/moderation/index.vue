@@ -194,7 +194,7 @@ loadPenaltyConfig();
 
 // --- 审核扣分配置 ---
 const penaltySaving = ref(false);
-const penaltyForm = ref({ postRejectPenalty: 0, commentRejectPenalty: 0, activityRejectPenalty: 0, manualRejectDeductEnabled: false, manualRejectAutoBanEnabled: false });
+const penaltyForm = ref({ postRejectPenalty: 0, commentRejectPenalty: 0, activityRejectPenalty: 0, manualRejectDeductEnabled: false, manualRejectAutoBanEnabled: false, rejectFreezeIntegralEnabled: false });
 
 async function loadPenaltyConfig() {
   try {
@@ -206,6 +206,7 @@ async function loadPenaltyConfig() {
       activityRejectPenalty: cfg.activityRejectPenalty ?? 0,
       manualRejectDeductEnabled: cfg.manualRejectDeductEnabled ?? false,
       manualRejectAutoBanEnabled: cfg.manualRejectAutoBanEnabled ?? false,
+      rejectFreezeIntegralEnabled: cfg.rejectFreezeIntegralEnabled ?? false,
     };
   } catch { /* */ }
 }
@@ -868,6 +869,8 @@ loadLogs(true);
               <span class="text-xs">人工驳回时扣分</span>
               <Switch v-model:checked="penaltyForm.manualRejectAutoBanEnabled" size="small" class="ml-4" />
               <span class="text-xs">人工驳回时封禁</span>
+              <Switch v-model:checked="penaltyForm.rejectFreezeIntegralEnabled" size="small" class="ml-4" />
+              <span class="text-xs">封禁时冻结积分</span>
             </div>
             <Button type="primary" :loading="penaltySaving" @click="handleSavePenalty" size="small">
               保存扣分设置

@@ -35,6 +35,8 @@ export interface IntegralConfig {
   manualRejectDeductEnabled?: boolean;
   /** 人工审核驳回时是否自动封禁用户 */
   manualRejectAutoBanEnabled?: boolean;
+  /** 审核不通过（AI/人工）封禁时是否同步冻结积分收益 */
+  rejectFreezeIntegralEnabled?: boolean;
 }
 
 /** 获取积分规则配置 */

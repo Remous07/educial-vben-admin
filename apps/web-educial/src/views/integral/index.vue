@@ -585,7 +585,7 @@ async function saveConfig() {
       'postCreate', 'commentCreate', 'postLiked', 'postFavorited', 'commentLiked',
       'dailyPostLimit', 'dailyCommentLimit', 'dailyTotalLimit',
       'postRejectPenalty', 'commentRejectPenalty', 'activityRejectPenalty',
-      'globalFrozen', 'manualRejectDeductEnabled', 'manualRejectAutoBanEnabled',
+      'globalFrozen', 'manualRejectDeductEnabled', 'manualRejectAutoBanEnabled', 'rejectFreezeIntegralEnabled',
     ];
     // 使用 ?? 将 undefined 和 0/false 都规范化为 null，避免新字段 undefined vs 0 的误报
     const mismatch = keys.some(k => (submitted[k] ?? null) !== (server[k] ?? null));
@@ -915,6 +915,8 @@ loadData();
             <span class="text-xs">人工驳回时扣除积分</span>
             <Switch v-model:checked="configForm.manualRejectAutoBanEnabled" size="small" class="ml-4" />
             <span class="text-xs">人工驳回时自动封禁</span>
+            <Switch v-model:checked="configForm.rejectFreezeIntegralEnabled" size="small" class="ml-4" />
+            <span class="text-xs">封禁时冻结积分收益</span>
           </div>
           <div class="flex items-center gap-2">
             <Switch v-model:checked="configForm.globalFrozen" size="small" />
