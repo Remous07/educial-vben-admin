@@ -583,7 +583,7 @@ async function saveConfig() {
     // 简单深度对比关键字段
     const keys: (keyof IntegralConfig)[] = [
       'postCreate', 'commentCreate', 'postLiked', 'postFavorited', 'commentLiked',
-      'dailyPostLimit', 'dailyCommentLimit', 'dailyTotalLimit',
+      'dailyPostLimit', 'dailyCommentLimit', 'dailyTotalLimit', 'passiveCountsToDailyLimit',
       'postRejectPenalty', 'commentRejectPenalty', 'activityRejectPenalty',
       'globalFrozen', 'manualRejectDeductEnabled', 'manualRejectAutoBanEnabled', 'rejectFreezeIntegralEnabled',
     ];
@@ -899,7 +899,11 @@ loadData();
             <div><div class="text-xs text-gray-500 mb-1">每日评论上限</div><InputNumber v-model:value="configForm.dailyCommentLimit" :min="0" size="small" style="width:100%" /></div>
             <div><div class="text-xs text-gray-500 mb-1">每日总分上限</div><InputNumber v-model:value="configForm.dailyTotalLimit" :min="0" size="small" style="width:100%" /></div>
           </div>
-          <div class="text-xs text-gray-400 mt-2">上限设为 0 表示不限制，每日总积分仅统计系统发放部分</div>
+          <div class="text-xs text-gray-400 mt-2">上限设为 0 表示不限制</div>
+          <div class="flex items-center gap-2 mt-2">
+            <Switch v-model:checked="configForm.passiveCountsToDailyLimit" size="small" />
+            <span class="text-xs">被点赞/被收藏等被动收益计入日总额度</span>
+          </div>
         </div>
 
         <!-- 审核与惩罚 -->

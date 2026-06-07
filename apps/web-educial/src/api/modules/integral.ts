@@ -37,6 +37,8 @@ export interface IntegralConfig {
   manualRejectAutoBanEnabled?: boolean;
   /** 审核不通过（AI/人工）封禁时是否同步冻结积分收益 */
   rejectFreezeIntegralEnabled?: boolean;
+  /** 被动收益（被点赞/被收藏/评论被点赞）是否占用每日总积分额度 */
+  passiveCountsToDailyLimit?: boolean;
 }
 
 /** 获取积分规则配置 */
