@@ -854,7 +854,7 @@ loadData();
           <div>
             <div class="text-sm font-medium">{{ smsConfig.enabled ? '真实短信模式' : '测试验证码模式' }}</div>
             <div class="text-xs text-gray-400">
-              {{ smsConfig.enabled ? '通过腾讯云发送真实短信（需先在 application.yml 中设置 sms.open: true）' : '验证码明文返回，无需配置短信服务即可登录注册' }}
+              {{ smsConfig.enabled ? '通过腾讯云发送真实短信至用户手机' : '验证码明文返回，无需配置短信服务即可登录注册' }}
             </div>
           </div>
         </div>
