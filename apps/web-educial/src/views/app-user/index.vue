@@ -22,6 +22,7 @@ import {
   Popconfirm,
   Select,
   Space,
+  Switch,
   Table,
   Tag,
 } from 'ant-design-vue';
@@ -36,6 +37,7 @@ import {
   unbanAppUserApi,
   updateAppUserApi,
 } from '#/api/modules/app-user';
+import { getSmsConfigApi, saveSmsConfigApi } from '#/api/modules/moderation';
 import { getIntegralConfigApi, type TitleTier } from '#/api/modules/integral';
 
 defineOptions({ name: 'AppUserManage' });
@@ -85,6 +87,37 @@ function buildTitleColorMap(tiers?: TitleTier[]) {
 function getTagColor(tag: string): string | undefined {
   return titleColorMap.value[tag];
 }
+
+// --- 短信配置 ---
+const smsModalVisible = ref(false);
+const smsConfig = ref({ secretId: '', secretKey: '', sdkAppId: '', signName: '', templateId: '', region: 'ap-guangzhou', dailyLimit: 10, enabled: false });
+const smsConfigSaving = ref(false);
+
+async function loadSmsConfig() {
+  try {
+    const res = await getSmsConfigApi();
+    if (res?.smsConfig) smsConfig.value = res.smsConfig;
+  } catch { /* */ }
+}
+
+async function handleSaveSmsConfig() {
+  smsConfigSaving.value = true;
+  try {
+    await saveSmsConfigApi(smsConfig.value);
+    message.success('短信配置已保存');
+    await loadSmsConfig();
+  } catch (err: any) {
+    message.error(err?.message || '保存失败，请重试');
+  } finally {
+    smsConfigSaving.value = false;
+  }
+}
+
+function openSmsConfig() {
+  loadSmsConfig();
+  smsModalVisible.value = true;
+}
+
 // 用于头衔内联编辑
 const editingTagIndex = ref<number | null>(null);
 const editingTagValue = ref('');
@@ -623,6 +656,12 @@ loadData();
           >
             批量删除
           </Button>
+          <Button
+            size="small"
+            @click="openSmsConfig"
+          >
+            短信配置
+          </Button>
         </Space>
       </template>
       <Table
@@ -795,6 +834,66 @@ loadData();
         <div class="flex justify-end gap-2 mt-4 pt-3 border-t">
           <Button @click="editModalVisible = false">取消</Button>
           <Button type="primary" :loading="editSaving" @click="handleSaveUserEdit">
+            保存
+          </Button>
+        </div>
+      </div>
+    </Modal>
+
+    <!-- 短信配置弹窗 -->
+    <Modal
+      v-model:open="smsModalVisible"
+      title="短信配置"
+      width="520px"
+      :footer="null"
+      destroy-on-close
+    >
+      <div class="py-2 space-y-4">
+        <div class="flex items-center gap-3 rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
+          <Switch v-model:checked="smsConfig.enabled" />
+          <div>
+            <div class="text-sm font-medium">{{ smsConfig.enabled ? '真实短信模式' : '测试验证码模式' }}</div>
+            <div class="text-xs text-gray-400">
+              {{ smsConfig.enabled ? '通过腾讯云发送真实短信（需先在 application.yml 中设置 sms.open: true）' : '验证码明文返回，无需配置短信服务即可登录注册' }}
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="mb-1 text-sm text-gray-500">SecretId</div>
+          <Input v-model:value="smsConfig.secretId" placeholder="腾讯云 SecretId" />
+        </div>
+        <div>
+          <div class="mb-1 text-sm text-gray-500">SecretKey</div>
+          <Input.Password
+            v-model:value="smsConfig.secretKey"
+            placeholder="腾讯云 SecretKey"
+          />
+        </div>
+        <div>
+          <div class="mb-1 text-sm text-gray-500">SDK AppID</div>
+          <Input v-model:value="smsConfig.sdkAppId" placeholder="短信应用 SDK AppID" />
+        </div>
+        <div>
+          <div class="mb-1 text-sm text-gray-500">短信签名</div>
+          <Input v-model:value="smsConfig.signName" placeholder="例如：教育平台" />
+        </div>
+        <div>
+          <div class="mb-1 text-sm text-gray-500">模板 ID</div>
+          <Input v-model:value="smsConfig.templateId" placeholder="短信模板 ID" />
+        </div>
+        <div>
+          <div class="mb-1 text-sm text-gray-500">区域</div>
+          <Input v-model:value="smsConfig.region" placeholder="ap-guangzhou" />
+          <div class="mt-1 text-xs text-gray-400">腾讯云 SMS 服务区域，默认 ap-guangzhou</div>
+        </div>
+        <div>
+          <div class="mb-1 text-sm text-gray-500">每日发送上限</div>
+          <InputNumber v-model:value="smsConfig.dailyLimit" :min="1" :max="100" style="width: 160px" />
+          <span class="ml-2 text-xs text-gray-400">每个手机号每天最多可请求的短信条数，默认 10</span>
+        </div>
+        <div class="flex justify-end gap-2 pt-2 border-t">
+          <Button @click="smsModalVisible = false">取消</Button>
+          <Button type="primary" :loading="smsConfigSaving" @click="handleSaveSmsConfig">
             保存
           </Button>
         </div>
