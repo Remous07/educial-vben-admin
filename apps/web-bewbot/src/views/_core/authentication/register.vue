@@ -1,6 +1,4 @@
 <script lang="ts" setup>
-import type { Recordable } from '@vben/types';
-
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 
@@ -57,13 +55,15 @@ const [Form, formApi] = useVbenForm({
       componentProps: { placeholder: '请再次输入密码' },
       fieldName: 'confirmPassword',
       label: '确认密码',
-      rules: z.string().refine(
-        (val) => {
-          const values = formApi?.getValues() as Recordable<any> | undefined;
-          return val === values?.password;
+      dependencies: {
+        rules(values) {
+          const { password } = values;
+          return z.string().refine((v) => v === password, {
+            message: '两次输入的密码不一致',
+          });
         },
-        { message: '两次输入的密码不一致' },
-      ),
+        triggerFields: ['password'],
+      },
     },
   ],
   showDefaultActions: false,
