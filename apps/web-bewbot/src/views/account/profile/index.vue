@@ -187,7 +187,6 @@ const convCode = ref('');
 const convCodeEdit = ref(false);
 const convCodeInput = ref('');
 const convCodeSaving = ref(false);
-const convCodeHelper = ref('');
 
 async function fetchConvCode() {
   try {
@@ -200,7 +199,6 @@ async function fetchConvCode() {
 
 function openConvCodeEdit() {
   convCodeInput.value = convCode.value;
-  convCodeHelper.value = '';
   convCodeEdit.value = true;
 }
 
@@ -211,15 +209,15 @@ function copyConvCode() {
 
 async function handleSetConvCode() {
   if (!convCodeInput.value) {
-    convCodeHelper.value = '识别码不能为空';
+    message.error('识别码不能为空');
     return;
   }
   if (convCodeInput.value.length < 8 || convCodeInput.value.length > 16) {
-    convCodeHelper.value = '识别码长度需为 8-16 位';
+    message.error('识别码长度需为 8-16 位');
     return;
   }
   if (!/^[a-zA-Z0-9_-]+$/.test(convCodeInput.value)) {
-    convCodeHelper.value = '仅允许字母、数字、-、_';
+    message.error('仅允许字母、数字、-、_');
     return;
   }
   convCodeSaving.value = true;
@@ -228,8 +226,8 @@ async function handleSetConvCode() {
     convCode.value = r.code;
     convCodeEdit.value = false;
     message.success('识别码已更新');
-  } catch (error: any) {
-    convCodeHelper.value = error?.response?.data?.message || '设置失败';
+  } catch {
+    // error handled by interceptor
   } finally {
     convCodeSaving.value = false;
   }
@@ -293,12 +291,6 @@ onMounted(async () => {
                 >
                   取消
                 </Button>
-                <p
-                  v-if="convCodeHelper"
-                  style=" margin: 4px 0 0; font-size: 12px;color: #ff4d4f"
-                >
-                  {{ convCodeHelper }}
-                </p>
               </template>
               <template v-else>
                 <code style="font-size: 14px; font-weight: bold">{{
