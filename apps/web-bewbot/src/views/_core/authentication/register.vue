@@ -25,10 +25,16 @@ const [Form, formApi] = useVbenForm({
   schema: [
     {
       component: 'VbenInput',
-      componentProps: { placeholder: '3-128 个字符' },
+      componentProps: { placeholder: '3-10位，字母/数字/下划线/连字符' },
       fieldName: 'username',
       label: '用户名',
-      rules: z.string().min(3, { message: '用户名至少 3 个字符' }).max(128),
+      rules: z
+        .string()
+        .min(3, { message: '用户名至少 3 个字符' })
+        .max(10, { message: '用户名最多 10 个字符' })
+        .regex(/^[a-zA-Z0-9_-]+$/, {
+          message: '仅允许字母、数字、下划线和连字符',
+        }),
     },
     {
       component: 'VbenInput',

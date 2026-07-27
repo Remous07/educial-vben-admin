@@ -26,7 +26,7 @@ const [Form, formApi] = useVbenForm({
   schema: [
     {
       component: 'VbenInput',
-      componentProps: { placeholder: '邮箱或用户名' },
+      componentProps: { placeholder: '邮箱或用户名 (3-10位)' },
       fieldName: 'username',
       rules: z.string().min(1, { message: '请输入邮箱或用户名' }),
     },
