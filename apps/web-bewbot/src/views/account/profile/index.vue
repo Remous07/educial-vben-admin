@@ -184,7 +184,7 @@ onMounted(async () => {
 <template>
   <Page>
     <Spin :spinning="loading">
-      <div style="max-width: 640px">
+      <div style="max-width: 420px; margin: 0 auto">
         <Card title="账户信息" style="margin-bottom: 16px">
           <Descriptions :column="1">
             <Descriptions.Item label="用户名">
