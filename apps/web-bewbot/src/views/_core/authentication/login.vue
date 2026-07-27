@@ -52,13 +52,12 @@ async function handleSubmit(params: Recordable<any>) {
   <AuthenticationLogin
     :form-schema="formSchema"
     :loading="authStore.loginLoading"
-    :show-third-party-login="false"
     login-title="Bewbot 管理面板"
     login-sub-title="登录您的账户"
     @submit="handleSubmit"
   >
-    <template v-if="siteKey" #third-party-login>
-      <div class="mb-4 flex justify-center">
+    <template v-if="siteKey" #subTitle>
+      <div class="mt-2 flex justify-center">
         <TurnstileWidget
           :site-key="siteKey"
           @verified="(t: string) => (turnstileToken = t)"
