@@ -42,6 +42,16 @@ const columns: TableColumnsType = [
   { title: '用户名', dataIndex: 'username', key: 'username', width: 130 },
   { title: '邮箱', dataIndex: 'email', key: 'email', width: 200 },
   {
+    title: '对话识别码',
+    dataIndex: 'conversation_code',
+    key: 'conversation_code',
+    width: 140,
+    customRender: ({ text }: { text: null | string }) =>
+      text
+        ? h('code', { style: { fontSize: '13px', fontWeight: 'bold' } }, text)
+        : '-',
+  },
+  {
     title: '权限组',
     dataIndex: 'roles',
     key: 'roles',

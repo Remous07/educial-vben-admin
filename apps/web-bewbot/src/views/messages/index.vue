@@ -14,6 +14,7 @@ defineOptions({ name: 'MessageHistory' });
 interface Message {
   id: number;
   user_id: number;
+  admin_user_id: null | number;
   text: string;
   direction: string;
   created_at: string;

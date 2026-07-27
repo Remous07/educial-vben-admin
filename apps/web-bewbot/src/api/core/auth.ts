@@ -77,17 +77,15 @@ export async function changeEmailApi(
 export async function getTelegramBindStatusApi() {
   return requestClient.get<{
     bound: boolean;
-    telegram_id: number | null;
-    telegram_first_name: string | null;
-    telegram_username: string | null;
+    telegram_first_name: null | string;
+    telegram_id: null | number;
+    telegram_username: null | string;
   }>('/account/bind-telegram/status');
 }
 
 /** Telegram 绑定 - 生成绑定密钥 */
 export async function setupTelegramBindApi() {
-  return requestClient.post<{ key: string }>(
-    '/account/bind-telegram/setup',
-  );
+  return requestClient.post<{ key: string }>('/account/bind-telegram/setup');
 }
 
 /** Telegram 解绑 */
@@ -146,4 +144,16 @@ export async function resetPasswordApi(data: {
   token: string;
 }) {
   return requestClient.post('/auth/reset-password', data);
+}
+
+/** 获取对话识别码 */
+export async function getConversationCodeApi() {
+  return requestClient.get<{ code: string }>('/account/conversation-code');
+}
+
+/** 设置对话识别码 */
+export async function setConversationCodeApi(code: string) {
+  return requestClient.post<{ code: string }>('/account/conversation-code', {
+    code,
+  });
 }

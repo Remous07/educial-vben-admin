@@ -19,8 +19,10 @@ import {
 import {
   changeEmailApi,
   changePasswordApi,
+  getConversationCodeApi,
   getTelegramBindStatusApi,
   getTotpStatusApi,
+  setConversationCodeApi,
   setupTelegramBindApi,
   totpDisableApi,
   totpEnableApi,
@@ -180,9 +182,62 @@ async function handleTotpDisable() {
   }
 }
 
+// Conversation code
+const convCode = ref('');
+const convCodeEdit = ref(false);
+const convCodeInput = ref('');
+const convCodeSaving = ref(false);
+const convCodeHelper = ref('');
+
+async function fetchConvCode() {
+  try {
+    const r = await getConversationCodeApi();
+    convCode.value = r.code;
+  } catch {
+    // ignore
+  }
+}
+
+function openConvCodeEdit() {
+  convCodeInput.value = convCode.value;
+  convCodeHelper.value = '';
+  convCodeEdit.value = true;
+}
+
+function copyConvCode() {
+  navigator.clipboard.writeText(convCode.value);
+  message.success('已复制');
+}
+
+async function handleSetConvCode() {
+  if (!convCodeInput.value) {
+    convCodeHelper.value = '识别码不能为空';
+    return;
+  }
+  if (convCodeInput.value.length < 8 || convCodeInput.value.length > 16) {
+    convCodeHelper.value = '识别码长度需为 8-16 位';
+    return;
+  }
+  if (!/^[a-zA-Z0-9_-]+$/.test(convCodeInput.value)) {
+    convCodeHelper.value = '仅允许字母、数字、-、_';
+    return;
+  }
+  convCodeSaving.value = true;
+  try {
+    const r = await setConversationCodeApi(convCodeInput.value);
+    convCode.value = r.code;
+    convCodeEdit.value = false;
+    message.success('识别码已更新');
+  } catch (error: any) {
+    convCodeHelper.value = error?.response?.data?.message || '设置失败';
+  } finally {
+    convCodeSaving.value = false;
+  }
+}
+
 onMounted(async () => {
   loading.value = true;
-  await Promise.all([fetchTotpStatus(), fetchTgStatus()]);
+  await Promise.all([fetchTotpStatus(), fetchTgStatus(), fetchConvCode()]);
   loading.value = false;
 });
 </script>
@@ -253,10 +308,59 @@ onMounted(async () => {
                   /bind {{ tgKey }}
                 </code>
               </p>
-              <Button size="small" @click="copyBindCommand">
-                复制指令
-              </Button>
+              <Button size="small" @click="copyBindCommand"> 复制指令 </Button>
             </div>
+          </template>
+        </Card>
+
+        <Card title="对话识别码" style="margin-bottom: 16px">
+          <template v-if="convCodeEdit">
+            <div style="margin-bottom: 8px">
+              <Input
+                v-model:value="convCodeInput"
+                placeholder="8-16位字母、数字、-、_"
+                maxlength="16"
+                style="margin-bottom: 4px"
+              />
+              <p
+                v-if="convCodeHelper"
+                style=" margin: 0; font-size: 12px;color: #ff4d4f"
+              >
+                {{ convCodeHelper }}
+              </p>
+            </div>
+            <Button
+              size="small"
+              type="primary"
+              :loading="convCodeSaving"
+              @click="handleSetConvCode"
+            >
+              保存
+            </Button>
+            <Button
+              size="small"
+              style="margin-left: 8px"
+              @click="convCodeEdit = false"
+            >
+              取消
+            </Button>
+          </template>
+          <template v-else>
+            <Descriptions :column="1" style="margin-bottom: 8px">
+              <Descriptions.Item label="识别码">
+                <code style="font-size: 16px; font-weight: bold">
+                  {{ convCode || '-' }}
+                </code>
+              </Descriptions.Item>
+            </Descriptions>
+            <Button size="small" @click="copyConvCode">复制</Button>
+            <Button
+              size="small"
+              style="margin-left: 8px"
+              @click="openConvCodeEdit"
+            >
+              修改
+            </Button>
           </template>
         </Card>
 

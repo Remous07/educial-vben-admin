@@ -22,6 +22,7 @@ export interface AdminUserItem {
   roles: string[];
   permissions: string[];
   created_at: null | string;
+  conversation_code: null | string;
 }
 
 export interface RolePayload {
@@ -100,10 +101,13 @@ export function createInviteCodeApi(payload: {
 }
 
 /** 编辑邀请码 */
-export function editInviteCodeApi(id: number, payload: {
-  expires_days?: number | null;
-  max_uses: number;
-}) {
+export function editInviteCodeApi(
+  id: number,
+  payload: {
+    expires_days?: null | number;
+    max_uses: number;
+  },
+) {
   return requestClient.put(`/invite-codes/${id}`, payload);
 }
 
