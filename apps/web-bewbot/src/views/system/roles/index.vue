@@ -3,7 +3,7 @@ import type { TableColumnsType } from 'ant-design-vue';
 
 import type { PermissionItem, RoleItem } from '#/api/core';
 
-import { computed, h, onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
 
@@ -15,7 +15,6 @@ import {
   Modal,
   Space,
   Table,
-  Tag,
 } from 'ant-design-vue';
 
 import {
@@ -32,10 +31,10 @@ const roles = ref<RoleItem[]>([]);
 const permissions = ref<PermissionItem[]>([]);
 const loading = ref(false);
 
-// Modal state
 const modalVisible = ref(false);
 const editingRole = ref<null | RoleItem>(null);
 const formName = ref('');
+const formRemark = ref('');
 const formPermissionIds = ref<number[]>([]);
 const saving = ref(false);
 
@@ -43,16 +42,13 @@ const isEditing = computed(() => !!editingRole.value);
 
 const columns: TableColumnsType = [
   { title: 'ID', dataIndex: 'id', key: 'id', width: 60 },
-  { title: '名称', dataIndex: 'name', key: 'name', width: 150 },
-  { title: '描述', dataIndex: 'description', key: 'description' },
+  { title: '角色名称', dataIndex: 'name', key: 'name', width: 150 },
+  { title: '备注', dataIndex: 'description', key: 'description' },
   {
-    title: '权限',
-    dataIndex: 'permissions',
-    key: 'permissions',
-    customRender: ({ text }: { text: PermissionItem[] }) =>
-      text.map((p) =>
-        h(Tag, { color: 'green', style: { margin: '1px' } }, () => p.code),
-      ),
+    title: '创建时间',
+    dataIndex: 'created_at',
+    key: 'created_at',
+    width: 180,
   },
   { title: '操作', key: 'action', width: 180 },
 ];
@@ -60,6 +56,7 @@ const columns: TableColumnsType = [
 function openCreateModal() {
   editingRole.value = null;
   formName.value = '';
+  formRemark.value = '';
   formPermissionIds.value = [];
   modalVisible.value = true;
 }
@@ -67,6 +64,7 @@ function openCreateModal() {
 function openEditModal(role: RoleItem) {
   editingRole.value = role;
   formName.value = role.name;
+  formRemark.value = role.description || '';
   formPermissionIds.value = role.permissions.map((p) => p.id);
   modalVisible.value = true;
 }
@@ -76,6 +74,7 @@ async function handleSave() {
   try {
     const payload = {
       name: formName.value,
+      description: formRemark.value,
       permission_ids: formPermissionIds.value,
     };
     if (isEditing.value && editingRole.value) {
@@ -162,6 +161,14 @@ onMounted(fetchData);
         <Input
           v-model:value="formName"
           placeholder="如：编辑"
+          style="margin-top: 4px"
+        />
+      </div>
+      <div style="margin-bottom: 12px">
+        <label>备注</label>
+        <Input
+          v-model:value="formRemark"
+          placeholder="角色说明"
           style="margin-top: 4px"
         />
       </div>

@@ -17,7 +17,7 @@ const routes: RouteRecordRaw[] = [
     meta: {
       authority: ['superadmin'],
       icon: 'lucide:user-cog',
-      title: '角色权限',
+      title: '系统角色',
       order: 92,
     },
     name: 'Roles',
