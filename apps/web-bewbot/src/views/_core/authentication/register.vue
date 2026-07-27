@@ -81,8 +81,9 @@ async function handleSubmit(values: Recordable<any>) {
     :loading="authStore.registerLoading"
     @submit="handleSubmit"
   >
-    <template v-if="siteKey" #submitButtonText>
-      <div class="mb-4 flex justify-center">
+    <template v-if="siteKey" #title>
+      <p class="text-center text-sm text-gray-500">注册新的管理账户</p>
+      <div class="mt-3 flex justify-center">
         <TurnstileWidget
           :site-key="siteKey"
           @verified="(t: string) => (turnstileToken = t)"
@@ -90,7 +91,6 @@ async function handleSubmit(values: Recordable<any>) {
           @error="turnstileToken = ''"
         />
       </div>
-      {{ $t('authentication.signUp') }}
     </template>
   </AuthenticationRegister>
 </template>
