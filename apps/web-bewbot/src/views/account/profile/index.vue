@@ -243,9 +243,20 @@ onMounted(async () => {
               <p style="font-size: 13px; color: #888">
                 请在 Telegram 中使用 /bind 命令绑定：
               </p>
-              <code style="font-size: 16px; font-weight: bold">
-                /bind {{ tgKey }}
-              </code>
+              <p style="margin-bottom: 4px">
+                <code style="font-size: 16px; font-weight: bold">
+                  /bind {{ tgKey }}
+                </code>
+              </p>
+              <Button
+                size="small"
+                @click="
+                  navigator.clipboard.writeText(`/bind ${tgKey}`);
+                  message.success('已复制');
+                "
+              >
+                复制指令
+              </Button>
             </div>
           </template>
         </Card>
