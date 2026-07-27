@@ -18,8 +18,10 @@ export interface RoleItem {
 export interface AdminUserItem {
   id: number;
   username: string;
+  email: string;
   roles: string[];
   permissions: string[];
+  created_at: null | string;
 }
 
 export interface RolePayload {
@@ -64,4 +66,9 @@ export function assignRolesApi(userId: number, roleIds: number[]) {
     `/admin-users/${userId}/roles`,
     roleIds,
   );
+}
+
+/** 删除系统用户 */
+export function deleteAdminUserApi(id: number) {
+  return requestClient.delete(`/admin-users/${id}`);
 }
