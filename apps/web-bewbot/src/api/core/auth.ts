@@ -62,6 +62,17 @@ export async function totpDisableApi(code: string) {
   return requestClient.post('/account/totp/disable', { code });
 }
 
+/** 修改密码 */
+export async function changePasswordApi(
+  currentPassword: string,
+  newPassword: string,
+) {
+  return requestClient.post('/account/change-password', {
+    current_password: currentPassword,
+    new_password: newPassword,
+  });
+}
+
 /** 注册 */
 export async function registerApi(data: AuthApi.RegisterParams) {
   return requestClient.post<AuthApi.RegisterResult>('/auth/register', data);

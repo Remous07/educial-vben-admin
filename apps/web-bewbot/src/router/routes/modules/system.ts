@@ -34,16 +34,6 @@ const routes: RouteRecordRaw[] = [
     name: 'InviteCodes',
     path: '/system/invite-codes',
   },
-  {
-    component: () => import('#/views/system/totp/index.vue'),
-    meta: {
-      icon: 'lucide:shield-check',
-      title: '两步验证',
-      order: 94,
-    },
-    name: 'Totp',
-    path: '/system/totp',
-  },
 ];
 
 export default routes;
