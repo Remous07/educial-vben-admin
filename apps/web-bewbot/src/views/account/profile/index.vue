@@ -22,10 +22,10 @@ import {
   getTelegramBindStatusApi,
   getTotpStatusApi,
   setupTelegramBindApi,
-  unbindTelegramApi,
   totpDisableApi,
   totpEnableApi,
   totpSetupApi,
+  unbindTelegramApi,
 } from '#/api/core';
 
 defineOptions({ name: 'Profile' });
@@ -48,8 +48,8 @@ async function handleChangeEmail() {
     emailVisible.value = false;
     emailCurrentPwd.value = '';
     newEmail.value = '';
-  } catch (e: any) {
-    message.error(e?.response?.data?.message || '修改失败');
+  } catch (error: any) {
+    message.error(error?.response?.data?.message || '修改失败');
   } finally {
     savingEmail.value = false;
   }
@@ -90,15 +90,15 @@ async function handleChangePassword() {
 const totpEnabled = ref(false);
 const totpVisible = ref(false);
 const disableVisible = ref(false);
-const setupData = ref<{ secret: string; uri: string } | null>(null);
+const setupData = ref<null | { secret: string; uri: string }>(null);
 const totpCode = ref('');
 const savingTotp = ref(false);
 
 // Telegram binding
 const tgBound = ref(false);
-const tgId = ref<number | null>(null);
-const tgFirstName = ref<string | null>(null);
-const tgUsername = ref<string | null>(null);
+const tgId = ref<null | number>(null);
+const tgFirstName = ref<null | string>(null);
+const tgUsername = ref<null | string>(null);
 const tgLink = ref('');
 const tgLinkVisible = ref(false);
 
@@ -182,82 +182,84 @@ onMounted(async () => {
   <Page>
     <Spin :spinning="loading">
       <div style="max-width: 640px">
-      <Card title="账户信息" style="margin-bottom: 16px">
-        <Descriptions :column="1">
-          <Descriptions.Item label="用户名">
-            {{ userInfo?.username }}
-          </Descriptions.Item>
-          <Descriptions.Item label="邮箱">
-            {{ userInfo?.email || '-' }}
-            <Button
-              size="small"
-              type="link"
-              style="margin-left: 8px"
-              @click="emailVisible = true"
-            >
-              修改
-            </Button>
-          </Descriptions.Item>
-          <Descriptions.Item label="创建时间">
-            {{ userInfo?.created_at
-              ? new Date(userInfo.created_at).toLocaleString('zh-CN')
-              : '-' }}
-          </Descriptions.Item>
-        </Descriptions>
-        <Button style="margin-top: 12px" @click="openChangePassword">
-          修改密码
-        </Button>
-      </Card>
-
-      <Card title="Telegram 绑定" style="margin-bottom: 16px">
-        <template v-if="tgBound">
-          <Descriptions :column="1" style="margin-bottom: 8px">
-            <Descriptions.Item label="TG 用户 ID">
-              {{ tgId }}
-            </Descriptions.Item>
-            <Descriptions.Item label="名称">
-              {{ tgFirstName }}
-            </Descriptions.Item>
+        <Card title="账户信息" style="margin-bottom: 16px">
+          <Descriptions :column="1">
             <Descriptions.Item label="用户名">
-              {{ tgUsername || '-' }}
+              {{ userInfo?.username }}
+            </Descriptions.Item>
+            <Descriptions.Item label="邮箱">
+              {{ userInfo?.email || '-' }}
+              <Button
+                size="small"
+                type="link"
+                style="margin-left: 8px"
+                @click="emailVisible = true"
+              >
+                修改
+              </Button>
+            </Descriptions.Item>
+            <Descriptions.Item label="创建时间">
+              {{
+                userInfo?.created_at
+                  ? new Date(userInfo.created_at).toLocaleString('zh-CN')
+                  : '-'
+              }}
             </Descriptions.Item>
           </Descriptions>
-          <Button danger @click="handleUnbind">解绑</Button>
-        </template>
-        <template v-else>
-          <p style="margin-bottom: 12px; color: #888">未绑定 Telegram 账号</p>
-          <Button type="primary" @click="handleSetupBind">
-            生成绑定链接
+          <Button style="margin-top: 12px" @click="openChangePassword">
+            修改密码
           </Button>
-        </template>
-      </Card>
+        </Card>
 
-      <Card title="两步验证">
-        <template v-if="totpEnabled">
-          <Result
-            status="success"
-            title="已开启"
-            sub-title="您的账户已受到两步验证保护"
-          >
-            <template #extra>
-              <Button danger @click="openDisable">关闭两步验证</Button>
-            </template>
-          </Result>
-        </template>
-        <template v-else>
-          <Result
-            status="info"
-            title="未开启"
-            sub-title="开启后将使用身份验证器保护您的账户"
-          >
-            <template #extra>
-              <Button type="primary" @click="handleTotpSetup">
-                开启两步验证
-              </Button>
-            </template>
-          </Result>
-        </template>
-      </Card>
+        <Card title="Telegram 绑定" style="margin-bottom: 16px">
+          <template v-if="tgBound">
+            <Descriptions :column="1" style="margin-bottom: 8px">
+              <Descriptions.Item label="TG 用户 ID">
+                {{ tgId }}
+              </Descriptions.Item>
+              <Descriptions.Item label="名称">
+                {{ tgFirstName }}
+              </Descriptions.Item>
+              <Descriptions.Item label="用户名">
+                {{ tgUsername || '-' }}
+              </Descriptions.Item>
+            </Descriptions>
+            <Button danger @click="handleUnbind">解绑</Button>
+          </template>
+          <template v-else>
+            <p style="margin-bottom: 12px; color: #888">未绑定 Telegram 账号</p>
+            <Button type="primary" @click="handleSetupBind">
+              生成绑定链接
+            </Button>
+          </template>
+        </Card>
+
+        <Card title="两步验证">
+          <template v-if="totpEnabled">
+            <Result
+              status="success"
+              title="已开启"
+              sub-title="您的账户已受到两步验证保护"
+            >
+              <template #extra>
+                <Button danger @click="openDisable">关闭两步验证</Button>
+              </template>
+            </Result>
+          </template>
+          <template v-else>
+            <Result
+              status="info"
+              title="未开启"
+              sub-title="开启后将使用身份验证器保护您的账户"
+            >
+              <template #extra>
+                <Button type="primary" @click="handleTotpSetup">
+                  开启两步验证
+                </Button>
+              </template>
+            </Result>
+          </template>
+        </Card>
       </div>
     </Spin>
 
@@ -329,7 +331,7 @@ onMounted(async () => {
       v-model:open="tgLinkVisible"
       title="绑定 Telegram"
       :footer="null"
-      width="360"
+      width="400"
     >
       <p style="margin-bottom: 12px">
         请点击下方链接或复制到 Telegram 中打开：
@@ -339,9 +341,7 @@ onMounted(async () => {
           {{ tgLink }}
         </a>
       </p>
-      <p style="font-size: 12px; color: #888">
-        链接有效期 5 分钟
-      </p>
+      <p style="font-size: 12px; color: #888">链接有效期 5 分钟</p>
     </Modal>
 
     <!-- TOTP Setup Modal -->
@@ -351,14 +351,26 @@ onMounted(async () => {
       :footer="null"
       width="360"
     >
-      <div v-if="setupData" style="text-align: center; max-width: 320px; margin: 0 auto">
+      <div
+        v-if="setupData"
+        style="max-width: 320px; margin: 0 auto; text-align: center"
+      >
         <p style="margin-bottom: 12px; font-size: 13px">
           请使用身份验证器扫描二维码
         </p>
-        <div style="display: flex; justify-content: center; margin-bottom: 12px">
+        <div
+          style="display: flex; justify-content: center; margin-bottom: 12px"
+        >
           <QRCode :value="setupData.uri" :size="180" />
         </div>
-        <p style="margin-bottom: 12px; font-size: 11px; color: #888; word-break: break-all">
+        <p
+          style="
+            margin-bottom: 12px;
+            font-size: 11px;
+            color: #888;
+            word-break: break-all;
+          "
+        >
           密钥：<code>{{ setupData.secret }}</code>
         </p>
         <Input
@@ -367,7 +379,12 @@ onMounted(async () => {
           maxlength="6"
           style="margin-bottom: 12px"
         />
-        <Button type="primary" block :loading="savingTotp" @click="handleTotpEnable">
+        <Button
+          type="primary"
+          block
+          :loading="savingTotp"
+          @click="handleTotpEnable"
+        >
           验证并启用
         </Button>
       </div>
