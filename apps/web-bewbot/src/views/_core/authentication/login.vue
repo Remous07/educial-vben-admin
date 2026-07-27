@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 
@@ -74,6 +73,12 @@ async function handleSubmit() {
       <VbenCheckbox v-model="rememberMe">
         {{ $t('authentication.rememberMe') }}
       </VbenCheckbox>
+      <a
+        class="cursor-pointer text-sm text-blue-500"
+        @click="router.push('/auth/forget-password')"
+      >
+        {{ $t('authentication.forgetPassword') }}
+      </a>
     </div>
 
     <div v-if="siteKey" class="mb-4 flex justify-center">
