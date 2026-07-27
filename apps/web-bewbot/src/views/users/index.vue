@@ -28,7 +28,13 @@ const columns: TableColumnsType = [
   { title: 'Telegram ID', dataIndex: 'telegram_id', key: 'telegram_id' },
   { title: '名称', dataIndex: 'first_name', key: 'first_name' },
   { title: '用户名', dataIndex: 'username', key: 'username' },
-  { title: '注册时间', dataIndex: 'created_at', key: 'created_at' },
+  {
+    title: '注册时间',
+    dataIndex: 'created_at',
+    key: 'created_at',
+    customRender: ({ text }: { text: string }) =>
+      new Date(text).toLocaleString('zh-CN'),
+  },
 ];
 
 async function fetchUsers() {

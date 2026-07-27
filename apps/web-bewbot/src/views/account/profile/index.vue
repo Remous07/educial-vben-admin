@@ -331,7 +331,8 @@ onMounted(async () => {
       v-model:open="tgLinkVisible"
       title="绑定 Telegram"
       :footer="null"
-      width="400"
+      width="360"
+      style="word-break: break-all"
     >
       <p style="margin-bottom: 12px">
         请点击下方链接或复制到 Telegram 中打开：
