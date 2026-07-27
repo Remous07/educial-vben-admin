@@ -269,6 +269,59 @@ onMounted(async () => {
                   : '-'
               }}
             </Descriptions.Item>
+            <Descriptions.Item label="对话识别码">
+              <template v-if="convCodeEdit">
+                <Input
+                  v-model:value="convCodeInput"
+                  placeholder="8-16位字母、数字、-、_"
+                  :maxlength="16"
+                  size="small"
+                  style="width: 180px; margin-right: 8px"
+                />
+                <Button
+                  size="small"
+                  type="primary"
+                  :loading="convCodeSaving"
+                  @click="handleSetConvCode"
+                >
+                  保存
+                </Button>
+                <Button
+                  size="small"
+                  style="margin-left: 4px"
+                  @click="convCodeEdit = false"
+                >
+                  取消
+                </Button>
+                <p
+                  v-if="convCodeHelper"
+                  style=" margin: 4px 0 0; font-size: 12px;color: #ff4d4f"
+                >
+                  {{ convCodeHelper }}
+                </p>
+              </template>
+              <template v-else>
+                <code style="font-size: 14px; font-weight: bold">{{
+                  convCode || '-'
+                }}</code>
+                <Button
+                  size="small"
+                  type="link"
+                  style="margin-left: 8px"
+                  @click="copyConvCode"
+                >
+                  复制
+                </Button>
+                <Button
+                  size="small"
+                  type="link"
+                  style="margin-left: 4px"
+                  @click="openConvCodeEdit"
+                >
+                  修改
+                </Button>
+              </template>
+            </Descriptions.Item>
           </Descriptions>
           <Button style="margin-top: 12px" @click="openChangePassword">
             修改密码
@@ -310,57 +363,6 @@ onMounted(async () => {
               </p>
               <Button size="small" @click="copyBindCommand"> 复制指令 </Button>
             </div>
-          </template>
-        </Card>
-
-        <Card title="对话识别码" style="margin-bottom: 16px">
-          <template v-if="convCodeEdit">
-            <div style="margin-bottom: 8px">
-              <Input
-                v-model:value="convCodeInput"
-                placeholder="8-16位字母、数字、-、_"
-                :maxlength="16"
-                style="margin-bottom: 4px"
-              />
-              <p
-                v-if="convCodeHelper"
-                style=" margin: 0; font-size: 12px;color: #ff4d4f"
-              >
-                {{ convCodeHelper }}
-              </p>
-            </div>
-            <Button
-              size="small"
-              type="primary"
-              :loading="convCodeSaving"
-              @click="handleSetConvCode"
-            >
-              保存
-            </Button>
-            <Button
-              size="small"
-              style="margin-left: 8px"
-              @click="convCodeEdit = false"
-            >
-              取消
-            </Button>
-          </template>
-          <template v-else>
-            <Descriptions :column="1" style="margin-bottom: 8px">
-              <Descriptions.Item label="识别码">
-                <code style="font-size: 16px; font-weight: bold">
-                  {{ convCode || '-' }}
-                </code>
-              </Descriptions.Item>
-            </Descriptions>
-            <Button size="small" @click="copyConvCode">复制</Button>
-            <Button
-              size="small"
-              style="margin-left: 8px"
-              @click="openConvCodeEdit"
-            >
-              修改
-            </Button>
           </template>
         </Card>
 
