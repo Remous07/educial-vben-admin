@@ -9,6 +9,7 @@ import { Page } from '@vben/common-ui';
 
 import {
   Button,
+  Input,
   InputNumber,
   message,
   Modal,
@@ -21,6 +22,7 @@ import {
 import {
   createInviteCodeApi,
   deleteInviteCodeApi,
+  editInviteCodeApi,
   getInviteCodesApi,
   getSystemSettingApi,
   reactivateInviteCodeApi,
@@ -129,6 +131,55 @@ async function handleReactivate(code: InviteCodeItem) {
   fetchData();
 }
 
+// Edit modal
+const editModalVisible = ref(false);
+const editingCode = ref<InviteCodeItem | null>(null);
+const editMaxUses = ref(1);
+const editExpiresDays = ref<number>();
+
+function openEditModal(code: InviteCodeItem) {
+  if (!code.is_active) {
+    Modal.confirm({
+      title: '编辑邀请码',
+      content: '被撤销的邀请码不可编辑，是否重新激活？',
+      okText: '重新激活',
+      cancelText: '取消',
+      onOk: async () => {
+        await reactivateInviteCodeApi(code.id);
+        message.success('已重新激活');
+        fetchData();
+      },
+    });
+    return;
+  }
+  if (code.expires_at && new Date(code.expires_at) < new Date()) {
+    message.warning('已过期的邀请码无法编辑');
+    return;
+  }
+  editingCode.value = code;
+  editMaxUses.value = code.max_uses;
+  editExpiresDays.value = undefined;
+  editModalVisible.value = true;
+}
+
+async function handleEditSave() {
+  if (!editingCode.value) return;
+  saving.value = true;
+  try {
+    await editInviteCodeApi(editingCode.value.id, {
+      expires_days: editExpiresDays.value,
+      max_uses: editMaxUses.value,
+    });
+    message.success('保存成功');
+    editModalVisible.value = false;
+    fetchData();
+  } catch {
+    message.error('保存失败');
+  } finally {
+    saving.value = false;
+  }
+}
+
 async function handleCreate() {
   saving.value = true;
   try {
@@ -203,6 +254,12 @@ onMounted(fetchData);
           <Space>
             <Button
               size="small"
+              @click="openEditModal(record as InviteCodeItem)"
+            >
+              编辑
+            </Button>
+            <Button
+              size="small"
               @click="copyCode((record as InviteCodeItem).code)"
             >
               复制
@@ -250,6 +307,36 @@ onMounted(fetchData);
           :max="365"
           style="width: 100%; margin-top: 4px"
           placeholder="永不过期"
+        />
+      </div>
+    </Modal>
+
+    <Modal
+      v-model:open="editModalVisible"
+      title="编辑邀请码"
+      @ok="handleEditSave"
+      :confirm-loading="saving"
+    >
+      <div style="margin-bottom: 12px">
+        <label>邀请码</label>
+        <Input :value="editingCode?.code" disabled style="margin-top: 4px" />
+      </div>
+      <div style="margin-bottom: 12px">
+        <label>最大使用次数（0 = 不限）</label>
+        <InputNumber
+          v-model:value="editMaxUses"
+          :min="0"
+          style="width: 100%; margin-top: 4px"
+        />
+      </div>
+      <div>
+        <label>重置过期时间（留空 = 不变，0 = 永不过期）</label>
+        <InputNumber
+          v-model:value="editExpiresDays"
+          :min="0"
+          :max="365"
+          style="width: 100%; margin-top: 4px"
+          placeholder="不变"
         />
       </div>
     </Modal>

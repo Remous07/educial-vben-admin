@@ -99,6 +99,14 @@ export function createInviteCodeApi(payload: {
   return requestClient.post<InviteCodeItem>('/invite-codes', payload);
 }
 
+/** 编辑邀请码 */
+export function editInviteCodeApi(id: number, payload: {
+  expires_days?: number | null;
+  max_uses: number;
+}) {
+  return requestClient.put(`/invite-codes/${id}`, payload);
+}
+
 /** 重新激活邀请码 */
 export function reactivateInviteCodeApi(id: number) {
   return requestClient.put(`/invite-codes/${id}/reactivate`);
