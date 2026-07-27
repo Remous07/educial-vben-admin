@@ -45,7 +45,6 @@ async function toggleInviteRequired(val: boolean) {
     message.success(val ? '已开启邀请码验证' : '已关闭邀请码验证');
   } catch {
     inviteRequired.value = !val;
-    message.error('设置失败');
   }
 }
 
@@ -206,8 +205,8 @@ async function handleEditSave() {
     message.success('保存成功');
     editModalVisible.value = false;
     fetchData();
-  } catch (e: any) {
-    message.error(e?.response?.data?.message || '保存失败');
+  } catch {
+    // error handled by interceptor
   } finally {
     saving.value = false;
   }
@@ -226,7 +225,7 @@ async function handleCreate() {
     expiresAt.value = dayjs().add(7, 'day');
     fetchData();
   } catch (e: any) {
-    message.error(e?.response?.data?.message || '生成失败');
+    // error handled by interceptor
   } finally {
     saving.value = false;
   }
