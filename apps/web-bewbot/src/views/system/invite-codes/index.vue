@@ -52,7 +52,9 @@ async function toggleInviteRequired(val: boolean) {
 // Create modal
 const modalVisible = ref(false);
 const maxUses = ref(1);
-const expiresAt = ref<string>('');
+const expiresAt = ref<string>(
+  dayjs().add(7, 'day').format('YYYY-MM-DD HH:mm:ss'),
+);
 const saving = ref(false);
 
 const columns: TableColumnsType = [
