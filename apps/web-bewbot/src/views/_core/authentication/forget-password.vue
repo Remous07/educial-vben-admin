@@ -88,7 +88,7 @@ async function handleSubmit() {
         class="cursor-pointer text-blue-500"
         @click="router.push('/auth/login')"
       >
-        {{ $t('authentication.backToLogin') }}
+        返回登录
       </a>
     </div>
   </div>
