@@ -52,9 +52,7 @@ async function toggleInviteRequired(val: boolean) {
 // Create modal
 const modalVisible = ref(false);
 const maxUses = ref(1);
-const expiresAt = ref<string>(
-  dayjs().add(7, 'day').format('YYYY-MM-DD HH:mm:ss'),
-);
+const expiresAt = ref(dayjs().add(7, 'day'));
 const saving = ref(false);
 
 const columns: TableColumnsType = [
@@ -165,7 +163,7 @@ async function handlePermanentDelete(code: InviteCodeItem) {
 const editModalVisible = ref(false);
 const editingCode = ref<InviteCodeItem | null>(null);
 const editMaxUses = ref(1);
-const editExpiresAt = ref<string>('');
+const editExpiresAt = ref<any>(null);
 
 function openEditModal(code: InviteCodeItem) {
   if (!code.is_active) {
@@ -188,7 +186,7 @@ function openEditModal(code: InviteCodeItem) {
   }
   editingCode.value = code;
   editMaxUses.value = code.max_uses;
-  editExpiresAt.value = code.expires_at || '';
+  editExpiresAt.value = code.expires_at ? dayjs(code.expires_at) : null;
   editModalVisible.value = true;
 }
 
@@ -197,9 +195,7 @@ async function handleEditSave() {
   saving.value = true;
   try {
     await editInviteCodeApi(editingCode.value.id, {
-      expires_at: editExpiresAt.value
-        ? dayjs(editExpiresAt.value).toISOString()
-        : '',
+      expires_at: editExpiresAt.value?.toISOString?.() ?? '',
       max_uses: editMaxUses.value,
     });
     message.success('保存成功');
@@ -216,15 +212,13 @@ async function handleCreate() {
   saving.value = true;
   try {
     await createInviteCodeApi({
-      expires_at: expiresAt.value
-        ? dayjs(expiresAt.value).toISOString()
-        : undefined,
+      expires_at: expiresAt.value?.toISOString?.() ?? undefined,
       max_uses: maxUses.value,
     });
     message.success('邀请码已生成');
     modalVisible.value = false;
     maxUses.value = 1;
-    expiresAt.value = '';
+    expiresAt.value = dayjs().add(7, 'day');
     fetchData();
   } catch {
     message.error('生成失败');
