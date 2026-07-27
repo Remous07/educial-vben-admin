@@ -33,6 +33,7 @@ const [Form, formApi] = useVbenForm({
     {
       component: 'Select',
       componentProps: {
+        class: 'w-full',
         options: [
           { label: '选项1', value: '1' },
           { label: '选项2', value: '2' },
@@ -53,7 +54,7 @@ const [Modal, modalApi] = useVbenModal({
     modalApi.close();
   },
   onConfirm: async () => {
-    await formApi.validateAndSubmitForm();
+    await formApi.validateAndSubmit();
     // modalApi.close();
   },
   onOpenChange(isOpen: boolean) {
