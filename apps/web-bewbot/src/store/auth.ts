@@ -16,6 +16,7 @@ import {
   getAccessCodesApi,
   getUserInfoApi,
   loginApi,
+  loginTotpApi,
   logoutApi,
   registerApi,
 } from '#/api';
@@ -28,6 +29,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   const loginLoading = ref(false);
   const registerLoading = ref(false);
+  const totpTempToken = ref('');
 
   async function authLogin(
     params: Recordable<any>,
@@ -36,7 +38,16 @@ export const useAuthStore = defineStore('auth', () => {
     let userInfo: null | UserInfo = null;
     try {
       loginLoading.value = true;
-      const { accessToken } = await loginApi(params);
+      const response: any = await loginApi(params);
+
+      // TOTP required: store temp token, redirect to TOTP page
+      if (response.totpPending) {
+        totpTempToken.value = response.tempToken;
+        await router.push('/auth/totp-verify');
+        return { userInfo: null };
+      }
+
+      const { accessToken } = response;
 
       if (accessToken) {
         accessStore.setAccessToken(accessToken);
@@ -119,13 +130,53 @@ export const useAuthStore = defineStore('auth', () => {
     registerLoading.value = false;
   }
 
+  async function authLoginTotp(totpCode: string) {
+    try {
+      loginLoading.value = true;
+      const { accessToken } = await loginTotpApi(
+        totpTempToken.value,
+        totpCode,
+      );
+
+      if (accessToken) {
+        accessStore.setAccessToken(accessToken);
+        totpTempToken.value = '';
+
+        const [fetchUserInfoResult, accessCodes] = await Promise.all([
+          fetchUserInfo(),
+          getAccessCodesApi(),
+        ]);
+
+        const userInfo = fetchUserInfoResult;
+        userStore.setUserInfo(userInfo);
+        accessStore.setAccessCodes(accessCodes);
+
+        await router.push(
+          userInfo.homePath || preferences.app.defaultHomePath,
+        );
+
+        if (userInfo?.realName) {
+          notification.success({
+            description: `${$t('authentication.loginSuccessDesc')}:${userInfo?.realName}`,
+            duration: 3,
+            message: $t('authentication.loginSuccess'),
+          });
+        }
+      }
+    } finally {
+      loginLoading.value = false;
+    }
+  }
+
   return {
     $reset,
     authLogin,
+    authLoginTotp,
     authRegister,
     fetchUserInfo,
     loginLoading,
     logout,
     registerLoading,
+    totpTempToken,
   };
 });

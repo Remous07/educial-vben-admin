@@ -58,6 +58,13 @@ const coreRoutes: RouteRecordRaw[] = [
         meta: { title: $t('authentication.forgetPassword') },
       },
       {
+        name: 'TotpVerify',
+        path: 'totp-verify',
+        component: () =>
+          import('#/views/_core/authentication/totp-verify.vue'),
+        meta: { title: '两步验证' },
+      },
+      {
         name: 'ResetPassword',
         path: 'reset-password',
         component: () =>

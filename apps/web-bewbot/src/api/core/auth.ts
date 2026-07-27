@@ -32,6 +32,36 @@ export async function loginApi(data: AuthApi.LoginParams) {
   return requestClient.post<AuthApi.LoginResult>('/auth/login', data);
 }
 
+/** TOTP 二次验证登录 */
+export async function loginTotpApi(tempToken: string, totpCode: string) {
+  return requestClient.post<AuthApi.LoginResult>('/auth/login-totp', {
+    temp_token: tempToken,
+    totp_code: totpCode,
+  });
+}
+
+/** TOTP 状态 */
+export async function getTotpStatusApi() {
+  return requestClient.get<{ enabled: boolean }>('/account/totp/status');
+}
+
+/** TOTP 设置 - 生成密钥 */
+export async function totpSetupApi() {
+  return requestClient.post<{ secret: string; uri: string }>(
+    '/account/totp/setup',
+  );
+}
+
+/** TOTP 启用 - 验证并开启 */
+export async function totpEnableApi(code: string) {
+  return requestClient.post('/account/totp/enable', { code });
+}
+
+/** TOTP 禁用 - 验证并关闭 */
+export async function totpDisableApi(code: string) {
+  return requestClient.post('/account/totp/disable', { code });
+}
+
 /** 注册 */
 export async function registerApi(data: AuthApi.RegisterParams) {
   return requestClient.post<AuthApi.RegisterResult>('/auth/register', data);
