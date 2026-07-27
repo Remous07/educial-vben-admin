@@ -331,13 +331,19 @@ onMounted(async () => {
       v-model:open="tgLinkVisible"
       title="绑定 Telegram"
       :footer="null"
-      width="360"
-      style="word-break: break-all"
+      width="340"
     >
-      <p style="margin-bottom: 12px">
+      <p style="margin-bottom: 12px; font-size: 13px">
         请点击下方链接或复制到 Telegram 中打开：
       </p>
-      <p style="margin-bottom: 12px">
+      <p
+        style="
+          margin-bottom: 12px;
+          font-size: 12px;
+          word-break: break-all;
+          color: #1677ff;
+        "
+      >
         <a :href="tgLink" target="_blank" style="color: #1677ff">
           {{ tgLink }}
         </a>
