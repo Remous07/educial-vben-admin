@@ -72,3 +72,34 @@ export function assignRolesApi(userId: number, roleIds: number[]) {
 export function deleteAdminUserApi(id: number) {
   return requestClient.delete(`/admin-users/${id}`);
 }
+
+// ── Invite Codes ─────────────────────────────────────
+
+export interface InviteCodeItem {
+  id: number;
+  code: string;
+  max_uses: number;
+  used_count: number;
+  is_active: boolean;
+  expires_at: null | string;
+  created_at: null | string;
+  created_by_username: null | string;
+}
+
+/** 获取邀请码列表 */
+export function getInviteCodesApi() {
+  return requestClient.get<InviteCodeItem[]>('/invite-codes');
+}
+
+/** 生成邀请码 */
+export function createInviteCodeApi(payload: {
+  expires_days?: number;
+  max_uses?: number;
+}) {
+  return requestClient.post<InviteCodeItem>('/invite-codes', payload);
+}
+
+/** 删除邀请码 */
+export function deleteInviteCodeApi(id: number) {
+  return requestClient.delete(`/invite-codes/${id}`);
+}

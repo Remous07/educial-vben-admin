@@ -11,9 +11,10 @@ export namespace AuthApi {
   }
 
   export interface RegisterParams {
-    username: string;
     email: string;
+    invite_code: string;
     password: string;
+    username: string;
   }
 
   export interface RegisterResult {

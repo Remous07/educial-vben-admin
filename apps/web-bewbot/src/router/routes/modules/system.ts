@@ -23,6 +23,17 @@ const routes: RouteRecordRaw[] = [
     name: 'Roles',
     path: '/system/roles',
   },
+  {
+    component: () => import('#/views/system/invite-codes/index.vue'),
+    meta: {
+      authority: ['superadmin'],
+      icon: 'lucide:ticket',
+      title: '邀请码',
+      order: 93,
+    },
+    name: 'InviteCodes',
+    path: '/system/invite-codes',
+  },
 ];
 
 export default routes;

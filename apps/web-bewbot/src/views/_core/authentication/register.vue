@@ -40,6 +40,13 @@ const [Form, formApi] = useVbenForm({
       rules: z.string().email({ message: '请输入有效的邮箱地址' }),
     },
     {
+      component: 'VbenInput',
+      componentProps: { placeholder: '请输入邀请码' },
+      fieldName: 'invite_code',
+      label: '邀请码',
+      rules: z.string().min(1, { message: '请输入邀请码' }),
+    },
+    {
       component: 'VbenInputPassword',
       componentProps: { placeholder: $t('authentication.password') },
       fieldName: 'password',
@@ -74,9 +81,10 @@ async function handleSubmit() {
 
   const values = await formApi.getValues();
   await authStore.authRegister({
-    username: values.username,
     email: values.email,
+    invite_code: values.invite_code,
     password: values.password,
+    username: values.username,
     turnstile_token: turnstileToken.value || undefined,
   });
   turnstileToken.value = '';
