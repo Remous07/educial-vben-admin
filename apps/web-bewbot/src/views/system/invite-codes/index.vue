@@ -96,6 +96,11 @@ const columns: TableColumnsType = [
   { title: '操作', key: 'action', width: 100 },
 ];
 
+function copyCode(code: string) {
+  navigator.clipboard.writeText(code);
+  message.success('已复制');
+}
+
 async function handleCreate() {
   saving.value = true;
   try {
@@ -167,14 +172,22 @@ onMounted(fetchData);
     >
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'action'">
-          <Button
-            v-if="(record as InviteCodeItem).is_active"
-            size="small"
-            danger
-            @click="handleDelete(record as InviteCodeItem)"
-          >
-            撤销
-          </Button>
+          <Space>
+            <Button
+              size="small"
+              @click="copyCode((record as InviteCodeItem).code)"
+            >
+              复制
+            </Button>
+            <Button
+              v-if="(record as InviteCodeItem).is_active"
+              size="small"
+              danger
+              @click="handleDelete(record as InviteCodeItem)"
+            >
+              撤销
+            </Button>
+          </Space>
         </template>
       </template>
     </Table>
