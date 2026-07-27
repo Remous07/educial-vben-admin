@@ -206,8 +206,8 @@ async function handleEditSave() {
     message.success('保存成功');
     editModalVisible.value = false;
     fetchData();
-  } catch {
-    message.error('保存失败');
+  } catch (e: any) {
+    message.error(e?.response?.data?.message || '保存失败');
   } finally {
     saving.value = false;
   }
@@ -225,8 +225,8 @@ async function handleCreate() {
     maxUses.value = 1;
     expiresAt.value = dayjs().add(7, 'day');
     fetchData();
-  } catch {
-    message.error('生成失败');
+  } catch (e: any) {
+    message.error(e?.response?.data?.message || '生成失败');
   } finally {
     saving.value = false;
   }
