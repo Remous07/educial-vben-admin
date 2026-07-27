@@ -252,16 +252,16 @@ onMounted(async () => {
       v-model:open="totpVisible"
       title="设置两步验证"
       :footer="null"
-      width="400"
+      width="360"
     >
-      <div v-if="setupData" style="text-align: center">
-        <p style="margin-bottom: 12px">
+      <div v-if="setupData" style="text-align: center; max-width: 320px; margin: 0 auto">
+        <p style="margin-bottom: 12px; font-size: 13px">
           请使用身份验证器扫描二维码
         </p>
         <div style="display: flex; justify-content: center; margin-bottom: 12px">
-          <QRCode :value="setupData.uri" :size="200" />
+          <QRCode :value="setupData.uri" :size="180" />
         </div>
-        <p style="margin-bottom: 12px; font-size: 12px; color: #888">
+        <p style="margin-bottom: 12px; font-size: 11px; color: #888; word-break: break-all">
           密钥：<code>{{ setupData.secret }}</code>
         </p>
         <Input
