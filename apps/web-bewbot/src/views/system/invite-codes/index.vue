@@ -50,7 +50,14 @@ const expiresDays = ref<number>();
 const saving = ref(false);
 
 const columns: TableColumnsType = [
-  { title: 'ID', dataIndex: 'id', key: 'id', width: 60 },
+  {
+    title: 'ID',
+    dataIndex: 'id',
+    key: 'id',
+    width: 60,
+    sorter: (a: InviteCodeItem, b: InviteCodeItem) => a.id - b.id,
+    sortDirections: ['ascend', 'descend'],
+  },
   { title: '邀请码', dataIndex: 'code', key: 'code', width: 180 },
   {
     title: '状态',
@@ -61,6 +68,9 @@ const columns: TableColumnsType = [
       text
         ? h(Tag, { color: 'green' }, () => '有效')
         : h(Tag, { color: 'red' }, () => '已撤销'),
+    sorter: (a: InviteCodeItem, b: InviteCodeItem) =>
+      Number(b.is_active) - Number(a.is_active),
+    sortDirections: ['ascend', 'descend'],
   },
   {
     title: '使用',
@@ -78,6 +88,13 @@ const columns: TableColumnsType = [
     width: 180,
     customRender: ({ text }: { text: null | string }) =>
       text ? new Date(text).toLocaleString('zh-CN') : '永不过期',
+    sorter: (a: InviteCodeItem, b: InviteCodeItem) => {
+      if (!a.expires_at && !b.expires_at) return 0;
+      if (!a.expires_at) return 1;
+      if (!b.expires_at) return -1;
+      return new Date(a.expires_at).getTime() - new Date(b.expires_at).getTime();
+    },
+    sortDirections: ['ascend', 'descend'],
   },
   {
     title: '创建时间',
@@ -86,6 +103,10 @@ const columns: TableColumnsType = [
     width: 180,
     customRender: ({ text }: { text: null | string }) =>
       text ? new Date(text).toLocaleString('zh-CN') : '-',
+    sorter: (a: InviteCodeItem, b: InviteCodeItem) =>
+      new Date(a.created_at || 0).getTime() -
+      new Date(b.created_at || 0).getTime(),
+    sortDirections: ['ascend', 'descend'],
   },
   {
     title: '创建者',
