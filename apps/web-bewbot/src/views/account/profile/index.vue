@@ -19,7 +19,10 @@ import {
 import {
   changeEmailApi,
   changePasswordApi,
+  getTelegramBindStatusApi,
   getTotpStatusApi,
+  setupTelegramBindApi,
+  unbindTelegramApi,
   totpDisableApi,
   totpEnableApi,
   totpSetupApi,
@@ -91,6 +94,38 @@ const setupData = ref<{ secret: string; uri: string } | null>(null);
 const totpCode = ref('');
 const savingTotp = ref(false);
 
+// Telegram binding
+const tgBound = ref(false);
+const tgId = ref<number | null>(null);
+const tgFirstName = ref<string | null>(null);
+const tgUsername = ref<string | null>(null);
+const tgLink = ref('');
+const tgLinkVisible = ref(false);
+
+async function fetchTgStatus() {
+  try {
+    const s = await getTelegramBindStatusApi();
+    tgBound.value = s.bound;
+    tgId.value = s.telegram_id;
+    tgFirstName.value = s.telegram_first_name;
+    tgUsername.value = s.telegram_username;
+  } catch {
+    // ignore
+  }
+}
+
+async function handleSetupBind() {
+  const r = await setupTelegramBindApi();
+  tgLink.value = r.link;
+  tgLinkVisible.value = true;
+}
+
+async function handleUnbind() {
+  await unbindTelegramApi();
+  message.success('已解绑');
+  fetchTgStatus();
+}
+
 async function fetchTotpStatus() {
   const result = await getTotpStatusApi();
   totpEnabled.value = result.enabled;
@@ -138,7 +173,7 @@ async function handleTotpDisable() {
 
 onMounted(async () => {
   loading.value = true;
-  await fetchTotpStatus();
+  await Promise.all([fetchTotpStatus(), fetchTgStatus()]);
   loading.value = false;
 });
 </script>
@@ -172,6 +207,29 @@ onMounted(async () => {
         <Button style="margin-top: 12px" @click="openChangePassword">
           修改密码
         </Button>
+      </Card>
+
+      <Card title="Telegram 绑定" style="margin-bottom: 16px">
+        <template v-if="tgBound">
+          <Descriptions :column="1" style="margin-bottom: 8px">
+            <Descriptions.Item label="TG 用户 ID">
+              {{ tgId }}
+            </Descriptions.Item>
+            <Descriptions.Item label="名称">
+              {{ tgFirstName }}
+            </Descriptions.Item>
+            <Descriptions.Item label="用户名">
+              {{ tgUsername || '-' }}
+            </Descriptions.Item>
+          </Descriptions>
+          <Button danger @click="handleUnbind">解绑</Button>
+        </template>
+        <template v-else>
+          <p style="margin-bottom: 12px; color: #888">未绑定 Telegram 账号</p>
+          <Button type="primary" @click="handleSetupBind">
+            生成绑定链接
+          </Button>
+        </template>
       </Card>
 
       <Card title="两步验证">
@@ -264,6 +322,26 @@ onMounted(async () => {
           style="margin-top: 4px"
         />
       </div>
+    </Modal>
+
+    <!-- Telegram Bind Modal -->
+    <Modal
+      v-model:open="tgLinkVisible"
+      title="绑定 Telegram"
+      :footer="null"
+      width="400"
+    >
+      <p style="margin-bottom: 12px">
+        请点击下方链接或复制到 Telegram 中打开：
+      </p>
+      <p style="margin-bottom: 12px">
+        <a :href="tgLink" target="_blank" style="color: #1677ff">
+          {{ tgLink }}
+        </a>
+      </p>
+      <p style="font-size: 12px; color: #888">
+        链接有效期 5 分钟
+      </p>
     </Modal>
 
     <!-- TOTP Setup Modal -->

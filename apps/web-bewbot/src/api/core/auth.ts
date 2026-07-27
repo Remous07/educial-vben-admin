@@ -73,6 +73,28 @@ export async function changeEmailApi(
   });
 }
 
+/** Telegram 绑定状态 */
+export async function getTelegramBindStatusApi() {
+  return requestClient.get<{
+    bound: boolean;
+    telegram_id: number | null;
+    telegram_first_name: string | null;
+    telegram_username: string | null;
+  }>('/account/bind-telegram/status');
+}
+
+/** Telegram 绑定 - 生成绑定链接 */
+export async function setupTelegramBindApi() {
+  return requestClient.post<{ link: string; expires_in: number }>(
+    '/account/bind-telegram/setup',
+  );
+}
+
+/** Telegram 解绑 */
+export async function unbindTelegramApi() {
+  return requestClient.post('/account/bind-telegram/unbind');
+}
+
 /** 修改密码 */
 export async function changePasswordApi(
   currentPassword: string,
