@@ -56,16 +56,26 @@ async function handleChangeEmail() {
 const passwordVisible = ref(false);
 const currentPwd = ref('');
 const newPwd = ref('');
+const pwdTotpCode = ref('');
 const savingPwd = ref(false);
+
+function openChangePassword() {
+  currentPwd.value = '';
+  newPwd.value = '';
+  pwdTotpCode.value = '';
+  passwordVisible.value = true;
+}
 
 async function handleChangePassword() {
   savingPwd.value = true;
   try {
-    await changePasswordApi(currentPwd.value, newPwd.value);
+    await changePasswordApi(
+      currentPwd.value,
+      newPwd.value,
+      pwdTotpCode.value || undefined,
+    );
     message.success('密码已修改');
     passwordVisible.value = false;
-    currentPwd.value = '';
-    newPwd.value = '';
   } catch {
     message.error('修改失败');
   } finally {
@@ -159,7 +169,7 @@ onMounted(async () => {
               : '-' }}
           </Descriptions.Item>
         </Descriptions>
-        <Button style="margin-top: 12px" @click="passwordVisible = true">
+        <Button style="margin-top: 12px" @click="openChangePassword">
           修改密码
         </Button>
       </Card>
@@ -242,6 +252,15 @@ onMounted(async () => {
           v-model:value="newPwd"
           type="password"
           placeholder="请输入新密码（至少6位）"
+          style="margin-top: 4px"
+        />
+      </div>
+      <div v-if="totpEnabled" style="margin-top: 12px">
+        <label>两步验证码</label>
+        <Input
+          v-model:value="pwdTotpCode"
+          placeholder="请输入 6 位验证码"
+          maxlength="6"
           style="margin-top: 4px"
         />
       </div>

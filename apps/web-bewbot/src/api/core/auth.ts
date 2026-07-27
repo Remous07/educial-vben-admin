@@ -77,10 +77,12 @@ export async function changeEmailApi(
 export async function changePasswordApi(
   currentPassword: string,
   newPassword: string,
+  totpCode?: string,
 ) {
   return requestClient.post('/account/change-password', {
     current_password: currentPassword,
     new_password: newPassword,
+    totp_code: totpCode,
   });
 }
 
