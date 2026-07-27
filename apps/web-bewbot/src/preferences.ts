@@ -7,6 +7,13 @@ export const overridesPreferences = defineOverridesPreferences({
   app: {
     name: import.meta.env.VITE_APP_TITLE,
   },
+  copyright: {
+    companyName: 'Bewbot',
+    companyLink: 'https://bewbot.lik.li',
+    enable: true,
+    icp: '',
+    icpLink: '',
+  },
 });
 
 export const preferencesExtension = definePreferencesExtension({
