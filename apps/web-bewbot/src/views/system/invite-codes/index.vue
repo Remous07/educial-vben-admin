@@ -23,6 +23,7 @@ import {
   deleteInviteCodeApi,
   getInviteCodesApi,
   getSystemSettingApi,
+  reactivateInviteCodeApi,
   setSystemSettingApi,
 } from '#/api/core';
 
@@ -122,6 +123,12 @@ function copyCode(code: string) {
   message.success('已复制');
 }
 
+async function handleReactivate(code: InviteCodeItem) {
+  await reactivateInviteCodeApi(code.id);
+  message.success('已重新激活');
+  fetchData();
+}
+
 async function handleCreate() {
   saving.value = true;
   try {
@@ -207,6 +214,14 @@ onMounted(fetchData);
               @click="handleDelete(record as InviteCodeItem)"
             >
               撤销
+            </Button>
+            <Button
+              v-else
+              size="small"
+              type="primary"
+              @click="handleReactivate(record as InviteCodeItem)"
+            >
+              重新激活
             </Button>
           </Space>
         </template>

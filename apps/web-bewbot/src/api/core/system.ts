@@ -99,6 +99,11 @@ export function createInviteCodeApi(payload: {
   return requestClient.post<InviteCodeItem>('/invite-codes', payload);
 }
 
+/** 重新激活邀请码 */
+export function reactivateInviteCodeApi(id: number) {
+  return requestClient.put(`/invite-codes/${id}/reactivate`);
+}
+
 /** 删除邀请码 */
 export function deleteInviteCodeApi(id: number) {
   return requestClient.delete(`/invite-codes/${id}`);
