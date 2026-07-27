@@ -304,7 +304,7 @@ onMounted(fetchData);
               type="primary"
               @click="handleReactivate(record as InviteCodeItem)"
             >
-              重新激活
+              激活
             </Button>
             <Button
               size="small"
