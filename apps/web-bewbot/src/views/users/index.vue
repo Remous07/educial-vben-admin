@@ -18,6 +18,8 @@ interface User {
   username: null | string;
   created_at: string;
   updated_at: string;
+  admin_username: null | string;
+  is_bound: boolean;
 }
 
 const users = ref<User[]>([]);
@@ -28,6 +30,21 @@ const columns: TableColumnsType = [
   { title: 'Telegram ID', dataIndex: 'telegram_id', key: 'telegram_id' },
   { title: '名称', dataIndex: 'first_name', key: 'first_name' },
   { title: '用户名', dataIndex: 'username', key: 'username' },
+  {
+    title: '已绑定',
+    dataIndex: 'is_bound',
+    key: 'is_bound',
+    width: 80,
+    customRender: ({ text }: { text: boolean }) => (text ? '是' : '否'),
+  },
+  {
+    title: '系统用户',
+    dataIndex: 'admin_username',
+    key: 'admin_username',
+    width: 100,
+    customRender: ({ text }: { text: string | null }) =>
+      text || '-',
+  },
   {
     title: '注册时间',
     dataIndex: 'created_at',
