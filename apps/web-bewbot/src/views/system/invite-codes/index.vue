@@ -6,9 +6,11 @@ import type { InviteCodeItem } from '#/api/core';
 import { h, onMounted, ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
+import dayjs from 'dayjs';
 
 import {
   Button,
+  DatePicker,
   Input,
   InputNumber,
   message,
@@ -50,7 +52,7 @@ async function toggleInviteRequired(val: boolean) {
 // Create modal
 const modalVisible = ref(false);
 const maxUses = ref(1);
-const expiresDays = ref<number>();
+const expiresAt = ref<string>('');
 const saving = ref(false);
 
 const columns: TableColumnsType = [
@@ -161,7 +163,7 @@ async function handlePermanentDelete(code: InviteCodeItem) {
 const editModalVisible = ref(false);
 const editingCode = ref<InviteCodeItem | null>(null);
 const editMaxUses = ref(1);
-const editExpiresDays = ref<number>();
+const editExpiresAt = ref<string>('');
 
 function openEditModal(code: InviteCodeItem) {
   if (!code.is_active) {
@@ -184,7 +186,7 @@ function openEditModal(code: InviteCodeItem) {
   }
   editingCode.value = code;
   editMaxUses.value = code.max_uses;
-  editExpiresDays.value = undefined;
+  editExpiresAt.value = code.expires_at || '';
   editModalVisible.value = true;
 }
 
@@ -193,7 +195,9 @@ async function handleEditSave() {
   saving.value = true;
   try {
     await editInviteCodeApi(editingCode.value.id, {
-      expires_days: editExpiresDays.value,
+      expires_at: editExpiresAt.value
+        ? dayjs(editExpiresAt.value).toISOString()
+        : '',
       max_uses: editMaxUses.value,
     });
     message.success('保存成功');
@@ -210,13 +214,15 @@ async function handleCreate() {
   saving.value = true;
   try {
     await createInviteCodeApi({
-      expires_days: expiresDays.value ?? undefined,
+      expires_at: expiresAt.value
+        ? dayjs(expiresAt.value).toISOString()
+        : undefined,
       max_uses: maxUses.value,
     });
     message.success('邀请码已生成');
     modalVisible.value = false;
     maxUses.value = 1;
-    expiresDays.value = undefined;
+    expiresAt.value = '';
     fetchData();
   } catch {
     message.error('生成失败');
@@ -334,13 +340,13 @@ onMounted(fetchData);
         />
       </div>
       <div>
-        <label>过期天数（留空 = 永不过期）</label>
-        <InputNumber
-          v-model:value="expiresDays"
-          :min="1"
-          :max="365"
-          style="width: 100%; margin-top: 4px"
+        <label>过期时间（留空 = 永不过期）</label>
+        <DatePicker
+          v-model:value="expiresAt"
+          show-time
+          format="YYYY-MM-DD HH:mm"
           placeholder="永不过期"
+          style="width: 100%; margin-top: 4px"
         />
       </div>
     </Modal>
@@ -364,13 +370,13 @@ onMounted(fetchData);
         />
       </div>
       <div>
-        <label>重置过期时间（留空 = 不变，0 = 永不过期）</label>
-        <InputNumber
-          v-model:value="editExpiresDays"
-          :min="0"
-          :max="365"
-          style="width: 100%; margin-top: 4px"
+        <label>过期时间（留空 = 不变，选择 "datetime" 清空 = 永不过期）</label>
+        <DatePicker
+          v-model:value="editExpiresAt"
+          show-time
+          format="YYYY-MM-DD HH:mm"
           placeholder="不变"
+          style="width: 100%; margin-top: 4px"
         />
       </div>
     </Modal>
