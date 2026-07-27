@@ -60,7 +60,7 @@ const columns: TableColumnsType = [
     customRender: ({ text }: { text: boolean }) =>
       text
         ? h(Tag, { color: 'green' }, () => '有效')
-        : h(Tag, { color: 'red' }, () => '已用'),
+        : h(Tag, { color: 'red' }, () => '已撤销'),
   },
   {
     title: '使用',
