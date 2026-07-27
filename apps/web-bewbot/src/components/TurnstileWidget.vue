@@ -1,5 +1,12 @@
 <script lang="ts" setup>
-import { nextTick, onMounted, onUnmounted, ref } from 'vue';
+import {
+  nextTick,
+  onActivated,
+  onDeactivated,
+  onMounted,
+  onUnmounted,
+  ref,
+} from 'vue';
 
 const props = withDefaults(
   defineProps<{
@@ -68,16 +75,25 @@ function reset() {
   }
 }
 
-onMounted(() => {
+async function mountWidget() {
+  await nextTick();
+  // Small delay ensures Cloudflare API is ready for re-render
+  await new Promise((r) => setTimeout(r, 100));
   renderWidget();
-});
+}
 
-onUnmounted(() => {
+function unmountWidget() {
   if (widgetId.value) {
     window.turnstile?.remove(widgetId.value);
     widgetId.value = '';
   }
-});
+}
+
+onMounted(mountWidget);
+onUnmounted(unmountWidget);
+// KeepAlive: re-render on activation, clean up on deactivation
+onActivated(mountWidget);
+onDeactivated(unmountWidget);
 
 defineExpose({ reset });
 </script>
