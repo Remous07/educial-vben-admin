@@ -5,7 +5,6 @@ import {
 
 export const overridesPreferences = defineOverridesPreferences({
   app: {
-    accessMode: 'backend',
     name: import.meta.env.VITE_APP_TITLE,
   },
 });

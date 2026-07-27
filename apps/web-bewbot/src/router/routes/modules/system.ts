@@ -1,0 +1,28 @@
+import type { RouteRecordRaw } from 'vue-router';
+
+const routes: RouteRecordRaw[] = [
+  {
+    component: () => import('#/views/system/admin-users/index.vue'),
+    meta: {
+      authority: ['admin:manage'],
+      icon: 'lucide:shield',
+      title: '管理员',
+      order: 91,
+    },
+    name: 'AdminUsers',
+    path: '/system/admin-users',
+  },
+  {
+    component: () => import('#/views/system/roles/index.vue'),
+    meta: {
+      authority: ['admin:manage'],
+      icon: 'lucide:user-cog',
+      title: '角色权限',
+      order: 92,
+    },
+    name: 'Roles',
+    path: '/system/roles',
+  },
+];
+
+export default routes;
