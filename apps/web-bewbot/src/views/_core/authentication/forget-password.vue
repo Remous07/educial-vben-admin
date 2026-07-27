@@ -84,12 +84,12 @@ async function handleSubmit() {
     </VbenButton>
 
     <div class="mt-4 text-center text-sm">
-      <a
-        class="cursor-pointer text-blue-500"
+      <span
+        class="vben-link cursor-pointer text-sm"
         @click="router.push('/auth/login')"
       >
         返回登录
-      </a>
+      </span>
     </div>
   </div>
 </template>
