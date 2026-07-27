@@ -67,13 +67,14 @@ const columns: TableColumnsType = [
   { title: '邀请码', dataIndex: 'code', key: 'code', width: 180 },
   {
     title: '状态',
-    dataIndex: 'is_active',
-    key: 'is_active',
+    key: 'status',
     width: 80,
-    customRender: ({ text }: { text: boolean }) =>
-      text
-        ? h(Tag, { color: 'green' }, () => '有效')
-        : h(Tag, { color: 'red' }, () => '已撤销'),
+    customRender: ({ record }: { record: InviteCodeItem }) => {
+      if (!record.is_active) return h(Tag, { color: 'red' }, () => '已撤销');
+      if (record.expires_at && new Date(record.expires_at) < new Date())
+        return h(Tag, { color: 'orange' }, () => '已过期');
+      return h(Tag, { color: 'green' }, () => '有效');
+    },
     sorter: (a: InviteCodeItem, b: InviteCodeItem) =>
       Number(b.is_active) - Number(a.is_active),
     sortDirections: ['ascend', 'descend'],
@@ -134,9 +135,13 @@ async function handleReactivate(code: InviteCodeItem) {
   fetchData();
 }
 
+function isCodeExpired(code: InviteCodeItem) {
+  return code.expires_at && new Date(code.expires_at) < new Date();
+}
+
 function isCodeInvalid(code: InviteCodeItem) {
   if (!code.is_active) return true;
-  if (code.expires_at && new Date(code.expires_at) < new Date()) return true;
+  if (isCodeExpired(code)) return true;
   if (code.max_uses > 0 && code.used_count >= code.max_uses) return true;
   return false;
 }
@@ -339,6 +344,7 @@ onMounted(fetchData);
         <label>过期时间（留空 = 永不过期）</label>
         <DatePicker
           v-model:value="expiresAt"
+          :disabled-date="(d: any) => d.isBefore(dayjs().startOf('day'))"
           show-time
           format="YYYY-MM-DD HH:mm"
           placeholder="永不过期"
