@@ -99,8 +99,7 @@ const tgBound = ref(false);
 const tgId = ref<null | number>(null);
 const tgFirstName = ref<null | string>(null);
 const tgUsername = ref<null | string>(null);
-const tgLink = ref('');
-const tgLinkVisible = ref(false);
+const tgLinking = ref(false);
 
 async function fetchTgStatus() {
   try {
@@ -115,9 +114,13 @@ async function fetchTgStatus() {
 }
 
 async function handleSetupBind() {
-  const r = await setupTelegramBindApi();
-  tgLink.value = r.link;
-  tgLinkVisible.value = true;
+  tgLinking.value = true;
+  try {
+    const r = await setupTelegramBindApi();
+    window.open(r.link, '_blank');
+  } finally {
+    tgLinking.value = false;
+  }
 }
 
 async function handleUnbind() {
@@ -228,8 +231,12 @@ onMounted(async () => {
           </template>
           <template v-else>
             <p style="margin-bottom: 12px; color: #888">未绑定 Telegram 账号</p>
-            <Button type="primary" @click="handleSetupBind">
-              生成绑定链接
+            <Button
+              type="primary"
+              :loading="tgLinking"
+              @click="handleSetupBind"
+            >
+              绑定 Telegram
             </Button>
           </template>
         </Card>
@@ -324,28 +331,6 @@ onMounted(async () => {
           style="margin-top: 4px"
         />
       </div>
-    </Modal>
-
-    <!-- Telegram Bind Modal -->
-    <Modal
-      v-model:open="tgLinkVisible"
-      title="绑定 Telegram"
-      :footer="null"
-      width="300"
-    >
-      <p style="margin-bottom: 12px; font-size: 13px; text-align: center">
-        点击下方按钮在 Telegram 中打开绑定链接：
-      </p>
-      <div style="text-align: center; margin-bottom: 12px">
-        <Button type="primary" size="large">
-          <a :href="tgLink" target="_blank" style="color: inherit">
-            前往 Telegram 绑定
-          </a>
-        </Button>
-      </div>
-      <p style="font-size: 12px; color: #888; text-align: center">
-        链接有效期 5 分钟
-      </p>
     </Modal>
 
     <!-- TOTP Setup Modal -->
