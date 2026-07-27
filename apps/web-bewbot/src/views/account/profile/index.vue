@@ -17,6 +17,7 @@ import {
 } from 'ant-design-vue';
 
 import {
+  changeEmailApi,
   changePasswordApi,
   getTotpStatusApi,
   totpDisableApi,
@@ -29,6 +30,27 @@ defineOptions({ name: 'Profile' });
 const userStore = useUserStore();
 const userInfo = userStore.userInfo;
 const loading = ref(false);
+
+// Change email
+const emailVisible = ref(false);
+const emailCurrentPwd = ref('');
+const newEmail = ref('');
+const savingEmail = ref(false);
+
+async function handleChangeEmail() {
+  savingEmail.value = true;
+  try {
+    await changeEmailApi(emailCurrentPwd.value, newEmail.value);
+    message.success('邮箱已修改');
+    emailVisible.value = false;
+    emailCurrentPwd.value = '';
+    newEmail.value = '';
+  } catch (e: any) {
+    message.error(e?.response?.data?.message || '修改失败');
+  } finally {
+    savingEmail.value = false;
+  }
+}
 
 // Change password
 const passwordVisible = ref(false);
@@ -121,6 +143,14 @@ onMounted(async () => {
           </Descriptions.Item>
           <Descriptions.Item label="邮箱">
             {{ userInfo?.email || '-' }}
+            <Button
+              size="small"
+              type="link"
+              style="margin-left: 8px"
+              @click="emailVisible = true"
+            >
+              修改
+            </Button>
           </Descriptions.Item>
           <Descriptions.Item label="创建时间">
             {{ userInfo?.created_at
@@ -160,6 +190,33 @@ onMounted(async () => {
         </template>
       </Card>
     </Spin>
+
+    <!-- Change Email Modal -->
+    <Modal
+      v-model:open="emailVisible"
+      title="修改邮箱"
+      @ok="handleChangeEmail"
+      :confirm-loading="savingEmail"
+    >
+      <div style="margin-bottom: 12px">
+        <label>当前密码</label>
+        <Input
+          v-model:value="emailCurrentPwd"
+          type="password"
+          placeholder="请输入当前密码"
+          style="margin-top: 4px"
+        />
+      </div>
+      <div>
+        <label>新邮箱</label>
+        <Input
+          v-model:value="newEmail"
+          type="email"
+          placeholder="请输入新邮箱"
+          style="margin-top: 4px"
+        />
+      </div>
+    </Modal>
 
     <!-- Change Password Modal -->
     <Modal

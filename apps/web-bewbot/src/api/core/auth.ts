@@ -62,6 +62,17 @@ export async function totpDisableApi(code: string) {
   return requestClient.post('/account/totp/disable', { code });
 }
 
+/** 修改邮箱 */
+export async function changeEmailApi(
+  currentPassword: string,
+  newEmail: string,
+) {
+  return requestClient.post('/account/change-email', {
+    current_password: currentPassword,
+    new_email: newEmail,
+  });
+}
+
 /** 修改密码 */
 export async function changePasswordApi(
   currentPassword: string,
