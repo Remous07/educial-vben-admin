@@ -43,12 +43,20 @@ const isEditing = computed(() => !!editingRole.value);
 const columns: TableColumnsType = [
   { title: 'ID', dataIndex: 'id', key: 'id', width: 60 },
   { title: '角色名称', dataIndex: 'name', key: 'name', width: 150 },
-  { title: '备注', dataIndex: 'description', key: 'description' },
+  {
+    title: '备注',
+    dataIndex: 'description',
+    key: 'description',
+    width: 200,
+    ellipsis: true,
+  },
   {
     title: '创建时间',
     dataIndex: 'created_at',
     key: 'created_at',
     width: 180,
+    customRender: ({ text }: { text: null | string }) =>
+      text ? new Date(text).toLocaleString('zh-CN') : '-',
   },
   { title: '操作', key: 'action', width: 180 },
 ];

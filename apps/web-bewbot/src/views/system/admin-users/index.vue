@@ -57,6 +57,8 @@ const columns: TableColumnsType = [
     dataIndex: 'created_at',
     key: 'created_at',
     width: 180,
+    customRender: ({ text }: { text: null | string }) =>
+      text ? new Date(text).toLocaleString('zh-CN') : '-',
   },
   { title: '操作', key: 'action', width: 160 },
 ];
