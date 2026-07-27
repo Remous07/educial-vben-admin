@@ -40,7 +40,7 @@ const menus = computed(() => [
       router.push({ name: 'Profile' });
     },
     icon: 'lucide:user',
-    text: $t('page.auth.profile'),
+    text: '个人中心',
   },
   {
     handler: () => {
@@ -177,8 +177,8 @@ watch(
         :avatar
         :menus
         :text="userStore.userInfo?.realName"
-        description="ann.vben@gmail.com"
-        tag-text="Pro"
+        :description="userStore.userInfo?.email ?? ''"
+        tag-text=""
         @clear-preferences-and-logout="handleLogout"
         @logout="handleLogout"
       />
