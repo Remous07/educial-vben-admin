@@ -53,7 +53,7 @@ const columns: TableColumnsType = [
         : h(Tag, { color: 'default' }, () => '无'),
   },
   {
-    title: '创建时间',
+    title: '注册时间',
     dataIndex: 'created_at',
     key: 'created_at',
     width: 180,
