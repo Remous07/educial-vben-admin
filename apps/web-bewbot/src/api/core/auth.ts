@@ -54,3 +54,19 @@ export async function logoutApi() {
 export async function getAccessCodesApi() {
   return requestClient.get<string[]>('/auth/codes');
 }
+
+/** 忘记密码 — 发送重置邮件 */
+export async function forgotPasswordApi(data: {
+  email: string;
+  turnstile_token?: string;
+}) {
+  return requestClient.post('/auth/forgot-password', data);
+}
+
+/** 重置密码 */
+export async function resetPasswordApi(data: {
+  new_password: string;
+  token: string;
+}) {
+  return requestClient.post('/auth/reset-password', data);
+}
