@@ -331,24 +331,21 @@ onMounted(async () => {
       v-model:open="tgLinkVisible"
       title="绑定 Telegram"
       :footer="null"
-      width="340"
+      width="300"
     >
-      <p style="margin-bottom: 12px; font-size: 13px">
-        请点击下方链接或复制到 Telegram 中打开：
+      <p style="margin-bottom: 12px; font-size: 13px; text-align: center">
+        点击下方按钮在 Telegram 中打开绑定链接：
       </p>
-      <p
-        style="
-          margin-bottom: 12px;
-          font-size: 12px;
-          word-break: break-all;
-          color: #1677ff;
-        "
-      >
-        <a :href="tgLink" target="_blank" style="color: #1677ff">
-          {{ tgLink }}
-        </a>
+      <div style="text-align: center; margin-bottom: 12px">
+        <Button type="primary" size="large">
+          <a :href="tgLink" target="_blank" style="color: inherit">
+            前往 Telegram 绑定
+          </a>
+        </Button>
+      </div>
+      <p style="font-size: 12px; color: #888; text-align: center">
+        链接有效期 5 分钟
       </p>
-      <p style="font-size: 12px; color: #888">链接有效期 5 分钟</p>
     </Modal>
 
     <!-- TOTP Setup Modal -->
