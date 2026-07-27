@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { TableColumnsType } from 'ant-design-vue';
 
-import { onMounted, ref } from 'vue';
+import { h, onMounted, ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
 
@@ -29,12 +29,21 @@ const columns: TableColumnsType = [
   { title: 'ID', dataIndex: 'id', key: 'id', width: 80 },
   { title: 'Telegram ID', dataIndex: 'telegram_id', key: 'telegram_id' },
   { title: '名称', dataIndex: 'first_name', key: 'first_name' },
-  { title: '用户名', dataIndex: 'username', key: 'username' },
+  {
+    title: '用户名',
+    dataIndex: 'username',
+    key: 'username',
+    customRender: ({ text }: { text: string | null }) =>
+      text
+        ? h('a', { href: `https://t.me/${text}`, target: '_blank' }, text)
+        : '-',
+  },
   {
     title: '已绑定',
     dataIndex: 'is_bound',
     key: 'is_bound',
     width: 80,
+    align: 'center',
     customRender: ({ text }: { text: boolean }) => (text ? '是' : '否'),
   },
   {
