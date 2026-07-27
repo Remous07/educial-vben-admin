@@ -10,7 +10,7 @@ export const overridesPreferences = defineOverridesPreferences({
   copyright: {
     companyName: 'Bewbot',
     companyLink: 'https://bewbot.lik.li',
-    enable: true,
+    enable: false,
     icp: '',
     icpLink: '',
   },
