@@ -132,7 +132,7 @@ onMounted(fetchStatus);
         <Input
           v-model:value="verifyCode"
           placeholder="输入 6 位验证码"
-          maxlength="6"
+          :maxlength="6"
           style="margin-bottom: 12px"
         />
         <Button
@@ -156,7 +156,7 @@ onMounted(fetchStatus);
       <Input
         v-model:value="verifyCode"
         placeholder="输入当前验证码以确认关闭"
-        maxlength="6"
+        :maxlength="6"
       />
     </Modal>
   </Page>

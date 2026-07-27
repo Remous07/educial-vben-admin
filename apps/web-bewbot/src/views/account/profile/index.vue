@@ -319,7 +319,7 @@ onMounted(async () => {
               <Input
                 v-model:value="convCodeInput"
                 placeholder="8-16位字母、数字、-、_"
-                maxlength="16"
+                :maxlength="16"
                 style="margin-bottom: 4px"
               />
               <p
@@ -450,7 +450,7 @@ onMounted(async () => {
         <Input
           v-model:value="pwdTotpCode"
           placeholder="请输入 6 位验证码"
-          maxlength="6"
+          :maxlength="6"
           style="margin-top: 4px"
         />
       </div>
@@ -488,7 +488,7 @@ onMounted(async () => {
         <Input
           v-model:value="totpCode"
           placeholder="输入 6 位验证码"
-          maxlength="6"
+          :maxlength="6"
           style="margin-bottom: 12px"
         />
         <Button
@@ -512,7 +512,7 @@ onMounted(async () => {
       <Input
         v-model:value="totpCode"
         placeholder="输入当前验证码以确认关闭"
-        maxlength="6"
+        :maxlength="6"
       />
     </Modal>
   </Page>
