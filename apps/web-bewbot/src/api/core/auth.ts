@@ -83,9 +83,9 @@ export async function getTelegramBindStatusApi() {
   }>('/account/bind-telegram/status');
 }
 
-/** Telegram 绑定 - 生成绑定链接 */
+/** Telegram 绑定 - 生成绑定密钥 */
 export async function setupTelegramBindApi() {
-  return requestClient.post<{ link: string; expires_in: number }>(
+  return requestClient.post<{ key: string }>(
     '/account/bind-telegram/setup',
   );
 }

@@ -99,6 +99,7 @@ const tgBound = ref(false);
 const tgId = ref<null | number>(null);
 const tgFirstName = ref<null | string>(null);
 const tgUsername = ref<null | string>(null);
+const tgKey = ref('');
 const tgLinking = ref(false);
 
 async function fetchTgStatus() {
@@ -117,7 +118,7 @@ async function handleSetupBind() {
   tgLinking.value = true;
   try {
     const r = await setupTelegramBindApi();
-    window.open(r.link, '_blank');
+    tgKey.value = r.key;
   } finally {
     tgLinking.value = false;
   }
@@ -236,8 +237,16 @@ onMounted(async () => {
               :loading="tgLinking"
               @click="handleSetupBind"
             >
-              绑定 Telegram
+              生成绑定密钥
             </Button>
+            <div v-if="tgKey" style="margin-top: 8px">
+              <p style="font-size: 13px; color: #888">
+                请在 Telegram 中使用 /bind 命令绑定：
+              </p>
+              <code style="font-size: 16px; font-weight: bold">
+                /bind {{ tgKey }}
+              </code>
+            </div>
           </template>
         </Card>
 
