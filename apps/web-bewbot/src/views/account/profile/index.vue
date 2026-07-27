@@ -124,6 +124,11 @@ async function handleSetupBind() {
   }
 }
 
+function copyBindCommand() {
+  navigator.clipboard.writeText(`/bind ${tgKey.value}`);
+  message.success('已复制');
+}
+
 async function handleUnbind() {
   await unbindTelegramApi();
   message.success('已解绑');
@@ -248,13 +253,7 @@ onMounted(async () => {
                   /bind {{ tgKey }}
                 </code>
               </p>
-              <Button
-                size="small"
-                @click="
-                  navigator.clipboard.writeText(`/bind ${tgKey}`);
-                  message.success('已复制');
-                "
-              >
+              <Button size="small" @click="copyBindCommand">
                 复制指令
               </Button>
             </div>
