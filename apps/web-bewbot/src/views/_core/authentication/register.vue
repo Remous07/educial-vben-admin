@@ -2,16 +2,21 @@
 import type { VbenFormSchema } from '@vben/common-ui';
 import type { Recordable } from '@vben/types';
 
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 
 import { AuthenticationRegister, z } from '@vben/common-ui';
 import { $t } from '@vben/locales';
 
+import TurnstileWidget from '#/components/TurnstileWidget.vue';
 import { useAuthStore } from '#/store';
 
 defineOptions({ name: 'Register' });
 
 const authStore = useAuthStore();
+const turnstileRef = ref<InstanceType<typeof TurnstileWidget>>();
+const turnstileToken = ref('');
+
+const siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY || '';
 
 const formSchema = computed((): VbenFormSchema[] => {
   return [
@@ -79,11 +84,19 @@ const formSchema = computed((): VbenFormSchema[] => {
 });
 
 async function handleSubmit(values: Recordable<any>) {
+  if (siteKey && !turnstileToken.value) {
+    const { message } = await import('ant-design-vue');
+    message.warning('请完成人机验证');
+    return;
+  }
   await authStore.authRegister({
     username: values.username,
     email: values.email,
     password: values.password,
+    turnstile_token: turnstileToken.value || undefined,
   });
+  turnstileToken.value = '';
+  turnstileRef.value?.reset();
 }
 </script>
 
@@ -92,5 +105,17 @@ async function handleSubmit(values: Recordable<any>) {
     :form-schema="formSchema"
     :loading="authStore.registerLoading"
     @submit="handleSubmit"
-  />
+  >
+    <template v-if="siteKey" #custom-form-items>
+      <div class="flex justify-center">
+        <TurnstileWidget
+          ref="turnstileRef"
+          :site-key="siteKey"
+          @verified="(token: string) => (turnstileToken = token)"
+          @expired="turnstileToken = ''"
+          @error="turnstileToken = ''"
+        />
+      </div>
+    </template>
+  </AuthenticationRegister>
 </template>
