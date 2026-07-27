@@ -112,9 +112,14 @@ export function reactivateInviteCodeApi(id: number) {
   return requestClient.put(`/invite-codes/${id}/reactivate`);
 }
 
-/** 删除邀请码 */
+/** 撤销邀请码（软删除） */
 export function deleteInviteCodeApi(id: number) {
   return requestClient.delete(`/invite-codes/${id}`);
+}
+
+/** 永久删除邀请码 */
+export function permanentlyDeleteInviteCodeApi(id: number) {
+  return requestClient.delete(`/invite-codes/${id}/permanent`);
 }
 
 /** 获取系统设置 */

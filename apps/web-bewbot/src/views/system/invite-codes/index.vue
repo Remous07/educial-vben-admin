@@ -25,6 +25,7 @@ import {
   editInviteCodeApi,
   getInviteCodesApi,
   getSystemSettingApi,
+  permanentlyDeleteInviteCodeApi,
   reactivateInviteCodeApi,
   setSystemSettingApi,
 } from '#/api/core';
@@ -129,6 +130,31 @@ async function handleReactivate(code: InviteCodeItem) {
   await reactivateInviteCodeApi(code.id);
   message.success('已重新激活');
   fetchData();
+}
+
+function isCodeInvalid(code: InviteCodeItem) {
+  if (!code.is_active) return true;
+  if (code.expires_at && new Date(code.expires_at) < new Date()) return true;
+  if (code.max_uses > 0 && code.used_count >= code.max_uses) return true;
+  return false;
+}
+
+async function handlePermanentDelete(code: InviteCodeItem) {
+  const invalid = isCodeInvalid(code);
+  Modal.confirm({
+    title: invalid ? '确定删除该邀请码？' : '该邀请码仍在有效期内',
+    content: invalid
+      ? '删除后不可恢复'
+      : '该邀请码仍然有效，确定要删除吗？',
+    okText: '删除',
+    okType: 'danger',
+    cancelText: '取消',
+    onOk: async () => {
+      await permanentlyDeleteInviteCodeApi(code.id);
+      message.success('已删除');
+      fetchData();
+    },
+  });
 }
 
 // Edit modal
@@ -279,6 +305,14 @@ onMounted(fetchData);
               @click="handleReactivate(record as InviteCodeItem)"
             >
               重新激活
+            </Button>
+            <Button
+              size="small"
+              danger
+              type="text"
+              @click="handlePermanentDelete(record as InviteCodeItem)"
+            >
+              删除
             </Button>
           </Space>
         </template>
