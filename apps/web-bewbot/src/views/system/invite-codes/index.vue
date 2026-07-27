@@ -13,6 +13,7 @@ import {
   message,
   Modal,
   Space,
+  Switch,
   Table,
   Tag,
 } from 'ant-design-vue';
@@ -21,12 +22,26 @@ import {
   createInviteCodeApi,
   deleteInviteCodeApi,
   getInviteCodesApi,
+  getSystemSettingApi,
+  setSystemSettingApi,
 } from '#/api/core';
 
 defineOptions({ name: 'InviteCodes' });
 
 const codes = ref<InviteCodeItem[]>([]);
 const loading = ref(false);
+const inviteRequired = ref(false);
+
+async function toggleInviteRequired(val: boolean) {
+  try {
+    await setSystemSettingApi('require_invite_code', String(val));
+    inviteRequired.value = val;
+    message.success(val ? '已开启邀请码验证' : '已关闭邀请码验证');
+  } catch {
+    inviteRequired.value = !val;
+    message.error('设置失败');
+  }
+}
 
 // Create modal
 const modalVisible = ref(false);
@@ -116,7 +131,12 @@ async function handleDelete(code: InviteCodeItem) {
 async function fetchData() {
   loading.value = true;
   try {
-    codes.value = await getInviteCodesApi();
+    const [codesData, requiredStr] = await Promise.all([
+      getInviteCodesApi(),
+      getSystemSettingApi('require_invite_code'),
+    ]);
+    codes.value = codesData;
+    inviteRequired.value = requiredStr === 'true';
   } finally {
     loading.value = false;
   }
@@ -129,6 +149,13 @@ onMounted(fetchData);
   <Page>
     <Space style="margin-bottom: 16px">
       <Button type="primary" @click="modalVisible = true">生成邀请码</Button>
+      <Space>
+        <span>要求邀请码注册</span>
+        <Switch
+          :checked="inviteRequired"
+          @change="toggleInviteRequired as any"
+        />
+      </Space>
     </Space>
 
     <Table

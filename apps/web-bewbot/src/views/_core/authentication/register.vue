@@ -41,10 +41,9 @@ const [Form, formApi] = useVbenForm({
     },
     {
       component: 'VbenInput',
-      componentProps: { placeholder: '请输入邀请码' },
+      componentProps: { placeholder: '请输入邀请码（如已开启）' },
       fieldName: 'invite_code',
       label: '邀请码',
-      rules: z.string().min(1, { message: '请输入邀请码' }),
     },
     {
       component: 'VbenInputPassword',

@@ -103,3 +103,13 @@ export function createInviteCodeApi(payload: {
 export function deleteInviteCodeApi(id: number) {
   return requestClient.delete(`/invite-codes/${id}`);
 }
+
+/** 获取系统设置 */
+export function getSystemSettingApi(key: string) {
+  return requestClient.get<string>(`/system-settings/${key}`);
+}
+
+/** 设置系统设置 */
+export function setSystemSettingApi(key: string, value: string) {
+  return requestClient.put(`/system-settings/${key}`, { value });
+}
