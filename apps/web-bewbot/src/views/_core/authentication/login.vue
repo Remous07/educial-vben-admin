@@ -1,6 +1,6 @@
 <script lang="ts" setup>
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { onMounted, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 
 import { $t } from '@vben/locales';
 
@@ -16,7 +16,28 @@ defineOptions({ name: 'Login' });
 
 const authStore = useAuthStore();
 const router = useRouter();
+const route = useRoute();
 const turnstileToken = ref('');
+
+onMounted(() => {
+  const q = route.query;
+  if (q.verified === '1') {
+    message.success('邮箱验证成功，请登录');
+    router.replace({ query: {} });
+  } else if (q.verified === 'already') {
+    message.info('邮箱已通过验证，请登录');
+    router.replace({ query: {} });
+  } else if (q.verified === 'error') {
+    message.error((q.msg as string) || '验证链接无效');
+    router.replace({ query: {} });
+  } else if (q.email_changed === '1') {
+    message.success('邮箱已更新，请重新登录');
+    router.replace({ query: {} });
+  } else if (q.email_changed === 'error') {
+    message.error((q.msg as string) || '邮箱修改失败');
+    router.replace({ query: {} });
+  }
+});
 const rememberMe = ref(false);
 
 const siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY || '';
