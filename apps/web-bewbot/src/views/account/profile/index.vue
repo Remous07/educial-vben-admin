@@ -275,22 +275,7 @@ onMounted(async () => {
               {{ userInfo?.username }}
             </Descriptions.Item>
             <Descriptions.Item label="邮箱">
-              <span>{{ userInfo?.email || '-' }}</span>
-              <template v-if="(userInfo as any)?.pending_email">
-                <Tag color="orange" style="margin-left: 8px">待验证</Tag>
-                <span style=" margin-left: 4px;font-size: 12px; color: #888">
-                  ({{ (userInfo as any).pending_email }})
-                </span>
-                <Button
-                  size="small"
-                  type="link"
-                  style="margin-left: 4px"
-                  :loading="resendingEmail"
-                  @click="handleResendEmail"
-                >
-                  重发邮件
-                </Button>
-              </template>
+              {{ userInfo?.email || '-' }}
               <Button
                 size="small"
                 type="link"
@@ -298,6 +283,24 @@ onMounted(async () => {
                 @click="emailVisible = true"
               >
                 修改
+              </Button>
+            </Descriptions.Item>
+            <Descriptions.Item
+              v-if="(userInfo as any)?.pending_email"
+              label="待验证邮箱"
+            >
+              <span style="color: #888">{{
+                (userInfo as any).pending_email
+              }}</span>
+              <Tag color="orange" style="margin-left: 8px">待验证</Tag>
+              <Button
+                size="small"
+                type="link"
+                style="margin-left: 4px"
+                :loading="resendingEmail"
+                @click="handleResendEmail"
+              >
+                重发邮件
               </Button>
             </Descriptions.Item>
             <Descriptions.Item label="创建时间">
