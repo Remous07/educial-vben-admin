@@ -23,6 +23,7 @@ export interface AdminUserItem {
   permissions: string[];
   created_at: null | string;
   conversation_code: null | string;
+  is_banned: boolean;
 }
 
 export interface RolePayload {
@@ -67,6 +68,16 @@ export function assignRolesApi(userId: number, roleIds: number[]) {
     `/admin-users/${userId}/roles`,
     roleIds,
   );
+}
+
+/** 封禁系统用户 */
+export function banAdminUserApi(id: number) {
+  return requestClient.put(`/admin-users/${id}/ban`);
+}
+
+/** 解封系统用户 */
+export function unbanAdminUserApi(id: number) {
+  return requestClient.put(`/admin-users/${id}/unban`);
 }
 
 /** 删除系统用户 */

@@ -20,9 +20,11 @@ import {
 
 import {
   assignRolesApi,
+  banAdminUserApi,
   deleteAdminUserApi,
   getAdminUsersApi,
   getRolesApi,
+  unbanAdminUserApi,
 } from '#/api/core';
 
 defineOptions({ name: 'AdminUsers' });
@@ -63,6 +65,17 @@ const columns: TableColumnsType = [
         : h(Tag, { color: 'default' }, () => '无'),
   },
   {
+    title: '状态',
+    dataIndex: 'is_banned',
+    key: 'is_banned',
+    width: 80,
+    align: 'center',
+    customRender: ({ text }: { text: boolean }) =>
+      text
+        ? h(Tag, { color: 'red' }, () => '已封禁')
+        : h(Tag, { color: 'green' }, () => '正常'),
+  },
+  {
     title: '创建时间',
     dataIndex: 'created_at',
     key: 'created_at',
@@ -95,6 +108,27 @@ async function handleSave() {
   } finally {
     saving.value = false;
   }
+}
+
+async function handleBan(user: AdminUserItem) {
+  Modal.confirm({
+    title: `确定封禁用户「${user.username}」？`,
+    content: '封禁后该用户将无法登录',
+    okText: '封禁',
+    okType: 'danger',
+    cancelText: '取消',
+    onOk: async () => {
+      await banAdminUserApi(user.id);
+      message.success('已封禁');
+      fetchData();
+    },
+  });
+}
+
+async function handleUnban(user: AdminUserItem) {
+  await unbanAdminUserApi(user.id);
+  message.success('已解封');
+  fetchData();
 }
 
 async function handleDelete(user: AdminUserItem) {
@@ -144,6 +178,24 @@ onMounted(fetchData);
             >
               编辑
             </Button>
+            <template v-if="(record as AdminUserItem).is_banned">
+              <Button
+                size="small"
+                type="primary"
+                @click="handleUnban(record as AdminUserItem)"
+              >
+                解封
+              </Button>
+            </template>
+            <template v-else>
+              <Button
+                size="small"
+                danger
+                @click="handleBan(record as AdminUserItem)"
+              >
+                封禁
+              </Button>
+            </template>
             <Button
               size="small"
               danger
