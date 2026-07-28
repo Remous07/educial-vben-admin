@@ -67,10 +67,18 @@ export async function changeEmailApi(
   currentPassword: string,
   newEmail: string,
 ) {
-  return requestClient.post('/account/change-email', {
-    current_password: currentPassword,
-    new_email: newEmail,
-  });
+  return requestClient.post<{ pending_email: string }>(
+    '/account/change-email',
+    {
+      current_password: currentPassword,
+      new_email: newEmail,
+    },
+  );
+}
+
+/** 重发邮箱修改验证邮件 */
+export async function resendEmailChangeApi() {
+  return requestClient.post('/account/resend-email-change');
 }
 
 /** Telegram 绑定状态 */

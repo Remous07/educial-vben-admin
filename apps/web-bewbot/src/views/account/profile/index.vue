@@ -15,6 +15,7 @@ import {
   QRCode,
   Result,
   Spin,
+  Tag,
 } from 'ant-design-vue';
 
 import {
@@ -23,6 +24,7 @@ import {
   getConversationCodeApi,
   getTelegramBindStatusApi,
   getTotpStatusApi,
+  resendEmailChangeApi,
   setConversationCodeApi,
   setupTelegramBindApi,
   totpDisableApi,
@@ -43,6 +45,7 @@ const emailVisible = ref(false);
 const emailCurrentPwd = ref('');
 const newEmail = ref('');
 const savingEmail = ref(false);
+const resendingEmail = ref(false);
 
 async function handleChangeEmail() {
   if (newEmail.value === userInfo?.email) {
@@ -51,8 +54,12 @@ async function handleChangeEmail() {
   }
   savingEmail.value = true;
   try {
-    await changeEmailApi(emailCurrentPwd.value, newEmail.value);
-    message.success('邮箱已修改');
+    const r = await changeEmailApi(emailCurrentPwd.value, newEmail.value);
+    // Update userInfo with pending email for UI
+    if (userInfo) {
+      (userInfo as any).pending_email = r.pending_email;
+    }
+    message.success('验证邮件已发送，请查收邮件并点击链接确认');
     emailVisible.value = false;
     emailCurrentPwd.value = '';
     newEmail.value = '';
@@ -60,6 +67,18 @@ async function handleChangeEmail() {
     // error handled by interceptor
   } finally {
     savingEmail.value = false;
+  }
+}
+
+async function handleResendEmail() {
+  resendingEmail.value = true;
+  try {
+    await resendEmailChangeApi();
+    message.success('验证邮件已重新发送');
+  } catch {
+    // error handled by interceptor
+  } finally {
+    resendingEmail.value = false;
   }
 }
 
@@ -256,7 +275,22 @@ onMounted(async () => {
               {{ userInfo?.username }}
             </Descriptions.Item>
             <Descriptions.Item label="邮箱">
-              {{ userInfo?.email || '-' }}
+              <span>{{ userInfo?.email || '-' }}</span>
+              <template v-if="(userInfo as any)?.pending_email">
+                <Tag color="orange" style="margin-left: 8px">待验证</Tag>
+                <span style=" margin-left: 4px;font-size: 12px; color: #888">
+                  ({{ (userInfo as any).pending_email }})
+                </span>
+                <Button
+                  size="small"
+                  type="link"
+                  style="margin-left: 4px"
+                  :loading="resendingEmail"
+                  @click="handleResendEmail"
+                >
+                  重发邮件
+                </Button>
+              </template>
               <Button
                 size="small"
                 type="link"
