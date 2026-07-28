@@ -51,6 +51,7 @@ const columns: TableColumnsType = [
     title: '识别码',
     dataIndex: 'code',
     key: 'code',
+    width: 150,
     customRender: ({ text }: { text: string }) =>
       h('code', { style: { fontSize: '14px', fontWeight: 'bold' } }, text),
   },
