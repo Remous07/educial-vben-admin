@@ -86,7 +86,7 @@ const columns: TableColumnsType = [
     width: 100,
     customRender: ({ record }: { record: InviteCodeItem }) =>
       record.max_uses === 0
-        ? '不限'
+        ? `${record.used_count} / 不限`
         : `${record.used_count}/${record.max_uses}`,
   },
   {
