@@ -33,7 +33,7 @@ const columns: TableColumnsType = [
     title: '用户名',
     dataIndex: 'username',
     key: 'username',
-    customRender: ({ text }: { text: string | null }) =>
+    customRender: ({ text }: { text: null | string }) =>
       text
         ? h('a', { href: `https://t.me/${text}`, target: '_blank' }, text)
         : '-',
@@ -51,8 +51,8 @@ const columns: TableColumnsType = [
     dataIndex: 'admin_username',
     key: 'admin_username',
     width: 100,
-    customRender: ({ text }: { text: string | null }) =>
-      text || '-',
+    align: 'center',
+    customRender: ({ text }: { text: null | string }) => text || '-',
   },
   {
     title: '注册时间',
