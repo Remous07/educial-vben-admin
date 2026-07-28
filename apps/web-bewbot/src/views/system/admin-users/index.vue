@@ -49,10 +49,12 @@ const columns: TableColumnsType = [
     key: 'is_banned',
     width: 70,
     align: 'center',
-    customRender: ({ text }: { text: boolean }) =>
-      text
-        ? h(Tag, { color: 'red' }, () => '已封禁')
-        : h(Tag, { color: 'green' }, () => '正常'),
+    customRender: ({ record }: { record: AdminUserItem }) => {
+      if (!record.email_verified)
+        return h(Tag, { color: 'orange' }, () => '未验证');
+      if (record.is_banned) return h(Tag, { color: 'red' }, () => '已封禁');
+      return h(Tag, { color: 'green' }, () => '正常');
+    },
   },
   {
     title: '对话识别码',

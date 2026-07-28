@@ -24,6 +24,7 @@ export interface AdminUserItem {
   created_at: null | string;
   conversation_code: null | string;
   is_banned: boolean;
+  email_verified: boolean;
 }
 
 export interface RolePayload {
