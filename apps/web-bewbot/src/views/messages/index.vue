@@ -29,7 +29,7 @@ const columns: TableColumnsType = [
   {
     title: 'TG 用户',
     key: 'tg_user',
-    width: 180,
+    width: 160,
     customRender: ({ record }: { record: Conversation }) => {
       const name = record.first_name || '未知';
       if (record.username) {
@@ -57,13 +57,13 @@ const columns: TableColumnsType = [
     title: 'TG ID',
     dataIndex: 'telegram_id',
     key: 'telegram_id',
-    width: 130,
+    width: 120,
   },
   {
-    title: '',
+    title: '会员',
     dataIndex: 'is_premium',
     key: 'is_premium',
-    width: 40,
+    width: 50,
     align: 'center',
     customRender: ({ text }: { text: boolean }) =>
       text ? h(Tag, { color: 'gold' }, () => '⭐') : null,
@@ -72,7 +72,7 @@ const columns: TableColumnsType = [
     title: '识别码',
     dataIndex: 'conv_code',
     key: 'conv_code',
-    width: 140,
+    width: 130,
     customRender: ({ text }: { text: null | string }) =>
       text ? h('code', { style: { fontSize: '12px' } }, text) : '-',
   },
@@ -80,7 +80,7 @@ const columns: TableColumnsType = [
     title: '消息数',
     dataIndex: 'message_count',
     key: 'message_count',
-    width: 80,
+    width: 65,
     align: 'center',
   },
   {
@@ -93,7 +93,7 @@ const columns: TableColumnsType = [
     title: '最近消息时间',
     dataIndex: 'last_message_at',
     key: 'last_message_at',
-    width: 170,
+    width: 160,
     customRender: ({ text }: { text: null | string }) =>
       text ? new Date(text).toLocaleString('zh-CN') : '-',
   },
