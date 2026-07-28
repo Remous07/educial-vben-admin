@@ -151,9 +151,61 @@ export async function getConversationCodeApi() {
   return requestClient.get<{ code: string }>('/account/conversation-code');
 }
 
-/** 设置对话识别码 */
+/** 设置对话识别码（主码） */
 export async function setConversationCodeApi(code: string) {
   return requestClient.post<{ code: string }>('/account/conversation-code', {
     code,
   });
+}
+
+/** 获取临时识别码列表 */
+export async function getConversationCodesApi() {
+  return requestClient.get<ConversationCodeItem[]>(
+    '/account/conversation-codes',
+  );
+}
+
+/** 生成临时识别码 */
+export async function createConversationCodeApi(payload: {
+  expires_at?: string;
+  expires_days?: number;
+  max_uses?: number;
+}) {
+  return requestClient.post<ConversationCodeItem>(
+    '/account/conversation-codes',
+    payload,
+  );
+}
+
+/** 编辑临时识别码 */
+export async function editConversationCodeApi(
+  id: number,
+  payload: { expires_at?: string; max_uses: number },
+) {
+  return requestClient.put(`/account/conversation-codes/${id}`, payload);
+}
+
+/** 重新激活临时识别码 */
+export async function reactivateConversationCodeApi(id: number) {
+  return requestClient.put(`/account/conversation-codes/${id}/reactivate`);
+}
+
+/** 撤销临时识别码 */
+export async function revokeConversationCodeApi(id: number) {
+  return requestClient.delete(`/account/conversation-codes/${id}`);
+}
+
+/** 永久删除临时识别码 */
+export async function permanentlyDeleteConversationCodeApi(id: number) {
+  return requestClient.delete(`/account/conversation-codes/${id}/permanent`);
+}
+
+export interface ConversationCodeItem {
+  id: number;
+  code: string;
+  max_uses: number;
+  used_count: number;
+  is_active: boolean;
+  expires_at: null | string;
+  created_at: null | string;
 }

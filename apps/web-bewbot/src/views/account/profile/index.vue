@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
 
 import { Page } from '@vben/common-ui';
 import { useUserStore } from '@vben/stores';
@@ -32,6 +33,7 @@ import {
 
 defineOptions({ name: 'Profile' });
 
+const router = useRouter();
 const userStore = useUserStore();
 const userInfo = userStore.userInfo;
 const loading = ref(false);
@@ -311,6 +313,14 @@ onMounted(async () => {
                   @click="openConvCodeEdit"
                 >
                   修改
+                </Button>
+                <Button
+                  size="small"
+                  type="link"
+                  style="margin-left: 4px"
+                  @click="router.push({ name: 'ConversationCodes' })"
+                >
+                  管理识别码
                 </Button>
               </template>
             </Descriptions.Item>
