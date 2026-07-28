@@ -76,7 +76,8 @@ const columns: TableColumnsType = [
     title: '识别码',
     dataIndex: 'conv_code',
     key: 'conv_code',
-    width: 130,
+    width: 115,
+    align: 'center',
     customRender: ({ text }: { text: null | string }) =>
       text ? h('code', { style: { fontSize: '12px' } }, text) : '-',
   },
