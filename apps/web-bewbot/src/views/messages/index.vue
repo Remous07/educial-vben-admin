@@ -27,20 +27,27 @@ const conversations = ref<Conversation[]>([]);
 const loading = ref(false);
 
 const columns: TableColumnsType = [
-  { title: 'ID', dataIndex: 'user_id', key: 'user_id', width: 50 },
-  { title: 'TG ID', dataIndex: 'telegram_id', key: 'telegram_id', width: 120 },
+  {
+    title: 'TG ID',
+    dataIndex: 'telegram_id',
+    key: 'telegram_id',
+    width: 130,
+    align: 'center',
+  },
   {
     title: '昵称',
     dataIndex: 'first_name',
     key: 'first_name',
-    width: 140,
+    width: 100,
+    align: 'center',
     customRender: ({ text }: { text: null | string }) => text || '-',
   },
   {
     title: '用户名',
     dataIndex: 'username',
     key: 'username',
-    width: 130,
+    width: 120,
+    align: 'center',
     customRender: ({ text }: { text: null | string }) =>
       text
         ? h(
@@ -58,7 +65,7 @@ const columns: TableColumnsType = [
     title: '会员',
     dataIndex: 'is_premium',
     key: 'is_premium',
-    width: 50,
+    width: 45,
     align: 'center',
     customRender: ({ text }: { text: boolean }) =>
       text
@@ -77,13 +84,14 @@ const columns: TableColumnsType = [
     title: '消息数',
     dataIndex: 'message_count',
     key: 'message_count',
-    width: 65,
+    width: 55,
     align: 'center',
   },
   {
     title: '最新消息',
     dataIndex: 'last_message_preview',
     key: 'last_message_preview',
+    width: 180,
     ellipsis: true,
   },
   {
