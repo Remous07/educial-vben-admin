@@ -9,6 +9,7 @@ import { VbenButton } from '@vben-core/shadcn-ui';
 
 import { message } from 'ant-design-vue';
 
+import { requestClient } from '#/api/request';
 import TurnstileWidget from '#/components/TurnstileWidget.vue';
 import { useAuthStore } from '#/store';
 
@@ -17,8 +18,11 @@ defineOptions({ name: 'Register' });
 const authStore = useAuthStore();
 const router = useRouter();
 const turnstileToken = ref('');
-
 const siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY || '';
+
+const registered = ref(false);
+const registeredEmail = ref('');
+const resending = ref(false);
 
 const [Form, formApi] = useVbenForm({
   commonConfig: { hideLabel: true, hideRequiredMark: true },
@@ -92,44 +96,90 @@ async function handleSubmit() {
     username: values.username,
     turnstile_token: turnstileToken.value || undefined,
   });
+  registeredEmail.value = values.email;
+  registered.value = true;
   turnstileToken.value = '';
+}
+
+async function handleResendVerification() {
+  resending.value = true;
+  try {
+    await requestClient.post('/auth/resend-verification', {
+      email: registeredEmail.value,
+    });
+    message.success('验证邮件已重新发送');
+  } catch {
+    // error handled by interceptor
+  } finally {
+    resending.value = false;
+  }
 }
 </script>
 
 <template>
   <div class="p-6">
-    <div class="mb-4 text-center">
-      <h2 class="text-xl font-semibold">创建账户 🚀</h2>
-      <p class="mt-1 text-sm text-gray-500">注册新的管理账户</p>
-    </div>
+    <!-- Pre-registration form -->
+    <template v-if="!registered">
+      <div class="mb-4 text-center">
+        <h2 class="text-xl font-semibold">创建账户 🚀</h2>
+        <p class="mt-1 text-sm text-gray-500">注册新的管理账户</p>
+      </div>
 
-    <Form />
+      <Form />
 
-    <div v-if="siteKey" class="mb-4 flex justify-center">
-      <TurnstileWidget
-        :site-key="siteKey"
-        @verified="(t: string) => (turnstileToken = t)"
-        @expired="turnstileToken = ''"
-        @error="turnstileToken = ''"
-      />
-    </div>
+      <div v-if="siteKey" class="mb-4 flex justify-center">
+        <TurnstileWidget
+          :site-key="siteKey"
+          @verified="(t: string) => (turnstileToken = t)"
+          @expired="turnstileToken = ''"
+          @error="turnstileToken = ''"
+        />
+      </div>
 
-    <VbenButton
-      :loading="authStore.registerLoading"
-      class="w-full"
-      @click="handleSubmit"
-    >
-      {{ $t('authentication.signUp') }}
-    </VbenButton>
-
-    <div class="mt-4 text-center text-sm">
-      <span class="text-gray-400">已有账号？</span>
-      <a
-        class="cursor-pointer text-blue-500"
-        @click="router.push('/auth/login')"
+      <VbenButton
+        :loading="authStore.registerLoading"
+        class="w-full"
+        @click="handleSubmit"
       >
-        登录
-      </a>
-    </div>
+        {{ $t('authentication.signUp') }}
+      </VbenButton>
+
+      <div class="mt-4 text-center text-sm">
+        <span class="text-gray-400">已有账号？</span>
+        <a
+          class="cursor-pointer text-blue-500"
+          @click="router.push('/auth/login')"
+        >
+          登录
+        </a>
+      </div>
+    </template>
+
+    <!-- Post-registration: verification pending -->
+    <template v-else>
+      <div class="text-center">
+        <h2 class="mb-2 text-xl font-semibold">注册成功 ✅</h2>
+        <p class="text-sm text-gray-500">
+          验证邮件已发送至
+          <span class="font-medium text-gray-700">{{ registeredEmail }}</span>
+        </p>
+        <p class="mt-1 text-sm text-gray-400">请查收邮件并点击链接完成验证</p>
+      </div>
+
+      <div class="mt-6 space-y-3">
+        <VbenButton
+          :loading="resending"
+          class="w-full"
+          variant="outline"
+          @click="handleResendVerification"
+        >
+          重新发送验证邮件
+        </VbenButton>
+
+        <VbenButton class="w-full" @click="router.push('/auth/login')">
+          前往登录
+        </VbenButton>
+      </div>
+    </template>
   </div>
 </template>

@@ -113,13 +113,6 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       registerLoading.value = true;
       await registerApi(params as AuthApi.RegisterParams);
-      notification.success({
-        description: '请查收验证邮件并点击链接完成注册',
-        duration: 5,
-        message: '注册成功',
-      });
-      // 跳转到登录页
-      await router.push({ path: LOGIN_PATH });
     } finally {
       registerLoading.value = false;
     }
@@ -133,10 +126,7 @@ export const useAuthStore = defineStore('auth', () => {
   async function authLoginTotp(totpCode: string) {
     try {
       loginLoading.value = true;
-      const { accessToken } = await loginTotpApi(
-        totpTempToken.value,
-        totpCode,
-      );
+      const { accessToken } = await loginTotpApi(totpTempToken.value, totpCode);
 
       if (accessToken) {
         accessStore.setAccessToken(accessToken);
@@ -151,9 +141,7 @@ export const useAuthStore = defineStore('auth', () => {
         userStore.setUserInfo(userInfo);
         accessStore.setAccessCodes(accessCodes);
 
-        await router.push(
-          userInfo.homePath || preferences.app.defaultHomePath,
-        );
+        await router.push(userInfo.homePath || preferences.app.defaultHomePath);
 
         if (userInfo?.realName) {
           notification.success({
