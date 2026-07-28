@@ -44,6 +44,21 @@ const columns: TableColumnsType = [
   { title: '用户名', dataIndex: 'username', key: 'username', width: 110 },
   { title: '邮箱', dataIndex: 'email', key: 'email', width: 180 },
   {
+    title: '邀请码',
+    dataIndex: 'invite_code',
+    key: 'invite_code',
+    width: 160,
+    customRender: ({ text }: { text: null | string }) =>
+      text ? h('code', { style: { fontSize: '13px' } }, text) : '-',
+  },
+  {
+    title: '邀请人',
+    dataIndex: 'invited_by',
+    key: 'invited_by',
+    width: 100,
+    customRender: ({ text }: { text: null | string }) => text || '-',
+  },
+  {
     title: '状态',
     dataIndex: 'is_banned',
     key: 'is_banned',

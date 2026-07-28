@@ -25,6 +25,8 @@ export interface AdminUserItem {
   conversation_code: null | string;
   is_banned: boolean;
   email_verified: boolean;
+  invite_code: null | string;
+  invited_by: null | string;
 }
 
 export interface RolePayload {
