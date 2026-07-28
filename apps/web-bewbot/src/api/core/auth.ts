@@ -101,6 +101,11 @@ export async function unbindTelegramApi() {
   return requestClient.post('/account/bind-telegram/unbind');
 }
 
+/** 注销账号 */
+export async function deleteAccountApi(password: string) {
+  return requestClient.post('/account/delete', { password });
+}
+
 /** 修改密码 */
 export async function changePasswordApi(
   currentPassword: string,

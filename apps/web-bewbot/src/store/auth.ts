@@ -47,6 +47,15 @@ export const useAuthStore = defineStore('auth', () => {
         return { userInfo: null };
       }
 
+      // Account deletion cancelled by logging in
+      if (response.deletionCancelled) {
+        notification.success({
+          message: '账户注销已取消',
+          description: '已重新激活您的账户',
+          duration: 5,
+        });
+      }
+
       const { accessToken } = response;
 
       if (accessToken) {

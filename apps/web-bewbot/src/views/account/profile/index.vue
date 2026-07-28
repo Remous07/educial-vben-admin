@@ -21,6 +21,7 @@ import {
 import {
   changeEmailApi,
   changePasswordApi,
+  deleteAccountApi,
   getConversationCodeApi,
   getTelegramBindStatusApi,
   getTotpStatusApi,
@@ -32,11 +33,13 @@ import {
   totpSetupApi,
   unbindTelegramApi,
 } from '#/api/core';
+import { useAuthStore } from '#/store';
 
 defineOptions({ name: 'Profile' });
 
 const router = useRouter();
 const userStore = useUserStore();
+const authStore = useAuthStore();
 const userInfo = userStore.userInfo;
 const loading = ref(false);
 
@@ -258,6 +261,25 @@ async function handleSetConvCode() {
   }
 }
 
+// Account deletion
+const deleteVisible = ref(false);
+const deletePassword = ref('');
+const deleting = ref(false);
+
+async function handleDeleteAccount() {
+  deleting.value = true;
+  try {
+    await deleteAccountApi(deletePassword.value);
+    message.success('账户注销已申请，7天内重新登录可取消');
+    deleteVisible.value = false;
+    await authStore.logout(false);
+  } catch {
+    // error handled by interceptor
+  } finally {
+    deleting.value = false;
+  }
+}
+
 onMounted(async () => {
   loading.value = true;
   await Promise.all([fetchTotpStatus(), fetchTgStatus(), fetchConvCode()]);
@@ -368,6 +390,13 @@ onMounted(async () => {
           </Descriptions>
           <Button style="margin-top: 12px" @click="openChangePassword">
             修改密码
+          </Button>
+          <Button
+            danger
+            style="margin-top: 12px; margin-left: 8px"
+            @click="deleteVisible = true"
+          >
+            注销账号
           </Button>
         </Card>
 
@@ -545,6 +574,31 @@ onMounted(async () => {
           验证并启用
         </Button>
       </div>
+    </Modal>
+
+    <!-- Delete Account Modal -->
+    <Modal
+      v-model:open="deleteVisible"
+      title="注销账号"
+      @ok="handleDeleteAccount"
+      :confirm-loading="deleting"
+      ok-text="确认注销"
+      ok-type="danger"
+      cancel-text="取消"
+    >
+      <p style="margin-bottom: 12px">
+        注销后您的账号将进入 <b>7 天冷静期</b>，期间重新登录可取消注销。
+      </p>
+      <p style="margin-bottom: 12px; color: #888">
+        冷静期结束后账号将被永久删除，所有数据不可恢复。
+      </p>
+      <label>请输入密码确认</label>
+      <Input
+        v-model:value="deletePassword"
+        type="password"
+        placeholder="请输入当前密码"
+        style="margin-top: 4px"
+      />
     </Modal>
 
     <!-- TOTP Disable Modal -->
