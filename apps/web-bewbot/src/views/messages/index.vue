@@ -54,6 +54,12 @@ const columns: TableColumnsType = [
     },
   },
   {
+    title: 'TG ID',
+    dataIndex: 'telegram_id',
+    key: 'telegram_id',
+    width: 130,
+  },
+  {
     title: '',
     dataIndex: 'is_premium',
     key: 'is_premium',
