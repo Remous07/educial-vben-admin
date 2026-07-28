@@ -11,55 +11,108 @@ import { requestClient } from '#/api/request';
 
 defineOptions({ name: 'MessageHistory' });
 
-interface Message {
-  id: number;
-  user_id: number;
-  admin_user_id: null | number;
-  text: string;
-  direction: string;
-  created_at: string;
+interface Conversation {
+  telegram_id: number;
+  first_name: null | string;
+  username: null | string;
+  is_premium: boolean;
+  conv_code: null | string;
+  message_count: number;
+  last_message_at: null | string;
+  last_message_preview: string;
 }
 
-const messages = ref<Message[]>([]);
+const conversations = ref<Conversation[]>([]);
 const loading = ref(false);
 
 const columns: TableColumnsType = [
-  { title: 'ID', dataIndex: 'id', key: 'id', width: 80 },
-  { title: '用户 ID', dataIndex: 'user_id', key: 'user_id', width: 100 },
-  { title: '内容', dataIndex: 'text', key: 'text', ellipsis: true },
   {
-    title: '方向',
-    dataIndex: 'direction',
-    key: 'direction',
-    width: 100,
-    customRender: ({ text }: { text: string }) =>
-      text === 'incoming'
-        ? h(Tag, { color: 'blue' }, () => '接收')
-        : h(Tag, { color: 'green' }, () => '发送'),
+    title: 'TG 用户',
+    key: 'tg_user',
+    width: 180,
+    customRender: ({ record }: { record: Conversation }) => {
+      const name = record.first_name || '未知';
+      if (record.username) {
+        return h('div', [
+          h(
+            'a',
+            {
+              href: `https://t.me/${record.username}`,
+              target: '_blank',
+              style: { fontWeight: 'bold' },
+            },
+            name,
+          ),
+          h(
+            'span',
+            { style: { color: '#888', fontSize: '12px', marginLeft: '4px' } },
+            `@${record.username}`,
+          ),
+        ]);
+      }
+      return name;
+    },
   },
-  { title: '时间', dataIndex: 'created_at', key: 'created_at', width: 180 },
+  {
+    title: '',
+    dataIndex: 'is_premium',
+    key: 'is_premium',
+    width: 40,
+    align: 'center',
+    customRender: ({ text }: { text: boolean }) =>
+      text ? h(Tag, { color: 'gold' }, () => '⭐') : null,
+  },
+  {
+    title: '识别码',
+    dataIndex: 'conv_code',
+    key: 'conv_code',
+    width: 140,
+    customRender: ({ text }: { text: null | string }) =>
+      text ? h('code', { style: { fontSize: '12px' } }, text) : '-',
+  },
+  {
+    title: '消息数',
+    dataIndex: 'message_count',
+    key: 'message_count',
+    width: 80,
+    align: 'center',
+  },
+  {
+    title: '最近消息',
+    dataIndex: 'last_message_preview',
+    key: 'last_message_preview',
+    ellipsis: true,
+  },
+  {
+    title: '最近消息时间',
+    dataIndex: 'last_message_at',
+    key: 'last_message_at',
+    width: 170,
+    customRender: ({ text }: { text: null | string }) =>
+      text ? new Date(text).toLocaleString('zh-CN') : '-',
+  },
 ];
 
-async function fetchMessages() {
+async function fetchConversations() {
   loading.value = true;
   try {
-    messages.value = await requestClient.get('/messages');
+    conversations.value = await requestClient.get('/my-conversations');
   } finally {
     loading.value = false;
   }
 }
 
-onMounted(fetchMessages);
+onMounted(fetchConversations);
 </script>
 
 <template>
   <Page>
     <Table
       :columns="columns"
-      :data-source="messages"
+      :data-source="conversations"
       :loading="loading"
       :pagination="{ pageSize: 20 }"
-      row-key="id"
+      row-key="telegram_id"
     />
   </Page>
 </template>
