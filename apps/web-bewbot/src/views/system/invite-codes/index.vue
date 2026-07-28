@@ -6,7 +6,6 @@ import type { InviteCodeItem } from '#/api/core';
 import { h, onMounted, ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
-import dayjs from 'dayjs';
 
 import {
   Button,
@@ -20,6 +19,7 @@ import {
   Table,
   Tag,
 } from 'ant-design-vue';
+import dayjs from 'dayjs';
 
 import {
   createInviteCodeApi,
@@ -72,6 +72,8 @@ const columns: TableColumnsType = [
       if (!record.is_active) return h(Tag, { color: 'red' }, () => '已撤销');
       if (record.expires_at && new Date(record.expires_at) < new Date())
         return h(Tag, { color: 'orange' }, () => '已过期');
+      if (record.max_uses > 0 && record.used_count >= record.max_uses)
+        return h(Tag, { color: 'red' }, () => '已用完');
       return h(Tag, { color: 'green' }, () => '有效');
     },
     sorter: (a: InviteCodeItem, b: InviteCodeItem) =>
@@ -98,7 +100,9 @@ const columns: TableColumnsType = [
       if (!a.expires_at && !b.expires_at) return 0;
       if (!a.expires_at) return 1;
       if (!b.expires_at) return -1;
-      return new Date(a.expires_at).getTime() - new Date(b.expires_at).getTime();
+      return (
+        new Date(a.expires_at).getTime() - new Date(b.expires_at).getTime()
+      );
     },
     sortDirections: ['ascend', 'descend'],
   },
@@ -149,9 +153,7 @@ async function handlePermanentDelete(code: InviteCodeItem) {
   const invalid = isCodeInvalid(code);
   Modal.confirm({
     title: invalid ? '确定删除该邀请码？' : '该邀请码仍在有效期内',
-    content: invalid
-      ? '删除后不可恢复'
-      : '该邀请码仍然有效，确定要删除吗？',
+    content: invalid ? '删除后不可恢复' : '该邀请码仍然有效，确定要删除吗？',
     okText: '删除',
     okType: 'danger',
     cancelText: '取消',
@@ -224,7 +226,7 @@ async function handleCreate() {
     maxUses.value = 1;
     expiresAt.value = dayjs().add(7, 'day');
     fetchData();
-  } catch (e: any) {
+  } catch {
     // error handled by interceptor
   } finally {
     saving.value = false;
