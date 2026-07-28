@@ -33,8 +33,10 @@ const [Form, formApi] = useVbenForm({
       componentProps: { placeholder: '请再次输入新密码' },
       fieldName: 'confirmPassword',
       rules: z.string().refine(
-        (val) => {
-          const values = formApi?.getValues() as Recordable<any> | undefined;
+        async (val) => {
+          const values = (await formApi?.getValues()) as
+            | Recordable<any>
+            | undefined;
           return val === values?.new_password;
         },
         { message: '两次输入的密码不一致' },
