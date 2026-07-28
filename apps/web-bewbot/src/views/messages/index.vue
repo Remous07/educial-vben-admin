@@ -31,14 +31,14 @@ const columns: TableColumnsType = [
     title: 'TG ID',
     dataIndex: 'telegram_id',
     key: 'telegram_id',
-    width: 100,
+    width: 80,
     align: 'center',
   },
   {
     title: '昵称',
     dataIndex: 'first_name',
     key: 'first_name',
-    width: 100,
+    width: 80,
     align: 'center',
     customRender: ({ text }: { text: null | string }) => text || '-',
   },
@@ -46,7 +46,7 @@ const columns: TableColumnsType = [
     title: '用户名',
     dataIndex: 'username',
     key: 'username',
-    width: 100,
+    width: 80,
     align: 'center',
     customRender: ({ text }: { text: null | string }) =>
       text
@@ -76,7 +76,7 @@ const columns: TableColumnsType = [
     title: '识别码',
     dataIndex: 'conv_code',
     key: 'conv_code',
-    width: 115,
+    width: 100,
     align: 'center',
     customRender: ({ text }: { text: null | string }) =>
       text ? h('code', { style: { fontSize: '12px' } }, text) : '-',
