@@ -65,7 +65,7 @@ const columns: TableColumnsType = [
     title: '会员',
     dataIndex: 'is_premium',
     key: 'is_premium',
-    width: 45,
+    width: 55,
     align: 'center',
     customRender: ({ text }: { text: boolean }) =>
       text
@@ -84,7 +84,7 @@ const columns: TableColumnsType = [
     title: '消息数',
     dataIndex: 'message_count',
     key: 'message_count',
-    width: 55,
+    width: 65,
     align: 'center',
   },
   {
