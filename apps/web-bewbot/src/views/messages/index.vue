@@ -5,8 +5,13 @@ import { h, onMounted, ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
 
-import { Table, Tag } from 'ant-design-vue';
+import { Button, message, Modal, Table, Tag } from 'ant-design-vue';
 
+import {
+  blockVisitorApi,
+  getBlockedVisitorsApi,
+  unblockVisitorApi,
+} from '#/api/core';
 import { requestClient } from '#/api/request';
 
 defineOptions({ name: 'MessageHistory' });
@@ -24,7 +29,29 @@ interface Conversation {
 }
 
 const conversations = ref<Conversation[]>([]);
+const blockedIds = ref<Set<number>>(new Set());
 const loading = ref(false);
+
+async function handleBlock(record: Conversation) {
+  Modal.confirm({
+    title: `确定拉黑该用户？`,
+    content: '拉黑后该用户将无法向你发送消息',
+    okText: '拉黑',
+    okType: 'danger',
+    cancelText: '取消',
+    onOk: async () => {
+      await blockVisitorApi(record.telegram_id);
+      blockedIds.value.add(record.telegram_id);
+      message.success('已拉黑');
+    },
+  });
+}
+
+async function handleUnblock(record: Conversation) {
+  await unblockVisitorApi(record.telegram_id);
+  blockedIds.value.delete(record.telegram_id);
+  message.success('已取消拉黑');
+}
 
 const columns: TableColumnsType = [
   {
@@ -103,12 +130,18 @@ const columns: TableColumnsType = [
     customRender: ({ text }: { text: null | string }) =>
       text ? new Date(text).toLocaleString('zh-CN') : '-',
   },
+  { title: '操作', key: 'action', width: 100 },
 ];
 
 async function fetchConversations() {
   loading.value = true;
   try {
-    conversations.value = await requestClient.get('/my-conversations');
+    const [convs, blocked] = await Promise.all([
+      requestClient.get('/my-conversations'),
+      getBlockedVisitorsApi(),
+    ]);
+    conversations.value = convs;
+    blockedIds.value = new Set(blocked.map((b: any) => b.tg_user_id));
   } finally {
     loading.value = false;
   }
@@ -125,6 +158,29 @@ onMounted(fetchConversations);
       :loading="loading"
       :pagination="{ pageSize: 20 }"
       row-key="telegram_id"
-    />
+    >
+      <template #bodyCell="{ column, record }">
+        <template v-if="column.key === 'action'">
+          <template v-if="blockedIds.has((record as Conversation).telegram_id)">
+            <Button
+              size="small"
+              type="primary"
+              @click="handleUnblock(record as Conversation)"
+            >
+              取消拉黑
+            </Button>
+          </template>
+          <template v-else>
+            <Button
+              size="small"
+              danger
+              @click="handleBlock(record as Conversation)"
+            >
+              拉黑
+            </Button>
+          </template>
+        </template>
+      </template>
+    </Table>
   </Page>
 </template>

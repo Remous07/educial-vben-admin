@@ -213,6 +213,29 @@ export async function permanentlyDeleteConversationCodeApi(id: number) {
   return requestClient.delete(`/account/conversation-codes/${id}/permanent`);
 }
 
+/** 拉黑访客 */
+export async function blockVisitorApi(tgUserId: number) {
+  return requestClient.post('/blocked-visitors', { tg_user_id: tgUserId });
+}
+
+/** 取消拉黑访客 */
+export async function unblockVisitorApi(tgUserId: number) {
+  return requestClient.delete(`/blocked-visitors/${tgUserId}`);
+}
+
+/** 检查是否已拉黑 */
+export async function getBlockedVisitorsApi() {
+  return requestClient.get<
+    {
+      created_at: null | string;
+      first_name: null | string;
+      id: number;
+      tg_user_id: number;
+      username: null | string;
+    }[]
+  >('/blocked-visitors');
+}
+
 export interface ConversationCodeItem {
   id: number;
   code: string;
