@@ -40,14 +40,25 @@ const selectedRoleIds = ref<number[]>([]);
 const saving = ref(false);
 
 const columns: TableColumnsType = [
-  { title: 'ID', dataIndex: 'id', key: 'id', width: 60 },
-  { title: '用户名', dataIndex: 'username', key: 'username', width: 130 },
-  { title: '邮箱', dataIndex: 'email', key: 'email', width: 200 },
+  { title: 'ID', dataIndex: 'id', key: 'id', width: 50 },
+  { title: '用户名', dataIndex: 'username', key: 'username', width: 110 },
+  { title: '邮箱', dataIndex: 'email', key: 'email', width: 180 },
+  {
+    title: '状态',
+    dataIndex: 'is_banned',
+    key: 'is_banned',
+    width: 70,
+    align: 'center',
+    customRender: ({ text }: { text: boolean }) =>
+      text
+        ? h(Tag, { color: 'red' }, () => '已封禁')
+        : h(Tag, { color: 'green' }, () => '正常'),
+  },
   {
     title: '对话识别码',
     dataIndex: 'conversation_code',
     key: 'conversation_code',
-    width: 140,
+    width: 130,
     customRender: ({ text }: { text: null | string }) =>
       text
         ? h('code', { style: { fontSize: '13px', fontWeight: 'bold' } }, text)
@@ -57,6 +68,7 @@ const columns: TableColumnsType = [
     title: '权限组',
     dataIndex: 'roles',
     key: 'roles',
+    width: 120,
     customRender: ({ text }: { text: string[] }) =>
       text.length > 0
         ? text.map((r) =>
@@ -65,21 +77,10 @@ const columns: TableColumnsType = [
         : h(Tag, { color: 'default' }, () => '无'),
   },
   {
-    title: '状态',
-    dataIndex: 'is_banned',
-    key: 'is_banned',
-    width: 80,
-    align: 'center',
-    customRender: ({ text }: { text: boolean }) =>
-      text
-        ? h(Tag, { color: 'red' }, () => '已封禁')
-        : h(Tag, { color: 'green' }, () => '正常'),
-  },
-  {
     title: '创建时间',
     dataIndex: 'created_at',
     key: 'created_at',
-    width: 180,
+    width: 170,
     customRender: ({ text }: { text: null | string }) =>
       text ? new Date(text).toLocaleString('zh-CN') : '-',
   },
