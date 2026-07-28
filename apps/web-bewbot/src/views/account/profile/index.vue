@@ -45,6 +45,10 @@ const newEmail = ref('');
 const savingEmail = ref(false);
 
 async function handleChangeEmail() {
+  if (newEmail.value === userInfo?.email) {
+    message.error('新邮箱不能与当前邮箱相同');
+    return;
+  }
   savingEmail.value = true;
   try {
     await changeEmailApi(emailCurrentPwd.value, newEmail.value);
@@ -52,8 +56,8 @@ async function handleChangeEmail() {
     emailVisible.value = false;
     emailCurrentPwd.value = '';
     newEmail.value = '';
-  } catch (error: any) {
-    message.error(error?.response?.data?.message || '修改失败');
+  } catch {
+    // error handled by interceptor
   } finally {
     savingEmail.value = false;
   }
