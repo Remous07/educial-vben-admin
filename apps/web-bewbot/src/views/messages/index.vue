@@ -31,7 +31,7 @@ const columns: TableColumnsType = [
     title: 'TG ID',
     dataIndex: 'telegram_id',
     key: 'telegram_id',
-    width: 130,
+    width: 100,
     align: 'center',
   },
   {
@@ -46,7 +46,7 @@ const columns: TableColumnsType = [
     title: '用户名',
     dataIndex: 'username',
     key: 'username',
-    width: 120,
+    width: 100,
     align: 'center',
     customRender: ({ text }: { text: null | string }) =>
       text
