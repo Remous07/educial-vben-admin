@@ -12,6 +12,7 @@ import { requestClient } from '#/api/request';
 defineOptions({ name: 'MessageHistory' });
 
 interface Conversation {
+  user_id: null | number;
   telegram_id: number;
   first_name: null | string;
   username: null | string;
@@ -26,38 +27,32 @@ const conversations = ref<Conversation[]>([]);
 const loading = ref(false);
 
 const columns: TableColumnsType = [
+  { title: 'ID', dataIndex: 'user_id', key: 'user_id', width: 50 },
+  { title: 'TG ID', dataIndex: 'telegram_id', key: 'telegram_id', width: 120 },
   {
-    title: 'TG 用户',
-    key: 'tg_user',
-    width: 160,
-    customRender: ({ record }: { record: Conversation }) => {
-      const name = record.first_name || '未知';
-      if (record.username) {
-        return h('div', [
-          h(
+    title: '昵称',
+    dataIndex: 'first_name',
+    key: 'first_name',
+    width: 140,
+    customRender: ({ text }: { text: null | string }) => text || '-',
+  },
+  {
+    title: '用户名',
+    dataIndex: 'username',
+    key: 'username',
+    width: 130,
+    customRender: ({ text }: { text: null | string }) =>
+      text
+        ? h(
             'a',
             {
-              href: `https://t.me/${record.username}`,
+              href: `https://t.me/${text}`,
               target: '_blank',
               style: { fontWeight: 'bold' },
             },
-            name,
-          ),
-          h(
-            'span',
-            { style: { color: '#888', fontSize: '12px', marginLeft: '4px' } },
-            `@${record.username}`,
-          ),
-        ]);
-      }
-      return name;
-    },
-  },
-  {
-    title: 'TG ID',
-    dataIndex: 'telegram_id',
-    key: 'telegram_id',
-    width: 120,
+            `@${text}`,
+          )
+        : '-',
   },
   {
     title: '会员',
@@ -66,7 +61,9 @@ const columns: TableColumnsType = [
     width: 50,
     align: 'center',
     customRender: ({ text }: { text: boolean }) =>
-      text ? h(Tag, { color: 'gold' }, () => '⭐') : null,
+      text
+        ? h(Tag, { color: 'gold' }, () => '是')
+        : h(Tag, { color: 'default' }, () => '否'),
   },
   {
     title: '识别码',
@@ -84,7 +81,7 @@ const columns: TableColumnsType = [
     align: 'center',
   },
   {
-    title: '最近消息',
+    title: '最新消息',
     dataIndex: 'last_message_preview',
     key: 'last_message_preview',
     ellipsis: true,
