@@ -10,6 +10,7 @@ import { Page } from '@vben/common-ui';
 import {
   Button,
   Checkbox,
+  Collapse,
   Input,
   message,
   Modal,
@@ -39,6 +40,30 @@ const formPermissionIds = ref<number[]>([]);
 const saving = ref(false);
 
 const isEditing = computed(() => !!editingRole.value);
+
+const CATEGORY_LABELS: Record<string, string> = {
+  dashboard: '仪表盘',
+  users: '用户',
+  messages: '消息',
+  visitors: '访客',
+  conversation: '对话',
+  invite: '邀请码',
+  admin: '系统管理',
+};
+
+const permissionGroups = computed(() => {
+  const groups: Record<string, PermissionItem[]> = {};
+  for (const perm of permissions.value) {
+    const prefix = perm.code.split(':')[0] || 'other';
+    if (!groups[prefix]) groups[prefix] = [];
+    groups[prefix].push(perm);
+  }
+  // Sort by category label order
+  return Object.entries(groups).toSorted(([a], [b]) => {
+    const labels = Object.keys(CATEGORY_LABELS);
+    return labels.indexOf(a) - labels.indexOf(b);
+  });
+});
 
 const columns: TableColumnsType = [
   { title: 'ID', dataIndex: 'id', key: 'id', width: 60 },
@@ -182,33 +207,34 @@ onMounted(fetchData);
       </div>
       <div>
         <label>权限</label>
-        <div
-          style="
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            margin-top: 4px;
-          "
-        >
-          <Checkbox
-            v-for="perm in permissions"
-            :key="perm.id"
-            :checked="formPermissionIds.includes(perm.id)"
-            @change="
-              (e: any) => {
-                if (e.target.checked) {
-                  formPermissionIds.push(perm.id);
-                } else {
-                  formPermissionIds = formPermissionIds.filter(
-                    (id) => id !== perm.id,
-                  );
-                }
-              }
-            "
+        <Collapse v-if="permissions.length" style="margin-top: 4px">
+          <Collapse.Panel
+            v-for="[prefix, perms] in permissionGroups"
+            :key="prefix"
+            :header="`${CATEGORY_LABELS[prefix] || prefix} (${perms.length})`"
           >
-            {{ perm.code }} — {{ perm.name }}
-          </Checkbox>
-        </div>
+            <div style="display: flex; flex-direction: column; gap: 4px">
+              <Checkbox
+                v-for="perm in perms"
+                :key="perm.id"
+                :checked="formPermissionIds.includes(perm.id)"
+                @change="
+                  (e: any) => {
+                    if (e.target.checked) {
+                      formPermissionIds.push(perm.id);
+                    } else {
+                      formPermissionIds = formPermissionIds.filter(
+                        (id) => id !== perm.id,
+                      );
+                    }
+                  }
+                "
+              >
+                {{ perm.code }} — {{ perm.name }}
+              </Checkbox>
+            </div>
+          </Collapse.Panel>
+        </Collapse>
       </div>
     </Modal>
   </Page>
