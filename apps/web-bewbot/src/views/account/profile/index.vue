@@ -21,6 +21,7 @@ import {
 import {
   changeEmailApi,
   changePasswordApi,
+  changeUsernameApi,
   deleteAccountApi,
   getConversationCodeApi,
   getTelegramBindStatusApi,
@@ -82,6 +83,41 @@ async function handleResendEmail() {
     // error handled by interceptor
   } finally {
     resendingEmail.value = false;
+  }
+}
+
+// Change username
+const usernameVisible = ref(false);
+const usernameCurrentPwd = ref('');
+const newUsername = ref('');
+const usernameTotpCode = ref('');
+const savingUsername = ref(false);
+
+function openUsernameModal() {
+  usernameCurrentPwd.value = '';
+  newUsername.value = '';
+  usernameTotpCode.value = '';
+  usernameVisible.value = true;
+}
+
+async function handleChangeUsername() {
+  savingUsername.value = true;
+  try {
+    await changeUsernameApi(
+      usernameCurrentPwd.value,
+      newUsername.value,
+      usernameTotpCode.value || undefined,
+    );
+    // Update userInfo
+    if (userInfo) {
+      userInfo.username = newUsername.value;
+    }
+    message.success('用户名已修改');
+    usernameVisible.value = false;
+  } catch {
+    // error handled by interceptor
+  } finally {
+    savingUsername.value = false;
   }
 }
 
@@ -295,6 +331,14 @@ onMounted(async () => {
           <Descriptions :column="1">
             <Descriptions.Item label="用户名">
               {{ userInfo?.username }}
+              <Button
+                size="small"
+                type="link"
+                style="padding: 0; margin-left: 8px"
+                @click="openUsernameModal"
+              >
+                修改
+              </Button>
             </Descriptions.Item>
             <Descriptions.Item label="邮箱">
               {{ userInfo?.email || '-' }}
@@ -489,6 +533,41 @@ onMounted(async () => {
           v-model:value="newEmail"
           type="email"
           placeholder="请输入新邮箱"
+          style="margin-top: 4px"
+        />
+      </div>
+    </Modal>
+
+    <!-- Change Username Modal -->
+    <Modal
+      v-model:open="usernameVisible"
+      title="修改用户名"
+      :confirm-loading="savingUsername"
+      @ok="handleChangeUsername"
+    >
+      <div style="margin-bottom: 12px">
+        <label>当前密码</label>
+        <Input.Password
+          v-model:value="usernameCurrentPwd"
+          placeholder="请输入当前密码"
+          style="margin-top: 4px"
+        />
+      </div>
+      <div style="margin-bottom: 12px">
+        <label>新用户名（3-10位字母、数字、-、_）</label>
+        <Input
+          v-model:value="newUsername"
+          placeholder="新用户名"
+          :maxlength="10"
+          style="margin-top: 4px"
+        />
+      </div>
+      <div v-if="totpEnabled" style="margin-bottom: 12px">
+        <label>两步验证码</label>
+        <Input
+          v-model:value="usernameTotpCode"
+          placeholder="6位验证码"
+          :maxlength="6"
           style="margin-top: 4px"
         />
       </div>

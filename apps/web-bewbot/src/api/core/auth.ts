@@ -119,6 +119,19 @@ export async function changePasswordApi(
   });
 }
 
+/** 修改用户名 */
+export async function changeUsernameApi(
+  currentPassword: string,
+  newUsername: string,
+  totpCode?: string,
+) {
+  return requestClient.put('/account/username', {
+    current_password: currentPassword,
+    new_username: newUsername,
+    totp_code: totpCode,
+  });
+}
+
 /** 注册 */
 export async function registerApi(data: AuthApi.RegisterParams) {
   return requestClient.post<AuthApi.RegisterResult>('/auth/register', data);
