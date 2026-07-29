@@ -171,7 +171,7 @@ const tgLinking = ref(false);
 async function fetchTgStatus() {
   try {
     const s = await getTelegramBindStatusApi();
-    tgBound.value = s.bound;
+    tgBound.value = s.is_bound;
     tgId.value = s.telegram_id;
     tgFirstName.value = s.telegram_first_name;
     tgUsername.value = s.telegram_username;

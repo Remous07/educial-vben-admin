@@ -84,7 +84,7 @@ export async function resendEmailChangeApi() {
 /** Telegram 绑定状态 */
 export async function getTelegramBindStatusApi() {
   return requestClient.get<{
-    bound: boolean;
+    is_bound: boolean;
     telegram_first_name: null | string;
     telegram_id: null | number;
     telegram_username: null | string;
