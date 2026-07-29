@@ -545,15 +545,28 @@ onMounted(fetchData);
     >
       <Table
         :columns="[
-          { title: 'TG ID', dataIndex: 'tg_user_id', key: 'tg_id', width: 110 },
+          {
+            title: 'TG ID',
+            key: 'tg_id',
+            width: 110,
+            customRender: ({ record: r }: any) =>
+              h(
+                'a',
+                {
+                  href: `tg://user?id=${r.tg_user_id}`,
+                  style: 'color:#1677ff',
+                },
+                r.tg_user_id,
+              ),
+          },
           {
             title: '用户',
             key: 'user',
             customRender: ({ record: r }: any) => {
-              const parts: any[] = [];
-              if (r.first_name) parts.push(r.first_name);
+              const nodes: any[] = [];
+              if (r.first_name) nodes.push(r.first_name, ' ');
               if (r.username) {
-                parts.push(
+                nodes.push(
                   h(
                     'a',
                     {
@@ -565,7 +578,8 @@ onMounted(fetchData);
                   ),
                 );
               }
-              return parts.join(' ') || '未知';
+              if (!nodes.length) return '未知';
+              return h('span', nodes);
             },
           },
           {
