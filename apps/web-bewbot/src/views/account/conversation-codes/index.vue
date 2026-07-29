@@ -24,6 +24,7 @@ import {
 import dayjs from 'dayjs';
 
 import {
+  blockVisitorApi,
   createConversationCodeApi,
   editConversationCodeApi,
   getCodeUsersApi,
@@ -33,6 +34,7 @@ import {
   revokeConversationCodeApi,
   rotateConversationCodeApi,
   setConversationCodeApi,
+  unblockVisitorApi,
 } from '#/api/core';
 
 defineOptions({ name: 'ConversationCodes' });
@@ -350,6 +352,23 @@ async function showCodeUsers(code: string) {
   }
 }
 
+async function handleBlockUser(tgUserId: number) {
+  await blockVisitorApi(tgUserId);
+  message.success('已拉黑');
+  // Refresh the list for the current code
+  if (userListCode.value) {
+    userListItems.value = await getCodeUsersApi(userListCode.value);
+  }
+}
+
+async function handleUnblockUser(tgUserId: number) {
+  await unblockVisitorApi(tgUserId);
+  message.success('已解除拉黑');
+  if (userListCode.value) {
+    userListItems.value = await getCodeUsersApi(userListCode.value);
+  }
+}
+
 async function fetchData() {
   loading.value = true;
   try {
@@ -522,30 +541,56 @@ onMounted(fetchData);
       v-model:open="userListVisible"
       :title="`使用识别码 ${userListCode} 的用户`"
       :footer="null"
-      width="500"
+      width="420"
     >
       <Table
         :columns="[
-          { title: 'TG ID', dataIndex: 'tg_user_id', key: 'tg_id', width: 140 },
+          { title: 'TG ID', dataIndex: 'tg_user_id', key: 'tg_id', width: 110 },
           {
             title: '用户',
             key: 'user',
-            width: 180,
             customRender: ({ record: r }: any) => {
-              const parts: string[] = [];
+              const parts: any[] = [];
               if (r.first_name) parts.push(r.first_name);
-              if (r.username) parts.push(`@${ r.username}`);
+              if (r.username) {
+                parts.push(
+                  h(
+                    'a',
+                    {
+                      href: `https://t.me/${r.username}`,
+                      target: '_blank',
+                      style: 'color:#1677ff',
+                    },
+                    `@${r.username}`,
+                  ),
+                );
+              }
               return parts.join(' ') || '未知';
             },
           },
           {
-            title: '状态',
-            key: 'blocked',
+            title: '操作',
+            key: 'action',
             width: 80,
             customRender: ({ record: r }: any) =>
               r.is_blocked
-                ? h(Tag, { color: 'red' }, () => '已拉黑')
-                : h(Tag, { color: 'green' }, () => '正常'),
+                ? h(
+                    Button,
+                    {
+                      size: 'small',
+                      onClick: () => handleUnblockUser(r.tg_user_id),
+                    },
+                    () => '解除',
+                  )
+                : h(
+                    Button,
+                    {
+                      size: 'small',
+                      danger: true,
+                      onClick: () => handleBlockUser(r.tg_user_id),
+                    },
+                    () => '拉黑',
+                  ),
           },
         ]"
         :data-source="userListItems"
