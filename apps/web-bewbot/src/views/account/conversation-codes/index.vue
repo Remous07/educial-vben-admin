@@ -11,11 +11,13 @@ import { Page } from '@vben/common-ui';
 import {
   Button,
   DatePicker,
+  Drawer,
   Input,
   InputNumber,
   List,
   message,
   Modal,
+  Popconfirm,
   Progress,
   Space,
   Table,
@@ -77,24 +79,37 @@ const columns: TableColumnsType = [
     key: 'usage',
     width: 150,
     customRender: ({ record }: { record: ConversationCodeItem }) => {
+      const canClick = record.used_count > 0;
       if (record.is_default)
-        return h(
-          'a',
-          {
-            style: 'font-size:12px;cursor:pointer;color:#1677ff',
-            onClick: () => showCodeUsers(record.code),
-          },
-          `${record.used_count} 次`,
-        );
+        return canClick
+          ? h(
+              'a',
+              {
+                style: 'font-size:12px;cursor:pointer;color:#1677ff',
+                onClick: () => showCodeUsers(record.code),
+              },
+              `${record.used_count} 次`,
+            )
+          : h(
+              'span',
+              { style: 'font-size:12px;color:#999' },
+              `${record.used_count} 次`,
+            );
       if (record.max_uses <= 0)
-        return h(
-          'a',
-          {
-            style: 'font-size:12px;cursor:pointer;color:#1677ff',
-            onClick: () => showCodeUsers(record.code),
-          },
-          `${record.used_count} 次`,
-        );
+        return canClick
+          ? h(
+              'a',
+              {
+                style: 'font-size:12px;cursor:pointer;color:#1677ff',
+                onClick: () => showCodeUsers(record.code),
+              },
+              `${record.used_count} 次`,
+            )
+          : h(
+              'span',
+              { style: 'font-size:12px;color:#999' },
+              `${record.used_count} 次`,
+            );
       // Temp code with max_uses > 0
       const pct = Math.round(
         (record.used_count / Math.max(record.max_uses, 1)) * 100,
@@ -103,27 +118,33 @@ const columns: TableColumnsType = [
       if (pct >= 100) strokeColor = '#f5222d';
       else if (pct >= 80) strokeColor = '#fa8c16';
       else strokeColor = '#52c41a';
+      if (canClick)
+        return h(
+          'a',
+          {
+            style:
+              'display:flex;align-items:center;gap:8px;cursor:pointer;color:inherit;text-decoration:none',
+            onClick: () => showCodeUsers(record.code),
+          },
+          [
+            h(
+              'span',
+              { style: 'white-space:nowrap;font-size:12px' },
+              `${record.used_count} / ${record.max_uses}`,
+            ),
+            h(Progress, {
+              percent: Math.min(pct, 100),
+              size: 'small',
+              strokeColor,
+              showInfo: false,
+              style: 'flex:1',
+            }),
+          ],
+        );
       return h(
-        'a',
-        {
-          style:
-            'display:flex;align-items:center;gap:8px;cursor:pointer;color:inherit;text-decoration:none',
-          onClick: () => showCodeUsers(record.code),
-        },
-        [
-          h(
-            'span',
-            { style: 'white-space:nowrap;font-size:12px' },
-            `${record.used_count} / ${record.max_uses}`,
-          ),
-          h(Progress, {
-            percent: Math.min(pct, 100),
-            size: 'small',
-            strokeColor,
-            showInfo: false,
-            style: 'flex:1',
-          }),
-        ],
+        'span',
+        { style: 'font-size:12px;color:#999' },
+        `${record.used_count} / ${record.max_uses}`,
       );
     },
   },
@@ -537,12 +558,11 @@ onMounted(fetchData);
       />
     </Modal>
 
-    <!-- User List Modal -->
-    <Modal
+    <!-- User List Drawer -->
+    <Drawer
       v-model:open="userListVisible"
       :title="`使用识别码 ${userListCode} 的用户`"
-      :footer="null"
-      width="300"
+      :width="640"
     >
       <List
         :data-source="userListItems"
@@ -587,10 +607,26 @@ onMounted(fetchData);
                   >
                     @{{ r.username }}
                   </a>
-                  <span v-if="!r.first_name && !r.username" style="color: #999">未知</span>
+                  <span v-if="!r.first_name && !r.username" style="color: #999">
+                    未知用户
+                  </span>
+                  <Tag v-if="r.is_premium" color="gold" style="font-size: 10px">
+⭐
+</Tag>
                   <Tag v-if="r.is_blocked" color="red" style="font-size: 11px">
                     已拉黑
                   </Tag>
+                </Space>
+              </template>
+              <template #description>
+                <Space size="middle" style=" font-size: 12px;color: #888">
+                  <span>
+                    <code style="font-size: 11px">{{ r.tg_user_id }}</code>
+                  </span>
+                  <span v-if="r.last_active_at">
+                    {{ dayjs(r.last_active_at).format('MM-DD HH:mm') }}
+                  </span>
+                  <span>{{ r.message_count }} 条消息</span>
                 </Space>
               </template>
             </List.Item.Meta>
@@ -602,18 +638,20 @@ onMounted(fetchData);
               >
                 解除
               </Button>
-              <Button
+              <Popconfirm
                 v-else
-                size="small"
-                danger
-                @click="handleBlockUser(r.tg_user_id)"
+                title="确认拉黑该用户？"
+                :description="`TG ID: ${r.tg_user_id}`"
+                ok-text="确认拉黑"
+                cancel-text="取消"
+                @confirm="handleBlockUser(r.tg_user_id)"
               >
-                拉黑
-              </Button>
+                <Button size="small" danger> 拉黑 </Button>
+              </Popconfirm>
             </template>
           </List.Item>
         </template>
       </List>
-    </Modal>
+    </Drawer>
   </Page>
 </template>

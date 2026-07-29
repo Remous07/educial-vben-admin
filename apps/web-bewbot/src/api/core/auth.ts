@@ -262,6 +262,9 @@ export interface CodeUserItem {
   first_name: null | string;
   username: null | string;
   is_blocked: boolean;
+  is_premium: boolean;
+  last_active_at: null | string;
+  message_count: number;
 }
 
 /** 获取使用某识别码的用户列表 */
