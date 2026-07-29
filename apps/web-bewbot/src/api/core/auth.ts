@@ -257,6 +257,20 @@ export async function getBlockedVisitorsApi() {
   >('/blocked-visitors');
 }
 
+export interface CodeUserItem {
+  tg_user_id: number;
+  first_name: null | string;
+  username: null | string;
+  is_blocked: boolean;
+}
+
+/** 获取使用某识别码的用户列表 */
+export async function getCodeUsersApi(code: string) {
+  return requestClient.get<CodeUserItem[]>(
+    `/account/conversation-codes/${code}/users`,
+  );
+}
+
 export interface ConversationCodeItem {
   id: number;
   code: string;

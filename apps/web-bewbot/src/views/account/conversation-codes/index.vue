@@ -2,6 +2,7 @@
 import type { TableColumnsType } from 'ant-design-vue';
 
 import type { ConversationCodeItem } from '#/api/core';
+import type { CodeUserItem } from '#/api/core/auth';
 
 import { h, onMounted, ref } from 'vue';
 
@@ -25,6 +26,7 @@ import dayjs from 'dayjs';
 import {
   createConversationCodeApi,
   editConversationCodeApi,
+  getCodeUsersApi,
   getConversationCodesApi,
   permanentlyDeleteConversationCodeApi,
   reactivateConversationCodeApi,
@@ -74,30 +76,52 @@ const columns: TableColumnsType = [
     customRender: ({ record }: { record: ConversationCodeItem }) => {
       if (record.is_default)
         return h(
-          'span',
-          { style: 'font-size:12px' },
+          'a',
+          {
+            style: 'font-size:12px;cursor:pointer;color:#1677ff',
+            onClick: () => showCodeUsers(record.code),
+          },
           `${record.used_count} 次`,
         );
-      if (record.max_uses <= 0) return '-';
-      const pct = Math.round((record.used_count / record.max_uses) * 100);
+      if (record.max_uses <= 0)
+        return h(
+          'a',
+          {
+            style: 'font-size:12px;cursor:pointer;color:#1677ff',
+            onClick: () => showCodeUsers(record.code),
+          },
+          `${record.used_count} 次`,
+        );
+      // Temp code with max_uses > 0
+      const pct = Math.round(
+        (record.used_count / Math.max(record.max_uses, 1)) * 100,
+      );
       let strokeColor: string;
       if (pct >= 100) strokeColor = '#f5222d';
       else if (pct >= 80) strokeColor = '#fa8c16';
       else strokeColor = '#52c41a';
-      return h('div', { style: 'display:flex;align-items:center;gap:8px' }, [
-        h(
-          'span',
-          { style: 'white-space:nowrap;font-size:12px' },
-          `${record.used_count} / ${record.max_uses}`,
-        ),
-        h(Progress, {
-          percent: Math.min(pct, 100),
-          size: 'small',
-          strokeColor,
-          showInfo: false,
-          style: 'flex:1',
-        }),
-      ]);
+      return h(
+        'a',
+        {
+          style:
+            'display:flex;align-items:center;gap:8px;cursor:pointer;color:inherit;text-decoration:none',
+          onClick: () => showCodeUsers(record.code),
+        },
+        [
+          h(
+            'span',
+            { style: 'white-space:nowrap;font-size:12px' },
+            `${record.used_count} / ${record.max_uses}`,
+          ),
+          h(Progress, {
+            percent: Math.min(pct, 100),
+            size: 'small',
+            strokeColor,
+            showInfo: false,
+            style: 'flex:1',
+          }),
+        ],
+      );
     },
   },
   {
@@ -307,6 +331,25 @@ function handleRotate() {
   });
 }
 
+// User list modal
+const userListVisible = ref(false);
+const userListCode = ref('');
+const userListItems = ref<CodeUserItem[]>([]);
+const userListLoading = ref(false);
+
+async function showCodeUsers(code: string) {
+  userListCode.value = code;
+  userListVisible.value = true;
+  userListLoading.value = true;
+  try {
+    userListItems.value = await getCodeUsersApi(code);
+  } catch {
+    message.error('加载用户列表失败');
+  } finally {
+    userListLoading.value = false;
+  }
+}
+
 async function fetchData() {
   loading.value = true;
   try {
@@ -471,6 +514,45 @@ onMounted(fetchData);
         placeholder="输入新的识别码"
         :maxlength="16"
         style="margin-top: 4px"
+      />
+    </Modal>
+
+    <!-- User List Modal -->
+    <Modal
+      v-model:open="userListVisible"
+      :title="`使用识别码 ${userListCode} 的用户`"
+      :footer="null"
+      width="500"
+    >
+      <Table
+        :columns="[
+          { title: 'TG ID', dataIndex: 'tg_user_id', key: 'tg_id', width: 140 },
+          {
+            title: '用户',
+            key: 'user',
+            width: 180,
+            customRender: ({ record: r }: any) => {
+              const parts: string[] = [];
+              if (r.first_name) parts.push(r.first_name);
+              if (r.username) parts.push(`@${ r.username}`);
+              return parts.join(' ') || '未知';
+            },
+          },
+          {
+            title: '状态',
+            key: 'blocked',
+            width: 80,
+            customRender: ({ record: r }: any) =>
+              r.is_blocked
+                ? h(Tag, { color: 'red' }, () => '已拉黑')
+                : h(Tag, { color: 'green' }, () => '正常'),
+          },
+        ]"
+        :data-source="userListItems"
+        :loading="userListLoading"
+        :pagination="false"
+        row-key="tg_user_id"
+        size="small"
       />
     </Modal>
   </Page>
