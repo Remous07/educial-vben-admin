@@ -14,7 +14,8 @@ const routes: RouteRecordRaw[] = [
   {
     component: () => import('#/views/account/conversation-codes/index.vue'),
     meta: {
-      title: '对话识别码管理',
+      icon: 'lucide:key',
+      title: '识别码',
     },
     name: 'ConversationCodes',
     path: '/conversation-codes',
