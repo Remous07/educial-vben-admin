@@ -13,6 +13,7 @@ import {
   DatePicker,
   Input,
   InputNumber,
+  List,
   message,
   Modal,
   Progress,
@@ -543,76 +544,78 @@ onMounted(fetchData);
       :footer="null"
       width="420"
     >
-      <Table
-        :columns="[
-          {
-            title: 'TG ID',
-            key: 'tg_id',
-            width: 110,
-            customRender: ({ record: r }: any) =>
-              h(
-                'a',
-                {
-                  href: `tg://user?id=${r.tg_user_id}`,
-                  style: 'color:#1677ff',
-                },
-                r.tg_user_id,
-              ),
-          },
-          {
-            title: '用户',
-            key: 'user',
-            customRender: ({ record: r }: any) => {
-              const nodes: any[] = [];
-              if (r.first_name) nodes.push(r.first_name, ' ');
-              if (r.username) {
-                nodes.push(
-                  h(
-                    'a',
-                    {
-                      href: `https://t.me/${r.username}`,
-                      target: '_blank',
-                      style: 'color:#1677ff',
-                    },
-                    `@${r.username}`,
-                  ),
-                );
-              }
-              if (!nodes.length) return '未知';
-              return h('span', nodes);
-            },
-          },
-          {
-            title: '操作',
-            key: 'action',
-            width: 80,
-            customRender: ({ record: r }: any) =>
-              r.is_blocked
-                ? h(
-                    Button,
-                    {
-                      size: 'small',
-                      onClick: () => handleUnblockUser(r.tg_user_id),
-                    },
-                    () => '解除',
-                  )
-                : h(
-                    Button,
-                    {
-                      size: 'small',
-                      danger: true,
-                      onClick: () => handleBlockUser(r.tg_user_id),
-                    },
-                    () => '拉黑',
-                  ),
-          },
-        ]"
+      <List
         :data-source="userListItems"
         :loading="userListLoading"
-        :pagination="false"
-        row-key="tg_user_id"
         size="small"
-      />
+      >
+        <template #renderItem="{ item: r }">
+          <List.Item>
+            <List.Item.Meta>
+              <template #avatar>
+                <div
+                  :style="{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    background: r.is_blocked ? '#f0f0f0' : '#e6f4ff',
+                    color: r.is_blocked ? '#bbb' : '#1677ff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '14px',
+                    fontWeight: 'bold',
+                  }"
+                >
+                  {{ (r.first_name || r.username || '?')[0].toUpperCase() }}
+                </div>
+              </template>
+              <template #title>
+                <span v-if="r.first_name">{{ r.first_name }}</span>
+                <a
+                  v-if="r.username"
+                  :href="`https://t.me/${r.username}`"
+                  target="_blank"
+                  style="margin-left: 4px; color: #1677ff"
+                >
+                  @{{ r.username }}
+                </a>
+                <span v-if="!r.first_name && !r.username" style="color: #999">未知</span>
+              </template>
+              <template #description>
+                <Space size="small">
+                  <a
+                    :href="`tg://user?id=${r.tg_user_id}`"
+                    style="font-size: 12px; color: #888"
+                  >
+                    {{ r.tg_user_id }}
+                  </a>
+                  <Tag v-if="r.is_blocked" color="red" style="font-size: 11px">
+                    已拉黑
+                  </Tag>
+                </Space>
+              </template>
+            </List.Item.Meta>
+            <template #extra>
+              <Button
+                v-if="r.is_blocked"
+                size="small"
+                @click="handleUnblockUser(r.tg_user_id)"
+              >
+                解除
+              </Button>
+              <Button
+                v-else
+                size="small"
+                danger
+                @click="handleBlockUser(r.tg_user_id)"
+              >
+                拉黑
+              </Button>
+            </template>
+          </List.Item>
+        </template>
+      </List>
     </Modal>
   </Page>
 </template>
