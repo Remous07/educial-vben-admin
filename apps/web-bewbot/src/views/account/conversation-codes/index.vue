@@ -14,6 +14,7 @@ import {
   InputNumber,
   message,
   Modal,
+  Progress,
   Space,
   Table,
   Tag,
@@ -65,8 +66,33 @@ const columns: TableColumnsType = [
     customRender: ({ text }: { text: string }) =>
       h('code', { style: { fontSize: '14px', fontWeight: 'bold' } }, text),
   },
-  { title: '使用上限', dataIndex: 'max_uses', key: 'max_uses', width: 100 },
-  { title: '已用', dataIndex: 'used_count', key: 'used_count', width: 80 },
+  {
+    title: '使用次数',
+    key: 'usage',
+    width: 180,
+    customRender: ({ record }: { record: ConversationCodeItem }) => {
+      if (record.max_uses <= 0) return '-';
+      const pct = Math.round((record.used_count / record.max_uses) * 100);
+      let strokeColor: string;
+      if (pct >= 100) strokeColor = '#f5222d';
+      else if (pct >= 80) strokeColor = '#fa8c16';
+      else strokeColor = '#52c41a';
+      return h('div', { style: 'display:flex;align-items:center;gap:8px' }, [
+        h(
+          'span',
+          { style: 'white-space:nowrap;font-size:12px' },
+          `${record.used_count} / ${record.max_uses}`,
+        ),
+        h(Progress, {
+          percent: Math.min(pct, 100),
+          size: 'small',
+          strokeColor,
+          showInfo: false,
+          style: 'flex:1',
+        }),
+      ]);
+    },
+  },
   {
     title: '状态',
     dataIndex: 'status',
