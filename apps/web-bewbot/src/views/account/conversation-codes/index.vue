@@ -542,7 +542,7 @@ onMounted(fetchData);
       v-model:open="userListVisible"
       :title="`使用识别码 ${userListCode} 的用户`"
       :footer="null"
-      width="420"
+      width="300"
     >
       <List
         :data-source="userListItems"
@@ -571,25 +571,23 @@ onMounted(fetchData);
                 </div>
               </template>
               <template #title>
-                <span v-if="r.first_name">{{ r.first_name }}</span>
-                <a
-                  v-if="r.username"
-                  :href="`https://t.me/${r.username}`"
-                  target="_blank"
-                  style="margin-left: 4px; color: #1677ff"
-                >
-                  @{{ r.username }}
-                </a>
-                <span v-if="!r.first_name && !r.username" style="color: #999">未知</span>
-              </template>
-              <template #description>
-                <Space size="small">
+                <Space size="small" :wrap="false">
                   <a
+                    v-if="r.first_name"
                     :href="`tg://user?id=${r.tg_user_id}`"
-                    style="font-size: 12px; color: #888"
+                    style="color: #1677ff"
                   >
-                    {{ r.tg_user_id }}
+                    {{ r.first_name }}
                   </a>
+                  <a
+                    v-if="r.username"
+                    :href="`https://t.me/${r.username}`"
+                    target="_blank"
+                    style="color: #1677ff"
+                  >
+                    @{{ r.username }}
+                  </a>
+                  <span v-if="!r.first_name && !r.username" style="color: #999">未知</span>
                   <Tag v-if="r.is_blocked" color="red" style="font-size: 11px">
                     已拉黑
                   </Tag>
