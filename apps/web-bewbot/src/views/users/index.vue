@@ -5,7 +5,16 @@ import { h, onMounted, ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
 
-import { Table } from 'ant-design-vue';
+import {
+  Button,
+  Input,
+  message,
+  Modal,
+  Popconfirm,
+  Space,
+  Table,
+  Tag,
+} from 'ant-design-vue';
 
 import { requestClient } from '#/api/request';
 
@@ -16,27 +25,46 @@ interface User {
   telegram_id: number;
   first_name: null | string;
   username: null | string;
+  is_premium: boolean;
+  is_banned: boolean;
   created_at: string;
-  updated_at: string;
   admin_username: null | string;
   is_bound: boolean;
 }
 
 const users = ref<User[]>([]);
 const loading = ref(false);
+const searchText = ref('');
+const total = ref(0);
+const pagination = ref({ current: 1, pageSize: 20 });
 
 const columns: TableColumnsType = [
   { title: 'ID', dataIndex: 'id', key: 'id', width: 80 },
-  { title: 'Telegram ID', dataIndex: 'telegram_id', key: 'telegram_id' },
-  { title: '名称', dataIndex: 'first_name', key: 'first_name' },
+  {
+    title: 'Telegram ID',
+    dataIndex: 'telegram_id',
+    key: 'telegram_id',
+    width: 120,
+  },
+  { title: '名称', dataIndex: 'first_name', key: 'first_name', width: 100 },
   {
     title: '用户名',
     dataIndex: 'username',
     key: 'username',
+    width: 100,
     customRender: ({ text }: { text: null | string }) =>
       text
         ? h('a', { href: `https://t.me/${text}`, target: '_blank' }, text)
         : '-',
+  },
+  {
+    title: 'Pre',
+    dataIndex: 'is_premium',
+    key: 'is_premium',
+    width: 55,
+    align: 'center',
+    customRender: ({ text }: { text: boolean }) =>
+      text ? h(Tag, { color: 'gold' }, () => 'Pre') : '-',
   },
   {
     title: '已绑定',
@@ -55,21 +83,84 @@ const columns: TableColumnsType = [
     customRender: ({ text }: { text: null | string }) => text || '-',
   },
   {
+    title: '状态',
+    key: 'status',
+    width: 80,
+    align: 'center',
+    customRender: ({ record }: { record: User }) =>
+      record.is_banned ? h(Tag, { color: 'red' }, () => '已拉黑') : '-',
+  },
+  {
     title: '注册时间',
     dataIndex: 'created_at',
     key: 'created_at',
+    width: 170,
     customRender: ({ text }: { text: string }) =>
       new Date(text).toLocaleString('zh-CN'),
   },
+  { title: '操作', key: 'action', width: 220 },
 ];
 
 async function fetchUsers() {
   loading.value = true;
   try {
-    users.value = await requestClient.get('/users');
+    const params: Record<string, any> = {
+      offset: (pagination.value.current - 1) * pagination.value.pageSize,
+      limit: pagination.value.pageSize,
+    };
+    if (searchText.value.trim()) {
+      params.search = searchText.value.trim();
+    }
+    const resp = await requestClient.get('/users', { params });
+    users.value = resp.data ?? resp;
+    total.value = resp.total ?? 0;
   } finally {
     loading.value = false;
   }
+}
+
+function handleSearch() {
+  pagination.value.current = 1;
+  fetchUsers();
+}
+
+async function handleBan(tgUserId: number) {
+  await requestClient.put(`/users/${tgUserId}/ban`);
+  message.success('已拉黑');
+  fetchUsers();
+}
+
+async function handleUnban(tgUserId: number) {
+  await requestClient.put(`/users/${tgUserId}/unban`);
+  message.success('已解除拉黑');
+  fetchUsers();
+}
+
+async function handleDelete(tgUserId: number) {
+  Modal.confirm({
+    title: '确定删除该用户？',
+    content: '删除后所有关联数据将被清除，不可恢复。',
+    okText: '删除',
+    okType: 'danger',
+    cancelText: '取消',
+    onOk: async () => {
+      await requestClient.delete(`/users/${tgUserId}`);
+      message.success('已删除');
+      fetchUsers();
+    },
+  });
+}
+
+async function handleUnbind(tgUserId: number) {
+  await requestClient.put(`/users/${tgUserId}/unbind`);
+  message.success('已解绑');
+  fetchUsers();
+}
+
+function handleTableChange(pag: any) {
+  pagination.value.current = pag.current || 1;
+  pagination.value.pageSize = pag.pageSize || 20;
+  fetchUsers();
 }
 
 onMounted(fetchUsers);
@@ -77,12 +168,72 @@ onMounted(fetchUsers);
 
 <template>
   <Page>
+    <Space style="margin-bottom: 16px">
+      <Input.Search
+        v-model:value="searchText"
+        placeholder="搜索用户名、名称或 TG ID"
+        style="width: 280px"
+        @search="handleSearch"
+      />
+    </Space>
+
     <Table
       :columns="columns"
       :data-source="users"
       :loading="loading"
-      :pagination="{ pageSize: 20 }"
+      :pagination="{
+        current: pagination.current,
+        pageSize: pagination.pageSize,
+        total,
+        showTotal: (t: number) => `共 ${t} 条`,
+        showSizeChanger: true,
+      }"
       row-key="id"
-    />
+      @change="handleTableChange"
+    >
+      <template #bodyCell="{ column, record }">
+        <template v-if="column.key === 'action'">
+          <Space>
+            <Popconfirm
+              v-if="!record.is_banned"
+              title="确定拉黑该用户？"
+              :description="`TG ID: ${record.telegram_id}`"
+              ok-text="确认拉黑"
+              cancel-text="取消"
+              @confirm="handleBan(record.telegram_id)"
+            >
+              <Button size="small" danger> 拉黑 </Button>
+            </Popconfirm>
+            <Button
+              v-else
+              size="small"
+              type="primary"
+              @click="handleUnban(record.telegram_id)"
+            >
+              解除拉黑
+            </Button>
+            <Popconfirm
+              v-if="record.is_bound"
+              title="确定解绑？"
+              :description="`解除 ${record.admin_username} 与 TG ID ${record.telegram_id} 的绑定`"
+              ok-text="确认解绑"
+              cancel-text="取消"
+              @confirm="handleUnbind(record.telegram_id)"
+            >
+              <Button size="small"> 解绑 </Button>
+            </Popconfirm>
+            <Popconfirm
+              title="确定删除该用户？"
+              description="所有关联数据将被清除，不可恢复。"
+              ok-text="删除"
+              cancel-text="取消"
+              @confirm="handleDelete(record.telegram_id)"
+            >
+              <Button size="small" danger> 删除 </Button>
+            </Popconfirm>
+          </Space>
+        </template>
+      </template>
+    </Table>
   </Page>
 </template>
