@@ -18,6 +18,7 @@ import {
   Space,
   Table,
   Tag,
+  Tooltip,
 } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
@@ -69,7 +70,7 @@ const columns: TableColumnsType = [
   {
     title: '使用次数',
     key: 'usage',
-    width: 180,
+    width: 150,
     customRender: ({ record }: { record: ConversationCodeItem }) => {
       if (record.is_default)
         return h(
@@ -126,7 +127,7 @@ const columns: TableColumnsType = [
   {
     title: '过期时间',
     key: 'expiry',
-    width: 200,
+    width: 160,
     customRender: ({ record }: { record: ConversationCodeItem }) => {
       if (record.is_default || !record.expires_at || !record.created_at)
         return '永久';
@@ -139,20 +140,27 @@ const columns: TableColumnsType = [
       const pct = Math.round((elapsed / total) * 100);
       const remaining = Math.max(0, expires - now);
       const days = Math.ceil(remaining / 86_400_000);
+      const fullDate = new Date(record.expires_at).toLocaleString('zh-CN');
       let strokeColor: string;
       if (pct >= 90) strokeColor = '#f5222d';
       else if (pct >= 70) strokeColor = '#fa8c16';
       else strokeColor = '#1677ff';
-      return h('div', { style: 'display:flex;align-items:center;gap:8px' }, [
-        h('span', { style: 'white-space:nowrap;font-size:12px' }, `${days}天`),
-        h(Progress, {
-          percent: Math.min(pct, 100),
-          size: 'small',
-          strokeColor,
-          showInfo: false,
-          style: 'flex:1',
-        }),
-      ]);
+      return h(Tooltip, { title: fullDate }, () =>
+        h('div', { style: 'display:flex;align-items:center;gap:8px' }, [
+          h(
+            'span',
+            { style: 'white-space:nowrap;font-size:12px' },
+            `${days}天`,
+          ),
+          h(Progress, {
+            percent: Math.min(pct, 100),
+            size: 'small',
+            strokeColor,
+            showInfo: false,
+            style: 'flex:1',
+          }),
+        ]),
+      );
     },
   },
   {
