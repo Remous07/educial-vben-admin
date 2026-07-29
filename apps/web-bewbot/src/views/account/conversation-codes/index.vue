@@ -611,15 +611,15 @@ onMounted(fetchData);
                     未知用户
                   </span>
                   <Tag v-if="r.is_premium" color="gold" style="font-size: 10px">
-⭐
-</Tag>
+                    Pre
+                  </Tag>
                   <Tag v-if="r.is_blocked" color="red" style="font-size: 11px">
                     已拉黑
                   </Tag>
                 </Space>
               </template>
               <template #description>
-                <Space size="middle" style=" font-size: 12px;color: #888">
+                <Space size="middle" style="font-size: 12px; color: #888">
                   <span>
                     <code style="font-size: 11px">{{ r.tg_user_id }}</code>
                   </span>

@@ -96,7 +96,7 @@ const columns: TableColumnsType = [
     align: 'center',
     customRender: ({ text }: { text: boolean }) =>
       text
-        ? h(Tag, { color: 'gold' }, () => '是')
+        ? h(Tag, { color: 'gold' }, () => 'Pre')
         : h(Tag, { color: 'default' }, () => '否'),
   },
   {
