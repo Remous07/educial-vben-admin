@@ -9,7 +9,10 @@ import { Page } from '@vben/common-ui';
 
 import {
   Button,
+  Card,
   DatePicker,
+  Descriptions,
+  Input,
   InputNumber,
   message,
   Modal,
@@ -22,6 +25,7 @@ import dayjs from 'dayjs';
 import {
   createConversationCodeApi,
   editConversationCodeApi,
+  getConversationCodeApi,
   getConversationCodesApi,
   permanentlyDeleteConversationCodeApi,
   reactivateConversationCodeApi,
@@ -32,11 +36,13 @@ defineOptions({ name: 'ConversationCodes' });
 
 const codes = ref<ConversationCodeItem[]>([]);
 const loading = ref(false);
+const masterCode = ref('');
 
 // Create modal
 const modalVisible = ref(false);
 const maxUses = ref(1);
 const expiresAt = ref(dayjs().add(7, 'day'));
+const remark = ref('');
 const saving = ref(false);
 
 // Edit modal
@@ -44,6 +50,7 @@ const editModalVisible = ref(false);
 const editingCode = ref<ConversationCodeItem | null>(null);
 const editMaxUses = ref(0);
 const editExpiresAt = ref<any>(null);
+const editRemark = ref('');
 
 const columns: TableColumnsType = [
   { title: 'ID', dataIndex: 'id', key: 'id', width: 60, sorter: true },
@@ -71,6 +78,14 @@ const columns: TableColumnsType = [
         return h(Tag, { color: 'red' }, () => '已用完');
       return h(Tag, { color: 'green' }, () => '有效');
     },
+  },
+  {
+    title: '备注',
+    dataIndex: 'remark',
+    key: 'remark',
+    width: 150,
+    ellipsis: true,
+    customRender: ({ text }: { text: null | string }) => text || '-',
   },
   {
     title: '过期时间',
@@ -102,10 +117,12 @@ async function handleCreate() {
     await createConversationCodeApi({
       expires_at: expiresAt.value?.toISOString?.() ?? undefined,
       max_uses: maxUses.value,
+      remark: remark.value || undefined,
     });
     message.success('识别码已生成');
     modalVisible.value = false;
     maxUses.value = 1;
+    remark.value = '';
     expiresAt.value = dayjs().add(7, 'day');
     fetchData();
   } catch {
@@ -123,6 +140,7 @@ function openEditModal(code: ConversationCodeItem) {
   editingCode.value = code;
   editMaxUses.value = code.max_uses;
   editExpiresAt.value = code.expires_at ? dayjs(code.expires_at) : null;
+  editRemark.value = code.remark || '';
   editModalVisible.value = true;
 }
 
@@ -133,6 +151,7 @@ async function handleEditSave() {
     await editConversationCodeApi(editingCode.value.id, {
       expires_at: editExpiresAt.value?.toISOString?.() ?? '',
       max_uses: editMaxUses.value,
+      remark: editRemark.value || undefined,
     });
     message.success('保存成功');
     editModalVisible.value = false;
@@ -189,7 +208,10 @@ async function handlePermanentDelete(code: ConversationCodeItem) {
 async function fetchData() {
   loading.value = true;
   try {
-    codes.value = await getConversationCodesApi();
+    [codes.value, masterCode.value] = await Promise.all([
+      getConversationCodesApi(),
+      getConversationCodeApi().then((r: { code: string }) => r.code),
+    ]);
   } finally {
     loading.value = false;
   }
@@ -200,57 +222,76 @@ onMounted(fetchData);
 
 <template>
   <Page>
-    <div style="margin-bottom: 16px">
-      <Button type="primary" @click="modalVisible = true"> 生成识别码 </Button>
-    </div>
+    <Card title="默认识别码" size="small" style="margin-bottom: 16px">
+      <Descriptions :column="1" size="small">
+        <Descriptions.Item label="识别码">
+          <code style="font-size: 15px; font-weight: bold">{{
+            masterCode
+          }}</code>
+          <Button size="small" type="link" @click="copyCode(masterCode)">
+            复制
+          </Button>
+        </Descriptions.Item>
+      </Descriptions>
+    </Card>
 
-    <Table
-      :columns="columns"
-      :data-source="codes"
-      :loading="loading"
-      :pagination="{ pageSize: 20 }"
-      row-key="id"
-    >
-      <template #bodyCell="{ column, record }">
-        <template v-if="column.key === 'action'">
-          <Space>
-            <Button size="small" @click="copyCode(record.code)"> 复制 </Button>
-            <template v-if="record.is_active">
-              <Button
-                size="small"
-                type="primary"
-                @click="openEditModal(record as ConversationCodeItem)"
-              >
-                编辑
+    <Card title="临时识别码" size="small">
+      <div style="margin-bottom: 16px">
+        <Button type="primary" @click="modalVisible = true">
+          生成识别码
+        </Button>
+      </div>
+
+      <Table
+        :columns="columns"
+        :data-source="codes"
+        :loading="loading"
+        :pagination="{ pageSize: 20 }"
+        row-key="id"
+      >
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.key === 'action'">
+            <Space>
+              <Button size="small" @click="copyCode(record.code)">
+                复制
               </Button>
-              <Button
-                size="small"
-                danger
-                @click="handleRevoke(record as ConversationCodeItem)"
-              >
-                撤销
-              </Button>
-            </template>
-            <template v-else>
-              <Button
-                size="small"
-                type="primary"
-                @click="handleReactivate(record as ConversationCodeItem)"
-              >
-                激活
-              </Button>
-              <Button
-                size="small"
-                danger
-                @click="handlePermanentDelete(record as ConversationCodeItem)"
-              >
-                删除
-              </Button>
-            </template>
-          </Space>
+              <template v-if="record.is_active">
+                <Button
+                  size="small"
+                  type="primary"
+                  @click="openEditModal(record as ConversationCodeItem)"
+                >
+                  编辑
+                </Button>
+                <Button
+                  size="small"
+                  danger
+                  @click="handleRevoke(record as ConversationCodeItem)"
+                >
+                  撤销
+                </Button>
+              </template>
+              <template v-else>
+                <Button
+                  size="small"
+                  type="primary"
+                  @click="handleReactivate(record as ConversationCodeItem)"
+                >
+                  激活
+                </Button>
+                <Button
+                  size="small"
+                  danger
+                  @click="handlePermanentDelete(record as ConversationCodeItem)"
+                >
+                  删除
+                </Button>
+              </template>
+            </Space>
+          </template>
         </template>
-      </template>
-    </Table>
+      </Table>
+    </Card>
 
     <!-- Create Modal -->
     <Modal
@@ -276,6 +317,15 @@ onMounted(fetchData);
           format="YYYY-MM-DD HH:mm:ss"
           style="width: 100%; margin-top: 4px"
           :disabled-date="(d: any) => d.isBefore(dayjs().startOf('day'))"
+        />
+      </div>
+      <div style="margin-top: 12px">
+        <label>备注</label>
+        <Input
+          v-model:value="remark"
+          placeholder="如：给张三的临时码"
+          :maxlength="256"
+          style="margin-top: 4px"
         />
       </div>
     </Modal>
@@ -304,6 +354,15 @@ onMounted(fetchData);
           format="YYYY-MM-DD HH:mm:ss"
           style="width: 100%; margin-top: 4px"
           :disabled-date="(d: any) => d.isBefore(dayjs().startOf('day'))"
+        />
+      </div>
+      <div style="margin-top: 12px">
+        <label>备注</label>
+        <Input
+          v-model:value="editRemark"
+          placeholder="如：给张三的临时码"
+          :maxlength="256"
+          style="margin-top: 4px"
         />
       </div>
     </Modal>
