@@ -71,6 +71,12 @@ const columns: TableColumnsType = [
     key: 'usage',
     width: 180,
     customRender: ({ record }: { record: ConversationCodeItem }) => {
+      if (record.is_default)
+        return h(
+          'span',
+          { style: 'font-size:12px' },
+          `${record.used_count} 次`,
+        );
       if (record.max_uses <= 0) return '-';
       const pct = Math.round((record.used_count / record.max_uses) * 100);
       let strokeColor: string;
