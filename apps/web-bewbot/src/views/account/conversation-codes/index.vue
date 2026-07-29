@@ -9,9 +9,7 @@ import { Page } from '@vben/common-ui';
 
 import {
   Button,
-  Card,
   DatePicker,
-  Descriptions,
   Input,
   InputNumber,
   message,
@@ -25,18 +23,18 @@ import dayjs from 'dayjs';
 import {
   createConversationCodeApi,
   editConversationCodeApi,
-  getConversationCodeApi,
   getConversationCodesApi,
   permanentlyDeleteConversationCodeApi,
   reactivateConversationCodeApi,
   revokeConversationCodeApi,
+  rotateConversationCodeApi,
+  setConversationCodeApi,
 } from '#/api/core';
 
 defineOptions({ name: 'ConversationCodes' });
 
 const codes = ref<ConversationCodeItem[]>([]);
 const loading = ref(false);
-const masterCode = ref('');
 
 // Create modal
 const modalVisible = ref(false);
@@ -45,12 +43,17 @@ const expiresAt = ref(dayjs().add(7, 'day'));
 const remark = ref('');
 const saving = ref(false);
 
-// Edit modal
+// Edit modal (temp codes)
 const editModalVisible = ref(false);
 const editingCode = ref<ConversationCodeItem | null>(null);
 const editMaxUses = ref(0);
 const editExpiresAt = ref<any>(null);
 const editRemark = ref('');
+
+// Edit default code modal
+const defaultEditVisible = ref(false);
+const newDefaultCode = ref('');
+const savingDefault = ref(false);
 
 const columns: TableColumnsType = [
   { title: 'ID', dataIndex: 'id', key: 'id', width: 60, sorter: true },
@@ -70,6 +73,7 @@ const columns: TableColumnsType = [
     key: 'status',
     width: 100,
     customRender: ({ record }: { record: ConversationCodeItem }) => {
+      if (record.is_default) return h(Tag, { color: 'blue' }, () => '默认');
       if (!record.is_active)
         return h(Tag, { color: 'default' }, () => '已撤销');
       if (record.expires_at && new Date(record.expires_at) < new Date())
@@ -205,13 +209,44 @@ async function handlePermanentDelete(code: ConversationCodeItem) {
   });
 }
 
+function openDefaultEdit(_code: string) {
+  newDefaultCode.value = '';
+  defaultEditVisible.value = true;
+}
+
+async function handleDefaultEditSave() {
+  savingDefault.value = true;
+  try {
+    await setConversationCodeApi(newDefaultCode.value);
+    message.success('默认识别码已更新');
+    defaultEditVisible.value = false;
+    fetchData();
+  } catch {
+    // error handled by interceptor
+  } finally {
+    savingDefault.value = false;
+  }
+}
+
+function handleRotate() {
+  Modal.confirm({
+    title: '确定轮换默认识别码？',
+    content: '轮换后旧识别码立即失效，使用旧码的访客将无法发起新对话。',
+    okText: '确认轮换',
+    okType: 'danger',
+    cancelText: '取消',
+    onOk: async () => {
+      await rotateConversationCodeApi();
+      message.success('默认识别码已轮换');
+      fetchData();
+    },
+  });
+}
+
 async function fetchData() {
   loading.value = true;
   try {
-    [codes.value, masterCode.value] = await Promise.all([
-      getConversationCodesApi(),
-      getConversationCodeApi().then((r: { code: string }) => r.code),
-    ]);
+    codes.value = await getConversationCodesApi();
   } finally {
     loading.value = false;
   }
@@ -222,76 +257,68 @@ onMounted(fetchData);
 
 <template>
   <Page>
-    <Card title="默认识别码" size="small" style="margin-bottom: 16px">
-      <Descriptions :column="1" size="small">
-        <Descriptions.Item label="识别码">
-          <code style="font-size: 15px; font-weight: bold">{{
-            masterCode
-          }}</code>
-          <Button size="small" type="link" @click="copyCode(masterCode)">
-            复制
-          </Button>
-        </Descriptions.Item>
-      </Descriptions>
-    </Card>
+    <div style="margin-bottom: 16px">
+      <Button type="primary" @click="modalVisible = true"> 生成识别码 </Button>
+    </div>
 
-    <Card title="临时识别码" size="small">
-      <div style="margin-bottom: 16px">
-        <Button type="primary" @click="modalVisible = true">
-          生成识别码
-        </Button>
-      </div>
-
-      <Table
-        :columns="columns"
-        :data-source="codes"
-        :loading="loading"
-        :pagination="{ pageSize: 20 }"
-        row-key="id"
-      >
-        <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'action'">
-            <Space>
-              <Button size="small" @click="copyCode(record.code)">
-                复制
+    <Table
+      :columns="columns"
+      :data-source="codes"
+      :loading="loading"
+      :pagination="{ pageSize: 20 }"
+      row-key="id"
+    >
+      <template #bodyCell="{ column, record }">
+        <template v-if="column.key === 'action'">
+          <Space v-if="record.is_default">
+            <Button size="small" @click="copyCode(record.code)"> 复制 </Button>
+            <Button
+              size="small"
+              type="primary"
+              @click="openDefaultEdit(record.code)"
+            >
+              编辑
+            </Button>
+            <Button size="small" danger @click="handleRotate()"> 轮换 </Button>
+          </Space>
+          <Space v-else>
+            <Button size="small" @click="copyCode(record.code)"> 复制 </Button>
+            <template v-if="record.is_active">
+              <Button
+                size="small"
+                type="primary"
+                @click="openEditModal(record as ConversationCodeItem)"
+              >
+                编辑
               </Button>
-              <template v-if="record.is_active">
-                <Button
-                  size="small"
-                  type="primary"
-                  @click="openEditModal(record as ConversationCodeItem)"
-                >
-                  编辑
-                </Button>
-                <Button
-                  size="small"
-                  danger
-                  @click="handleRevoke(record as ConversationCodeItem)"
-                >
-                  撤销
-                </Button>
-              </template>
-              <template v-else>
-                <Button
-                  size="small"
-                  type="primary"
-                  @click="handleReactivate(record as ConversationCodeItem)"
-                >
-                  激活
-                </Button>
-                <Button
-                  size="small"
-                  danger
-                  @click="handlePermanentDelete(record as ConversationCodeItem)"
-                >
-                  删除
-                </Button>
-              </template>
-            </Space>
-          </template>
+              <Button
+                size="small"
+                danger
+                @click="handleRevoke(record as ConversationCodeItem)"
+              >
+                撤销
+              </Button>
+            </template>
+            <template v-else>
+              <Button
+                size="small"
+                type="primary"
+                @click="handleReactivate(record as ConversationCodeItem)"
+              >
+                激活
+              </Button>
+              <Button
+                size="small"
+                danger
+                @click="handlePermanentDelete(record as ConversationCodeItem)"
+              >
+                删除
+              </Button>
+            </template>
+          </Space>
         </template>
-      </Table>
-    </Card>
+      </template>
+    </Table>
 
     <!-- Create Modal -->
     <Modal
@@ -365,6 +392,22 @@ onMounted(fetchData);
           style="margin-top: 4px"
         />
       </div>
+    </Modal>
+
+    <!-- Edit Default Code Modal -->
+    <Modal
+      v-model:open="defaultEditVisible"
+      title="编辑默认识别码"
+      :confirm-loading="savingDefault"
+      @ok="handleDefaultEditSave"
+    >
+      <label>新识别码（8-16位字母、数字、-、_）</label>
+      <Input
+        v-model:value="newDefaultCode"
+        placeholder="输入新的识别码"
+        :maxlength="16"
+        style="margin-top: 4px"
+      />
     </Modal>
   </Page>
 </template>

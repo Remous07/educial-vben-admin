@@ -227,6 +227,13 @@ export async function permanentlyDeleteConversationCodeApi(id: number) {
   return requestClient.delete(`/account/conversation-codes/${id}/permanent`);
 }
 
+/** 轮换默认识别码 */
+export async function rotateConversationCodeApi() {
+  return requestClient.post<{ code: string }>(
+    '/account/conversation-code/rotate',
+  );
+}
+
 /** 拉黑访客 */
 export async function blockVisitorApi(tgUserId: number) {
   return requestClient.post('/blocked-visitors', { tg_user_id: tgUserId });
@@ -256,6 +263,7 @@ export interface ConversationCodeItem {
   max_uses: number;
   used_count: number;
   is_active: boolean;
+  is_default: boolean;
   remark: null | string;
   expires_at: null | string;
   created_at: null | string;
