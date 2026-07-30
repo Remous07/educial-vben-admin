@@ -42,6 +42,7 @@ defineOptions({ name: 'InviteCodes' });
 const codes = ref<InviteCodeItem[]>([]);
 const loading = ref(false);
 const inviteRequired = ref(false);
+const openRegistration = ref(true);
 
 // Code users drawer
 const userDrawerVisible = ref(false);
@@ -69,6 +70,16 @@ async function toggleInviteRequired(val: boolean) {
     message.success(val ? '已开启邀请码验证' : '已关闭邀请码验证');
   } catch {
     inviteRequired.value = !val;
+  }
+}
+
+async function toggleOpenRegistration(val: boolean) {
+  try {
+    await setSystemSettingApi('open_registration', String(val));
+    openRegistration.value = val;
+    message.success(val ? '已开放注册' : '已关闭注册');
+  } catch {
+    openRegistration.value = !val;
   }
 }
 
@@ -345,12 +356,14 @@ async function handleDelete(code: InviteCodeItem) {
 async function fetchData() {
   loading.value = true;
   try {
-    const [codesData, requiredStr] = await Promise.all([
+    const [codesData, requiredStr, openRegStr] = await Promise.all([
       getInviteCodesApi(),
       getSystemSettingApi('require_invite_code'),
+      getSystemSettingApi('open_registration'),
     ]);
     codes.value = codesData;
     inviteRequired.value = requiredStr === 'true';
+    openRegistration.value = openRegStr !== 'false';
   } finally {
     loading.value = false;
   }
@@ -363,6 +376,13 @@ onMounted(fetchData);
   <Page>
     <Space style="margin-bottom: 16px">
       <Button type="primary" @click="modalVisible = true">生成邀请码</Button>
+      <Space>
+        <span>开放注册</span>
+        <Switch
+          :checked="openRegistration"
+          @change="toggleOpenRegistration as any"
+        />
+      </Space>
       <Space>
         <span>要求邀请码注册</span>
         <Switch
