@@ -404,6 +404,12 @@ onMounted(async () => {
                 (userInfo as any).pending_email
               }}</span>
               <Tag color="orange" style="margin-left: 8px">待验证</Tag>
+              <span
+                v-if="(userInfo as any).pending_email_expires_in"
+                style=" margin-left: 4px;font-size: 12px; color: #fa8c16"
+              >
+                {{ (userInfo as any).pending_email_expires_in }} 分钟后过期
+              </span>
               <Button
                 size="small"
                 type="link"
