@@ -9,6 +9,7 @@ import { VbenButton, VbenCheckbox } from '@vben-core/shadcn-ui';
 
 import { message } from 'ant-design-vue';
 
+import { getRegistrationStatusApi } from '#/api/core';
 import TurnstileWidget from '#/components/TurnstileWidget.vue';
 import { useAuthStore } from '#/store';
 
@@ -18,8 +19,19 @@ const authStore = useAuthStore();
 const router = useRouter();
 const route = useRoute();
 const turnstileToken = ref('');
+const registrationOpen = ref(true);
 
-onMounted(() => {
+onMounted(async () => {
+  try {
+    const res = await getRegistrationStatusApi();
+    if (res) {
+      registrationOpen.value = res.open_registration;
+    }
+  } catch {
+    // If the request fails, default to showing registration (safe default)
+  }
+
+  // Handle query params
   const q = route.query;
   if (q.verified === '1') {
     message.success('邮箱验证成功，请登录');
@@ -119,7 +131,7 @@ async function handleSubmit() {
       {{ $t('common.login') }}
     </VbenButton>
 
-    <div class="mt-4 text-center text-sm">
+    <div v-if="registrationOpen" class="mt-4 text-center text-sm">
       <span class="text-gray-400">还没有账号？</span>
       <a
         class="cursor-pointer text-blue-500"
