@@ -29,6 +29,7 @@ import {
   getTotpStatusApi,
   resendEmailChangeApi,
   setConversationCodeApi,
+  setSystemSettingApi,
   setupTelegramBindApi,
   totpDisableApi,
   totpEnableApi,
@@ -199,6 +200,39 @@ function copyBindCommand() {
 function copyBotUsername(username: string) {
   navigator.clipboard.writeText(username);
   message.success('已复制');
+}
+
+// Bot username edit
+const botUsernameEdit = ref(false);
+const botUsernameInput = ref('');
+const botUsernameSaving = ref(false);
+
+function openBotUsernameEdit() {
+  botUsernameInput.value = userInfo?.bot_username || '';
+  botUsernameEdit.value = true;
+}
+
+async function handleSetBotUsername() {
+  const val = botUsernameInput.value.trim();
+  if (!val) {
+    message.error('用户名不能为空');
+    return;
+  }
+  if (!/^[a-zA-Z]\w{3,31}$/.test(val)) {
+    message.error('格式不正确（4-32位、字母开头、仅字母数字下划线）');
+    return;
+  }
+  botUsernameSaving.value = true;
+  try {
+    await setSystemSettingApi('bot_username', val);
+    if (userInfo) {
+      (userInfo as any).bot_username = val;
+    }
+    message.success('机器人用户名已更新');
+    botUsernameEdit.value = false;
+  } finally {
+    botUsernameSaving.value = false;
+  }
 }
 
 async function handleUnbind() {
@@ -452,22 +486,57 @@ onMounted(async () => {
 
         <Card title="Telegram 绑定" style="margin-bottom: 16px">
           <div v-if="userInfo?.bot_username" style="margin-bottom: 12px">
-            <span style=" font-size: 13px;color: #888">机器人</span>
-            <Space style="margin-left: 8px">
-              <a
-                :href="`https://t.me/${userInfo.bot_username}`"
-                target="_blank"
-                style="font-weight: 500"
-              >
-                @{{ userInfo.bot_username }}
-              </a>
+            <span style="font-size: 13px; color: #888">机器人</span>
+            <template v-if="botUsernameEdit">
+              <Input
+                v-model:value="botUsernameInput"
+                placeholder="用户名（不含 @）"
+                :maxlength="32"
+                size="small"
+                style="width: 160px; margin-left: 8px"
+              />
               <Button
                 size="small"
-                @click="copyBotUsername(userInfo.bot_username)"
+                type="primary"
+                :loading="botUsernameSaving"
+                style="margin-left: 4px"
+                @click="handleSetBotUsername"
               >
-                复制
+                保存
               </Button>
-            </Space>
+              <Button
+                size="small"
+                style="margin-left: 4px"
+                @click="botUsernameEdit = false"
+              >
+                取消
+              </Button>
+            </template>
+            <template v-else>
+              <Space style="margin-left: 8px">
+                <a
+                  :href="`https://t.me/${userInfo.bot_username}`"
+                  target="_blank"
+                  style="font-weight: 500"
+                >
+                  @{{ userInfo.bot_username }}
+                </a>
+                <Button
+                  size="small"
+                  @click="copyBotUsername(userInfo.bot_username)"
+                >
+                  复制
+                </Button>
+                <Button
+                  v-if="userInfo?.permissions?.includes('bot:settings')"
+                  size="small"
+                  type="link"
+                  @click="openBotUsernameEdit"
+                >
+                  修改
+                </Button>
+              </Space>
+            </template>
           </div>
           <template v-if="tgBound">
             <Descriptions :column="1" style="margin-bottom: 8px">
