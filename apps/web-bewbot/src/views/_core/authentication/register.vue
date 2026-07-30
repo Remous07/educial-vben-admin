@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
 import { $t } from '@vben/locales';
@@ -9,6 +9,7 @@ import { VbenButton } from '@vben-core/shadcn-ui';
 
 import { message } from 'ant-design-vue';
 
+import { getRegistrationStatusApi } from '#/api/core';
 import { requestClient } from '#/api/request';
 import TurnstileWidget from '#/components/TurnstileWidget.vue';
 import { useAuthStore } from '#/store';
@@ -18,6 +19,21 @@ defineOptions({ name: 'Register' });
 const authStore = useAuthStore();
 const router = useRouter();
 const turnstileToken = ref('');
+const checkingAccess = ref(true);
+
+onMounted(async () => {
+  try {
+    const res = await getRegistrationStatusApi();
+    if (res && !res.open_registration) {
+      message.warning('注册已关闭');
+      router.replace('/auth/login');
+      return;
+    }
+  } catch {
+    // If the check fails, allow access (safe default)
+  }
+  checkingAccess.value = false;
+});
 const siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY || '';
 
 const registered = ref(false);
@@ -117,7 +133,7 @@ async function handleResendVerification() {
 </script>
 
 <template>
-  <div class="p-6">
+  <div v-if="!checkingAccess" class="p-6">
     <!-- Pre-registration form -->
     <template v-if="!registered">
       <div class="mb-4 text-center">
