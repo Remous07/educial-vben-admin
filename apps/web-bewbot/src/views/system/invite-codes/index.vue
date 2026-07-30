@@ -10,8 +10,10 @@ import { Page } from '@vben/common-ui';
 import {
   Button,
   DatePicker,
+  Drawer,
   Input,
   InputNumber,
+  List,
   message,
   Modal,
   Progress,
@@ -29,6 +31,7 @@ import {
   editInviteCodeApi,
   getInviteCodesApi,
   getSystemSettingApi,
+  getUsersByInviteCodeApi,
   permanentlyDeleteInviteCodeApi,
   reactivateInviteCodeApi,
   setSystemSettingApi,
@@ -39,6 +42,25 @@ defineOptions({ name: 'InviteCodes' });
 const codes = ref<InviteCodeItem[]>([]);
 const loading = ref(false);
 const inviteRequired = ref(false);
+
+// Code users drawer
+const userDrawerVisible = ref(false);
+const userDrawerCode = ref('');
+const userDrawerItems = ref<
+  { created_at: null | string; email: string; id: number; username: string }[]
+>([]);
+const userDrawerLoading = ref(false);
+
+async function showCodeUsers(code: InviteCodeItem) {
+  userDrawerCode.value = code.code;
+  userDrawerVisible.value = true;
+  userDrawerLoading.value = true;
+  try {
+    userDrawerItems.value = await getUsersByInviteCodeApi(code.id);
+  } finally {
+    userDrawerLoading.value = false;
+  }
+}
 
 async function toggleInviteRequired(val: boolean) {
   try {
@@ -87,12 +109,22 @@ const columns: TableColumnsType = [
     key: 'usage',
     width: 150,
     customRender: ({ record }: { record: InviteCodeItem }) => {
+      const canClick = record.used_count > 0;
       if (record.max_uses <= 0)
-        return h(
-          'span',
-          { style: 'font-size:12px' },
-          `${record.used_count} / 不限`,
-        );
+        return canClick
+          ? h(
+              'a',
+              {
+                style: 'font-size:12px;cursor:pointer;color:#1677ff',
+                onClick: () => showCodeUsers(record),
+              },
+              `${record.used_count} / 不限`,
+            )
+          : h(
+              'span',
+              { style: 'font-size:12px;color:#999' },
+              `${record.used_count} / 不限`,
+            );
       const pct = Math.round(
         (record.used_count / Math.max(record.max_uses, 1)) * 100,
       );
@@ -100,20 +132,34 @@ const columns: TableColumnsType = [
       if (pct >= 100) strokeColor = '#f5222d';
       else if (pct >= 80) strokeColor = '#fa8c16';
       else strokeColor = '#52c41a';
-      return h('div', { style: 'display:flex;align-items:center;gap:8px' }, [
-        h(
-          'span',
-          { style: 'white-space:nowrap;font-size:12px' },
-          `${record.used_count} / ${record.max_uses}`,
-        ),
-        h(Progress, {
-          percent: Math.min(pct, 100),
-          size: 'small',
-          strokeColor,
-          showInfo: false,
-          style: 'flex:1',
-        }),
-      ]);
+      if (canClick)
+        return h(
+          'a',
+          {
+            style:
+              'display:flex;align-items:center;gap:8px;cursor:pointer;color:inherit;text-decoration:none',
+            onClick: () => showCodeUsers(record),
+          },
+          [
+            h(
+              'span',
+              { style: 'white-space:nowrap;font-size:12px' },
+              `${record.used_count} / ${record.max_uses}`,
+            ),
+            h(Progress, {
+              percent: Math.min(pct, 100),
+              size: 'small',
+              strokeColor,
+              showInfo: false,
+              style: 'flex:1',
+            }),
+          ],
+        );
+      return h(
+        'span',
+        { style: 'font-size:12px;color:#999' },
+        `${record.used_count} / ${record.max_uses}`,
+      );
     },
   },
   {
@@ -433,5 +479,35 @@ onMounted(fetchData);
         />
       </div>
     </Modal>
+
+    <!-- Users by code drawer -->
+    <Drawer
+      v-model:open="userDrawerVisible"
+      :title="`使用邀请码 ${userDrawerCode} 的用户`"
+      :width="500"
+    >
+      <List
+        :data-source="userDrawerItems"
+        :loading="userDrawerLoading"
+        size="small"
+      >
+        <template #renderItem="{ item: r }">
+          <List.Item>
+            <List.Item.Meta>
+              <template #title>{{ r.username }}</template>
+              <template #description>
+                {{ r.email }}
+                <span
+                  v-if="r.created_at"
+                  style="margin-left: 12px; color: #999"
+                >
+                  {{ new Date(r.created_at).toLocaleString('zh-CN') }}
+                </span>
+              </template>
+            </List.Item.Meta>
+          </List.Item>
+        </template>
+      </List>
+    </Drawer>
   </Page>
 </template>

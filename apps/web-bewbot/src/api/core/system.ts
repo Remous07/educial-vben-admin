@@ -151,3 +151,10 @@ export function getSystemSettingApi(key: string) {
 export function setSystemSettingApi(key: string, value: string) {
   return requestClient.put(`/system-settings/${key}`, { value });
 }
+
+/** 获取使用指定邀请码的系统用户 */
+export function getUsersByInviteCodeApi(codeId: number) {
+  return requestClient.get<
+    { created_at: null | string; email: string; id: number; username: string }[]
+  >(`/admin-users/by-invite-code/${codeId}`);
+}
