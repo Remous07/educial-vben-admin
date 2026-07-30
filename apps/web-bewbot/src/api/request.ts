@@ -84,7 +84,11 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
   client.addResponseInterceptor(
     errorMessageResponseInterceptor((msg: string, error) => {
       const responseData = error?.response?.data ?? {};
-      const errorMessage = responseData?.error ?? responseData?.message ?? '';
+      const errorMessage =
+        responseData?.detail ??
+        responseData?.error ??
+        responseData?.message ??
+        '';
       message.error(errorMessage || msg);
     }),
   );
