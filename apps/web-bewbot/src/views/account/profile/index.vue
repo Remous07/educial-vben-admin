@@ -50,6 +50,7 @@ const loading = ref(false);
 const emailVisible = ref(false);
 const emailCurrentPwd = ref('');
 const newEmail = ref('');
+const emailTotpCode = ref('');
 const savingEmail = ref(false);
 const resendingEmail = ref(false);
 
@@ -60,7 +61,11 @@ async function handleChangeEmail() {
   }
   savingEmail.value = true;
   try {
-    const r = await changeEmailApi(emailCurrentPwd.value, newEmail.value);
+    const r = await changeEmailApi(
+      emailCurrentPwd.value,
+      newEmail.value,
+      emailTotpCode.value || undefined,
+    );
     // Update userInfo with pending email for UI
     if (userInfo) {
       (userInfo as any).pending_email = r.pending_email;
@@ -635,6 +640,15 @@ onMounted(async () => {
           v-model:value="newEmail"
           type="email"
           placeholder="请输入新邮箱"
+          style="margin-top: 4px"
+        />
+      </div>
+      <div v-if="totpEnabled" style="margin-top: 12px">
+        <label>两步验证码</label>
+        <Input
+          v-model:value="emailTotpCode"
+          placeholder="请输入 6 位验证码"
+          :maxlength="6"
           style="margin-top: 4px"
         />
       </div>

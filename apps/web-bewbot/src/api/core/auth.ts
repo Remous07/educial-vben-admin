@@ -66,12 +66,14 @@ export async function totpDisableApi(code: string) {
 export async function changeEmailApi(
   currentPassword: string,
   newEmail: string,
+  totpCode?: string,
 ) {
   return requestClient.post<{ pending_email: string }>(
     '/account/change-email',
     {
       current_password: currentPassword,
       new_email: newEmail,
+      totp_code: totpCode,
     },
   );
 }
