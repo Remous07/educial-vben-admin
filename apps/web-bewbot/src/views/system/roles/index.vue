@@ -48,7 +48,10 @@ const CATEGORY_LABELS: Record<string, string> = {
   visitors: '访客',
   conversation: '对话',
   invite: '邀请码',
-  admin: '系统管理',
+  registration: '注册',
+  admin: '后台用户',
+  bot: '机器人',
+  profile: '个人设置',
 };
 
 const permissionGroups = computed(() => {
