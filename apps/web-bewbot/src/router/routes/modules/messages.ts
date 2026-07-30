@@ -5,7 +5,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('#/views/messages/index.vue'),
     meta: {
       icon: 'lucide:message-square',
-      title: '我的对话',
+      title: '我的访客',
       order: 30,
     },
     name: 'Messages',
