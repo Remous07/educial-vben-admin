@@ -485,7 +485,13 @@ onMounted(async () => {
         </Card>
 
         <Card title="Telegram 绑定" style="margin-bottom: 16px">
-          <div v-if="userInfo?.bot_username" style="margin-bottom: 12px">
+          <div
+            v-if="
+              userInfo?.bot_username ||
+              userInfo?.permissions?.includes('bot:settings')
+            "
+            style="margin-bottom: 12px"
+          >
             <span style="font-size: 13px; color: #888">机器人</span>
             <template v-if="botUsernameEdit">
               <Input
@@ -514,19 +520,22 @@ onMounted(async () => {
             </template>
             <template v-else>
               <Space style="margin-left: 8px">
-                <a
-                  :href="`https://t.me/${userInfo.bot_username}`"
-                  target="_blank"
-                  style="font-weight: 500"
-                >
-                  @{{ userInfo.bot_username }}
-                </a>
-                <Button
-                  size="small"
-                  @click="copyBotUsername(userInfo.bot_username)"
-                >
-                  复制
-                </Button>
+                <template v-if="userInfo?.bot_username">
+                  <a
+                    :href="`https://t.me/${userInfo.bot_username}`"
+                    target="_blank"
+                    style="font-weight: 500"
+                  >
+                    @{{ userInfo.bot_username }}
+                  </a>
+                  <Button
+                    size="small"
+                    @click="copyBotUsername(userInfo.bot_username)"
+                  >
+                    复制
+                  </Button>
+                </template>
+                <span v-else style="color: #999">@未设置</span>
                 <Button
                   v-if="userInfo?.permissions?.includes('bot:settings')"
                   size="small"
