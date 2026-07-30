@@ -104,8 +104,11 @@ export async function unbindTelegramApi() {
 }
 
 /** 注销账号 */
-export async function deleteAccountApi(password: string) {
-  return requestClient.post('/account/delete', { password });
+export async function deleteAccountApi(password: string, totpCode?: string) {
+  return requestClient.post('/account/delete', {
+    password,
+    totp_code: totpCode,
+  });
 }
 
 /** 修改密码 */

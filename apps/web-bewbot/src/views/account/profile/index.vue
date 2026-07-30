@@ -345,12 +345,16 @@ async function handleSetConvCode() {
 // Account deletion
 const deleteVisible = ref(false);
 const deletePassword = ref('');
+const deleteTotpCode = ref('');
 const deleting = ref(false);
 
 async function handleDeleteAccount() {
   deleting.value = true;
   try {
-    await deleteAccountApi(deletePassword.value);
+    await deleteAccountApi(
+      deletePassword.value,
+      totpEnabled.value ? deleteTotpCode.value : undefined,
+    );
     message.success('账户注销已申请，7天内重新登录可取消');
     deleteVisible.value = false;
     await authStore.logout(false);
@@ -406,7 +410,7 @@ onMounted(async () => {
               <Tag color="orange" style="margin-left: 8px">待验证</Tag>
               <span
                 v-if="(userInfo as any).pending_email_expires_in"
-                style=" margin-left: 4px;font-size: 12px; color: #fa8c16"
+                style="margin-left: 4px; font-size: 12px; color: #fa8c16"
               >
                 {{ (userInfo as any).pending_email_expires_in }} 分钟后过期
               </span>
@@ -800,6 +804,15 @@ onMounted(async () => {
         placeholder="请输入当前密码"
         style="margin-top: 4px"
       />
+      <template v-if="totpEnabled">
+        <label style="display: block; margin-top: 12px">两步验证码</label>
+        <Input
+          v-model:value="deleteTotpCode"
+          placeholder="请输入 6 位验证码"
+          :maxlength="6"
+          style="margin-top: 4px"
+        />
+      </template>
     </Modal>
 
     <!-- TOTP Disable Modal -->
