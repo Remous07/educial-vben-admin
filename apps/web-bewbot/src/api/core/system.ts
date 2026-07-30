@@ -25,6 +25,7 @@ export interface AdminUserItem {
   conversation_code: null | string;
   is_banned: boolean;
   email_verified: boolean;
+  totp_enabled: boolean;
   invite_code: null | string;
   invited_by: null | string;
   is_bound: boolean;

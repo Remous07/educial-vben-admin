@@ -54,6 +54,14 @@ const columns: TableColumnsType = [
   { title: '用户名', dataIndex: 'username', key: 'username', width: 110 },
   { title: '邮箱', dataIndex: 'email', key: 'email', width: 180 },
   {
+    title: 'TOTP',
+    dataIndex: 'totp_enabled',
+    key: 'totp_enabled',
+    width: 55,
+    align: 'center',
+    customRender: ({ text }: { text: boolean }) => (text ? '✓' : '—'),
+  },
+  {
     title: '邀请码',
     dataIndex: 'invite_code',
     key: 'invite_code',
