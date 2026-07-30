@@ -644,21 +644,21 @@ onMounted(async () => {
           style="margin-top: 4px"
         />
       </div>
+      <div v-if="totpEnabled" style="margin-bottom: 12px">
+        <label>两步验证码</label>
+        <Input
+          v-model:value="emailTotpCode"
+          placeholder="请输入 6 位验证码"
+          :maxlength="6"
+          style="margin-top: 4px"
+        />
+      </div>
       <div>
         <label>新邮箱</label>
         <Input
           v-model:value="newEmail"
           type="email"
           placeholder="请输入新邮箱"
-          style="margin-top: 4px"
-        />
-      </div>
-      <div v-if="totpEnabled" style="margin-top: 12px">
-        <label>两步验证码</label>
-        <Input
-          v-model:value="emailTotpCode"
-          placeholder="请输入 6 位验证码"
-          :maxlength="6"
           style="margin-top: 4px"
         />
       </div>
@@ -679,21 +679,21 @@ onMounted(async () => {
           style="margin-top: 4px"
         />
       </div>
-      <div style="margin-bottom: 12px">
-        <label>新用户名（3-10位字母、数字、-、_）</label>
-        <Input
-          v-model:value="newUsername"
-          placeholder="新用户名"
-          :maxlength="10"
-          style="margin-top: 4px"
-        />
-      </div>
       <div v-if="totpEnabled" style="margin-bottom: 12px">
         <label>两步验证码</label>
         <Input
           v-model:value="usernameTotpCode"
           placeholder="6位验证码"
           :maxlength="6"
+          style="margin-top: 4px"
+        />
+      </div>
+      <div style="margin-bottom: 12px">
+        <label>新用户名（3-10位字母、数字、-、_）</label>
+        <Input
+          v-model:value="newUsername"
+          placeholder="新用户名"
+          :maxlength="10"
           style="margin-top: 4px"
         />
       </div>
@@ -715,21 +715,21 @@ onMounted(async () => {
           style="margin-top: 4px"
         />
       </div>
+      <div v-if="totpEnabled" style="margin-bottom: 12px">
+        <label>两步验证码</label>
+        <Input
+          v-model:value="pwdTotpCode"
+          placeholder="请输入 6 位验证码"
+          :maxlength="6"
+          style="margin-top: 4px"
+        />
+      </div>
       <div>
         <label>新密码</label>
         <Input
           v-model:value="newPwd"
           type="password"
           placeholder="请输入新密码（至少6位）"
-          style="margin-top: 4px"
-        />
-      </div>
-      <div v-if="totpEnabled" style="margin-top: 12px">
-        <label>两步验证码</label>
-        <Input
-          v-model:value="pwdTotpCode"
-          placeholder="请输入 6 位验证码"
-          :maxlength="6"
           style="margin-top: 4px"
         />
       </div>
