@@ -27,6 +27,12 @@ export interface AdminUserItem {
   email_verified: boolean;
   invite_code: null | string;
   invited_by: null | string;
+  is_bound: boolean;
+  telegram_id: null | number;
+  telegram_first_name: null | string;
+  telegram_username: null | string;
+  bound_at: null | string;
+  telegram_is_premium: boolean;
 }
 
 export interface RolePayload {

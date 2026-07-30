@@ -10,6 +10,7 @@ import { Page } from '@vben/common-ui';
 import {
   Button,
   Checkbox,
+  Descriptions,
   Input,
   message,
   Modal,
@@ -38,6 +39,15 @@ const modalVisible = ref(false);
 const selectedUser = ref<AdminUserItem | null>(null);
 const selectedRoleIds = ref<number[]>([]);
 const saving = ref(false);
+
+// Bot info modal
+const botModalVisible = ref(false);
+const botModalUser = ref<AdminUserItem | null>(null);
+
+function openBotModal(user: AdminUserItem) {
+  botModalUser.value = user;
+  botModalVisible.value = true;
+}
 
 const columns: TableColumnsType = [
   { title: 'ID', dataIndex: 'id', key: 'id', width: 50 },
@@ -69,6 +79,25 @@ const columns: TableColumnsType = [
         return h(Tag, { color: 'orange' }, () => '未验证');
       if (record.is_banned) return h(Tag, { color: 'red' }, () => '已封禁');
       return h(Tag, { color: 'green' }, () => '正常');
+    },
+  },
+  {
+    title: 'Bot绑定',
+    key: 'bot_bind',
+    width: 110,
+    customRender: ({ record }: { record: AdminUserItem }) => {
+      if (!record.is_bound) return '-';
+      const label = record.telegram_username
+        ? `@${record.telegram_username}`
+        : record.telegram_first_name || `TG${record.telegram_id}`;
+      return h(
+        'a',
+        {
+          style: { cursor: 'pointer', color: '#1677ff' },
+          onClick: () => openBotModal(record),
+        },
+        label,
+      );
     },
   },
   {
@@ -274,6 +303,44 @@ onMounted(fetchData);
           </Checkbox>
         </div>
       </div>
+    </Modal>
+
+    <Modal
+      v-model:open="botModalVisible"
+      title="TG 用户信息"
+      :footer="null"
+      :width="400"
+    >
+      <Descriptions v-if="botModalUser" :column="1" size="small" bordered>
+        <Descriptions.Item label="Telegram ID">
+          <code>{{ botModalUser.telegram_id }}</code>
+        </Descriptions.Item>
+        <Descriptions.Item label="昵称">
+          {{ botModalUser.telegram_first_name || '-' }}
+        </Descriptions.Item>
+        <Descriptions.Item label="用户名">
+          <template v-if="botModalUser.telegram_username">
+            <a
+              :href="`https://t.me/${botModalUser.telegram_username}`"
+              target="_blank"
+            >
+              @{{ botModalUser.telegram_username }}
+            </a>
+          </template>
+          <template v-else>-</template>
+        </Descriptions.Item>
+        <Descriptions.Item label="Pre">
+          <Tag v-if="botModalUser.telegram_is_premium" color="gold"> Pre </Tag>
+          <template v-else>否</template>
+        </Descriptions.Item>
+        <Descriptions.Item label="绑定时间">
+          {{
+            botModalUser.bound_at
+              ? new Date(botModalUser.bound_at).toLocaleString('zh-CN')
+              : '-'
+          }}
+        </Descriptions.Item>
+      </Descriptions>
     </Modal>
   </Page>
 </template>
