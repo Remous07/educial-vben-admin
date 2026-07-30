@@ -14,6 +14,7 @@ import {
   Modal,
   QRCode,
   Result,
+  Space,
   Spin,
   Tag,
 } from 'ant-design-vue';
@@ -192,6 +193,11 @@ async function handleSetupBind() {
 
 function copyBindCommand() {
   navigator.clipboard.writeText(`/bind ${tgKey.value}`);
+  message.success('已复制');
+}
+
+function copyBotUsername(username: string) {
+  navigator.clipboard.writeText(username);
   message.success('已复制');
 }
 
@@ -445,6 +451,24 @@ onMounted(async () => {
         </Card>
 
         <Card title="Telegram 绑定" style="margin-bottom: 16px">
+          <div v-if="userInfo?.bot_username" style="margin-bottom: 12px">
+            <span style=" font-size: 13px;color: #888">机器人</span>
+            <Space style="margin-left: 8px">
+              <a
+                :href="`https://t.me/${userInfo.bot_username}`"
+                target="_blank"
+                style="font-weight: 500"
+              >
+                @{{ userInfo.bot_username }}
+              </a>
+              <Button
+                size="small"
+                @click="copyBotUsername(userInfo.bot_username)"
+              >
+                复制
+              </Button>
+            </Space>
+          </div>
           <template v-if="tgBound">
             <Descriptions :column="1" style="margin-bottom: 8px">
               <Descriptions.Item label="TG 用户 ID">
