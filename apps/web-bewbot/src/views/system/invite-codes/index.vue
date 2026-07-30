@@ -14,10 +14,12 @@ import {
   InputNumber,
   message,
   Modal,
+  Progress,
   Space,
   Switch,
   Table,
   Tag,
+  Tooltip,
 } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
@@ -83,28 +85,76 @@ const columns: TableColumnsType = [
   {
     title: '使用',
     key: 'usage',
-    width: 100,
-    customRender: ({ record }: { record: InviteCodeItem }) =>
-      record.max_uses === 0
-        ? `${record.used_count} / 不限`
-        : `${record.used_count}/${record.max_uses}`,
+    width: 150,
+    customRender: ({ record }: { record: InviteCodeItem }) => {
+      if (record.max_uses <= 0)
+        return h(
+          'span',
+          { style: 'font-size:12px' },
+          `${record.used_count} / 不限`,
+        );
+      const pct = Math.round(
+        (record.used_count / Math.max(record.max_uses, 1)) * 100,
+      );
+      let strokeColor: string;
+      if (pct >= 100) strokeColor = '#f5222d';
+      else if (pct >= 80) strokeColor = '#fa8c16';
+      else strokeColor = '#52c41a';
+      return h('div', { style: 'display:flex;align-items:center;gap:8px' }, [
+        h(
+          'span',
+          { style: 'white-space:nowrap;font-size:12px' },
+          `${record.used_count} / ${record.max_uses}`,
+        ),
+        h(Progress, {
+          percent: Math.min(pct, 100),
+          size: 'small',
+          strokeColor,
+          showInfo: false,
+          style: 'flex:1',
+        }),
+      ]);
+    },
   },
   {
     title: '过期时间',
-    dataIndex: 'expires_at',
-    key: 'expires_at',
-    width: 180,
-    customRender: ({ text }: { text: null | string }) =>
-      text ? new Date(text).toLocaleString('zh-CN') : '永不过期',
-    sorter: (a: InviteCodeItem, b: InviteCodeItem) => {
-      if (!a.expires_at && !b.expires_at) return 0;
-      if (!a.expires_at) return 1;
-      if (!b.expires_at) return -1;
-      return (
-        new Date(a.expires_at).getTime() - new Date(b.expires_at).getTime()
+    key: 'expiry',
+    width: 160,
+    customRender: ({ record }: { record: InviteCodeItem }) => {
+      if (!record.expires_at) return '永不过期';
+      const created = new Date(
+        record.created_at || record.expires_at,
+      ).getTime();
+      const expires = new Date(record.expires_at).getTime();
+      const now = Date.now();
+      if (now >= expires) return h(Tag, { color: 'red' }, () => '已过期');
+      const total = expires - created;
+      const elapsed = now - created;
+      const pct = Math.round((elapsed / total) * 100);
+      const remaining = Math.max(0, expires - now);
+      const days = Math.ceil(remaining / 86_400_000);
+      const fullDate = new Date(record.expires_at).toLocaleString('zh-CN');
+      let strokeColor: string;
+      if (pct >= 90) strokeColor = '#f5222d';
+      else if (pct >= 70) strokeColor = '#fa8c16';
+      else strokeColor = '#1677ff';
+      return h(Tooltip, { title: fullDate }, () =>
+        h('div', { style: 'display:flex;align-items:center;gap:8px' }, [
+          h(
+            'span',
+            { style: 'white-space:nowrap;font-size:12px' },
+            `${days}天`,
+          ),
+          h(Progress, {
+            percent: Math.min(pct, 100),
+            size: 'small',
+            strokeColor,
+            showInfo: false,
+            style: 'flex:1',
+          }),
+        ]),
       );
     },
-    sortDirections: ['ascend', 'descend'],
   },
   {
     title: '创建时间',
