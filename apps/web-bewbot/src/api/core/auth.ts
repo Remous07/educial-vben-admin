@@ -198,6 +198,7 @@ export async function getConversationCodesApi() {
 
 /** 生成临时识别码 */
 export async function createConversationCodeApi(payload: {
+  code?: string;
   expires_at?: string;
   expires_days?: number;
   max_uses?: number;
@@ -212,7 +213,12 @@ export async function createConversationCodeApi(payload: {
 /** 编辑临时识别码 */
 export async function editConversationCodeApi(
   id: number,
-  payload: { expires_at?: string; max_uses: number; remark?: string },
+  payload: {
+    code?: string;
+    expires_at?: string;
+    max_uses: number;
+    remark?: string;
+  },
 ) {
   return requestClient.put(`/account/conversation-codes/${id}`, payload);
 }
@@ -280,6 +286,7 @@ export async function getCodeUsersApi(code: string) {
 }
 
 export interface ConversationCodeItem {
+  active_session_count: number;
   id: number;
   code: string;
   max_uses: number;

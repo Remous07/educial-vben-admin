@@ -45,13 +45,40 @@ defineOptions({ name: 'ConversationCodes' });
 const codes = ref<ConversationCodeItem[]>([]);
 const loading = ref(false);
 
-// Create modal
+// ── helpers ──
+
+const CODE_PATTERN = /^[a-zA-Z0-9_-]{8,16}$/;
+
+function generateCode(): string {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  const bytes = crypto.getRandomValues(new Uint8Array(10));
+  let result = '';
+  for (const b of bytes) result += chars[b % chars.length];
+  return result;
+}
+
+function validateCode(code: string): string {
+  if (!code) return '请输入识别码';
+  if (code.length < 8) return '至少 8 个字符';
+  if (code.length > 16) return '最多 16 个字符';
+  if (!CODE_PATTERN.test(code)) return '仅支持字母、数字、-、_';
+  return '';
+}
+
+// ── create modal ──
+
 const modalVisible = ref(false);
+const codeInput = ref('');
+const codeError = ref('');
 const maxUses = ref(1);
 const expiresAt = ref<any>(dayjs().add(7, 'day'));
 const expiresDays = ref(7);
 const remark = ref('');
 const saving = ref(false);
+
+function onCodeInputChange() {
+  codeError.value = validateCode(codeInput.value);
+}
 
 function onExpiresAtChange(d: any) {
   expiresDays.value = d
@@ -66,10 +93,16 @@ function onExpiresDaysChange() {
 // Edit modal (temp codes)
 const editModalVisible = ref(false);
 const editingCode = ref<ConversationCodeItem | null>(null);
+const editCode = ref('');
+const editCodeError = ref('');
 const editMaxUses = ref(0);
 const editExpiresAt = ref<any>(null);
 const editExpiresDays = ref(0);
 const editRemark = ref('');
+
+function onEditCodeChange() {
+  editCodeError.value = validateCode(editCode.value);
+}
 
 function onEditExpiresAtChange(d: any) {
   editExpiresDays.value = d
@@ -251,20 +284,33 @@ function copyCode(code: string) {
   message.success('已复制');
 }
 
+function onCreateModalOpen() {
+  codeInput.value = generateCode();
+  codeError.value = '';
+  maxUses.value = 1;
+  remark.value = '';
+  expiresAt.value = dayjs().add(7, 'day');
+  expiresDays.value = 7;
+}
+
 async function handleCreate() {
+  // Validate code before submitting
+  const err = validateCode(codeInput.value);
+  if (err) {
+    codeError.value = err;
+    return;
+  }
+  codeError.value = '';
   saving.value = true;
   try {
     await createConversationCodeApi({
+      code: codeInput.value,
       expires_at: expiresAt.value?.toISOString?.() ?? undefined,
       max_uses: maxUses.value,
       remark: remark.value || undefined,
     });
     message.success('识别码已生成');
     modalVisible.value = false;
-    maxUses.value = 1;
-    remark.value = '';
-    expiresAt.value = dayjs().add(7, 'day');
-    expiresDays.value = 7;
     fetchData();
   } catch {
     // error handled by interceptor
@@ -279,6 +325,8 @@ function openEditModal(code: ConversationCodeItem) {
     return;
   }
   editingCode.value = code;
+  editCode.value = code.code;
+  editCodeError.value = '';
   editMaxUses.value = code.max_uses;
   editExpiresAt.value = code.expires_at ? dayjs(code.expires_at) : null;
   editExpiresDays.value = code.expires_at
@@ -290,9 +338,21 @@ function openEditModal(code: ConversationCodeItem) {
 
 async function handleEditSave() {
   if (!editingCode.value) return;
+
+  // Validate code if changed
+  if (editCode.value !== editingCode.value.code) {
+    const err = validateCode(editCode.value);
+    if (err) {
+      editCodeError.value = err;
+      return;
+    }
+  }
+  editCodeError.value = '';
   saving.value = true;
   try {
     await editConversationCodeApi(editingCode.value.id, {
+      code:
+        editCode.value === editingCode.value.code ? undefined : editCode.value,
       expires_at: editExpiresAt.value?.toISOString?.() ?? '',
       max_uses: editMaxUses.value,
       remark: editRemark.value || '',
@@ -502,7 +562,22 @@ onMounted(fetchData);
       title="生成对话识别码"
       @ok="handleCreate"
       :confirm-loading="saving"
+      @after-open-change="(open: boolean) => open && onCreateModalOpen()"
     >
+      <div style="margin-bottom: 12px">
+        <label>识别码</label>
+        <Input
+          v-model:value="codeInput"
+          :maxlength="16"
+          placeholder="8-16位字母、数字、-、_"
+          :status="codeError ? 'error' : ''"
+          style="margin-top: 4px"
+          @change="onCodeInputChange"
+        />
+        <span v-if="codeError" style="font-size: 12px; color: #ff4d4f">
+          {{ codeError }}
+        </span>
+      </div>
       <div style="margin-bottom: 12px">
         <label>使用次数上限</label>
         <InputNumber
@@ -553,6 +628,26 @@ onMounted(fetchData);
       @ok="handleEditSave"
       :confirm-loading="saving"
     >
+      <div style="margin-bottom: 12px">
+        <label>识别码</label>
+        <Input
+          v-model:value="editCode"
+          :maxlength="16"
+          :disabled="(editingCode?.active_session_count ?? 0) > 0"
+          :status="editCodeError ? 'error' : ''"
+          style="margin-top: 4px"
+          @change="onEditCodeChange"
+        />
+        <span
+          v-if="(editingCode?.active_session_count ?? 0) > 0"
+          style="font-size: 12px; color: #999"
+        >
+          有活跃会话，暂不可修改识别码
+        </span>
+        <span v-else-if="editCodeError" style="font-size: 12px; color: #ff4d4f">
+          {{ editCodeError }}
+        </span>
+      </div>
       <div style="margin-bottom: 12px">
         <label>使用次数上限</label>
         <InputNumber
