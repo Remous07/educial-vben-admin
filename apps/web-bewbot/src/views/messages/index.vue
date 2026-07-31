@@ -27,16 +27,14 @@ interface Conversation {
   last_message_at: null | string;
   last_message_preview: string;
   is_active: boolean;
-  last_msg_seconds_ago: null | number;
+  conv_timeout_remaining: null | number;
 }
 
-const ACTIVITY_WINDOW = 3600; // 1 hour
-
-function activityTip(seconds: null | number): string {
-  if (seconds === null || seconds === undefined) return '';
-  if (seconds < 60) return '刚刚活跃';
-  if (seconds < 3600) return `${Math.floor(seconds / 60)} 分钟前活跃`;
-  return `${Math.floor(seconds / 3600)} 小时前活跃`;
+function timeoutTip(seconds: null | number): string {
+  if (seconds === null || seconds === undefined || seconds <= 0) return '';
+  if (seconds < 60) return '剩余不到 1 分钟';
+  if (seconds < 3600) return `剩余约 ${Math.ceil(seconds / 60)} 分钟`;
+  return `剩余约 ${Math.ceil(seconds / 3600)} 小时`;
 }
 
 const conversations = ref<Conversation[]>([]);
@@ -71,9 +69,7 @@ const columns: TableColumnsType = [
     width: 28,
     align: 'center',
     customRender: ({ record }: { record: Conversation }) => {
-      const ago = record.last_msg_seconds_ago;
-      const active = ago !== null && ago < ACTIVITY_WINDOW;
-      const tip = activityTip(ago);
+      const tip = timeoutTip(record.conv_timeout_remaining);
       return h('span', {
         title: tip || undefined,
         style: {
@@ -81,7 +77,7 @@ const columns: TableColumnsType = [
           width: '10px',
           height: '10px',
           borderRadius: '50%',
-          backgroundColor: active ? '#52c41a' : '#d9d9d9',
+          backgroundColor: record.is_active ? '#52c41a' : '#d9d9d9',
           verticalAlign: 'middle',
         },
       });
