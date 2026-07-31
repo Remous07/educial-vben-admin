@@ -47,26 +47,22 @@ const loading = ref(false);
 
 // ── avatar helpers ──
 
-const AVATAR_COLORS = [
-  '#1677ff',
-  '#52c41a',
-  '#fa8c16',
-  '#722ed1',
-  '#eb2f96',
-  '#13c2c2',
-  '#f5222d',
-  '#2f54eb',
-];
-
 function avatarChar(firstName: null | string, username: null | string): string {
   const source = firstName || username || '';
   const match = source.match(/\p{L}/u);
   return match ? match[0].toUpperCase() : '?';
 }
 
-function avatarColor(tgUserId: number): string {
-  const idx = tgUserId % AVATAR_COLORS.length;
-  return AVATAR_COLORS[idx] ?? '#1677ff';
+function avatarColor(tgUserId: number, firstName: null | string): string {
+  // Base hue from ID — stable, never changes
+  const base = Math.trunc((tgUserId * 2_654_435_761) % 4_294_967_296) % 360;
+  // Name adds ±10° fine-tuning
+  let offset = 0;
+  const name = firstName || '';
+  for (const ch of name)
+    offset = Math.trunc((offset << 5) - offset + (ch.codePointAt(0) ?? 0));
+  const hue = (base + (offset % 20) - 10 + 360) % 360;
+  return `hsl(${hue}, 50%, 40%)`;
 }
 
 // ── code helpers ──
@@ -753,7 +749,7 @@ onMounted(fetchData);
                     borderRadius: '50%',
                     background: r.is_blocked
                       ? '#f0f0f0'
-                      : avatarColor(r.tg_user_id),
+                      : avatarColor(r.tg_user_id, r.first_name),
                     color: r.is_blocked ? '#bbb' : '#fff',
                     display: 'flex',
                     alignItems: 'center',
