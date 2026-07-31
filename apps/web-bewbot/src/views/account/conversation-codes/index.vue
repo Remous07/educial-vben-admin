@@ -490,6 +490,8 @@ onMounted(fetchData);
           v-model:value="expiresAt"
           show-time
           format="YYYY-MM-DD HH:mm:ss"
+          placeholder="永不过期"
+          allow-clear
           style="width: 100%; margin-top: 4px"
           :disabled-date="(d: any) => d.isBefore(dayjs().startOf('day'))"
         />
@@ -527,6 +529,8 @@ onMounted(fetchData);
           v-model:value="editExpiresAt"
           show-time
           format="YYYY-MM-DD HH:mm:ss"
+          placeholder="永不过期"
+          allow-clear
           style="width: 100%; margin-top: 4px"
           :disabled-date="(d: any) => d.isBefore(dayjs().startOf('day'))"
         />
