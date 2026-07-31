@@ -27,14 +27,16 @@ interface Conversation {
   last_message_at: null | string;
   last_message_preview: string;
   is_active: boolean;
-  conv_timeout_remaining: null | number;
+  last_msg_seconds_ago: null | number;
 }
 
-function timeoutTip(seconds: null | number): string {
-  if (seconds === null || seconds === undefined || seconds <= 0) return '';
-  if (seconds < 0) return '永不超时';
-  if (seconds < 3600) return `${Math.ceil(seconds / 60)} 分钟后超时`;
-  return `${Math.ceil(seconds / 3600)} 小时后超时`;
+const ACTIVITY_WINDOW = 3600; // 1 hour
+
+function activityTip(seconds: null | number): string {
+  if (seconds === null || seconds === undefined) return '';
+  if (seconds < 60) return '刚刚活跃';
+  if (seconds < 3600) return `${Math.floor(seconds / 60)} 分钟前活跃`;
+  return `${Math.floor(seconds / 3600)} 小时前活跃`;
 }
 
 const conversations = ref<Conversation[]>([]);
@@ -69,8 +71,9 @@ const columns: TableColumnsType = [
     width: 28,
     align: 'center',
     customRender: ({ record }: { record: Conversation }) => {
-      const active = (record.conv_timeout_remaining ?? 0) > 0;
-      const tip = active ? timeoutTip(record.conv_timeout_remaining) : '';
+      const ago = record.last_msg_seconds_ago;
+      const active = ago !== null && ago < ACTIVITY_WINDOW;
+      const tip = activityTip(ago);
       return h('span', {
         title: tip || undefined,
         style: {
