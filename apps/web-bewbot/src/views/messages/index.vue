@@ -5,7 +5,7 @@ import { h, onMounted, ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
 
-import { Button, message, Modal, Table, Tag, Tooltip } from 'ant-design-vue';
+import { Button, message, Modal, Table, Tag } from 'ant-design-vue';
 
 import {
   blockVisitorApi,
@@ -70,23 +70,20 @@ const columns: TableColumnsType = [
     width: 80,
     align: 'center',
     customRender: ({ record }: { record: Conversation }) => {
-      const dot = record.is_active
-        ? h('span', {
-            style: {
-              display: 'inline-block',
-              width: '6px',
-              height: '6px',
-              borderRadius: '50%',
-              backgroundColor: '#52c41a',
-              marginRight: '4px',
-              verticalAlign: 'middle',
-            },
-          })
-        : null;
-
       const tip = timeoutTip(record.conv_timeout_remaining);
       return h('span', [
-        tip ? h(Tooltip, { title: tip }, { default: () => dot }) : dot,
+        h('span', {
+          title: tip || undefined,
+          style: {
+            display: 'inline-block',
+            width: '6px',
+            height: '6px',
+            borderRadius: '50%',
+            backgroundColor: record.is_active ? '#52c41a' : 'transparent',
+            marginRight: '4px',
+            verticalAlign: 'middle',
+          },
+        }),
         record.telegram_id,
       ]);
     },
