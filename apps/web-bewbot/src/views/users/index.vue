@@ -4,9 +4,11 @@ import type { TableColumnsType } from 'ant-design-vue';
 import { h, onMounted, ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
+import { useAccessStore } from '@vben/stores';
 
 import {
   Button,
+  Descriptions,
   Input,
   message,
   Modal,
@@ -16,6 +18,7 @@ import {
   Tag,
 } from 'ant-design-vue';
 
+import { getAdminUserApi } from '#/api/core';
 import { requestClient } from '#/api/request';
 
 defineOptions({ name: 'UserManagement' });
@@ -29,14 +32,23 @@ interface User {
   is_banned: boolean;
   created_at: string;
   admin_username: null | string;
+  admin_id: null | number;
   is_bound: boolean;
 }
+
+const accessStore = useAccessStore();
+const hasAdminView = accessStore.accessCodes?.includes('admin:view') ?? false;
 
 const users = ref<User[]>([]);
 const loading = ref(false);
 const searchText = ref('');
 const total = ref(0);
 const pagination = ref({ current: 1, pageSize: 20 });
+
+// Admin detail modal
+const adminModalVisible = ref(false);
+const adminModalUser = ref<any>(null);
+const adminModalLoading = ref(false);
 
 const columns: TableColumnsType = [
   { title: 'ID', dataIndex: 'id', key: 'id', width: 80 },
@@ -76,11 +88,23 @@ const columns: TableColumnsType = [
   },
   {
     title: '系统用户',
-    dataIndex: 'admin_username',
     key: 'admin_username',
     width: 100,
     align: 'center',
-    customRender: ({ text }: { text: null | string }) => text || '-',
+    customRender: ({ record }: { record: User }) => {
+      if (!record.is_bound || !record.admin_username) return '-';
+      if (!hasAdminView) return record.admin_username;
+      const adminId = record.admin_id;
+      if (!adminId) return record.admin_username;
+      return h(
+        'a',
+        {
+          style: { cursor: 'pointer', color: '#1677ff' },
+          onClick: () => openAdminModal(adminId),
+        },
+        record.admin_username,
+      );
+    },
   },
   {
     title: '状态',
@@ -100,6 +124,20 @@ const columns: TableColumnsType = [
   },
   { title: '操作', key: 'action', width: 220 },
 ];
+
+async function openAdminModal(adminId: number) {
+  adminModalVisible.value = true;
+  adminModalUser.value = null;
+  adminModalLoading.value = true;
+  try {
+    adminModalUser.value = await getAdminUserApi(adminId);
+  } catch {
+    message.error('获取用户信息失败');
+    adminModalVisible.value = false;
+  } finally {
+    adminModalLoading.value = false;
+  }
+}
 
 async function fetchUsers() {
   loading.value = true;
@@ -235,5 +273,58 @@ onMounted(fetchUsers);
         </template>
       </template>
     </Table>
+
+    <Modal
+      v-model:open="adminModalVisible"
+      title="系统用户信息"
+      :footer="null"
+      :width="400"
+      :loading="adminModalLoading"
+    >
+      <Descriptions v-if="adminModalUser" :column="1" size="small" bordered>
+        <Descriptions.Item label="用户名">
+          {{ adminModalUser.username }}
+        </Descriptions.Item>
+        <Descriptions.Item label="邮箱">
+          {{ adminModalUser.email }}
+        </Descriptions.Item>
+        <Descriptions.Item label="权限组">
+          <template v-if="adminModalUser.roles?.length">
+            <Tag
+              v-for="role in adminModalUser.roles"
+              :key="role"
+              color="blue"
+              style="margin: 1px"
+            >
+              {{ role }}
+            </Tag>
+          </template>
+          <template v-else>-</template>
+        </Descriptions.Item>
+        <Descriptions.Item label="状态">
+          <Tag v-if="adminModalUser.is_banned" color="red"> 已封禁 </Tag>
+          <Tag v-else-if="!adminModalUser.email_verified" color="orange">
+            未验证
+          </Tag>
+          <Tag v-else color="green"> 正常 </Tag>
+        </Descriptions.Item>
+        <Descriptions.Item label="TOTP">
+          {{ adminModalUser.totp_enabled ? '✓' : '—' }}
+        </Descriptions.Item>
+        <Descriptions.Item label="对话识别码">
+          <code v-if="adminModalUser.conversation_code">{{
+            adminModalUser.conversation_code
+          }}</code>
+          <template v-else>-</template>
+        </Descriptions.Item>
+        <Descriptions.Item label="创建时间">
+          {{
+            adminModalUser.created_at
+              ? new Date(adminModalUser.created_at).toLocaleString('zh-CN')
+              : '-'
+          }}
+        </Descriptions.Item>
+      </Descriptions>
+    </Modal>
   </Page>
 </template>

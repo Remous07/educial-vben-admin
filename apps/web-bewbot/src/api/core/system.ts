@@ -95,6 +95,11 @@ export function deleteAdminUserApi(id: number) {
   return requestClient.delete(`/admin-users/${id}`);
 }
 
+/** 获取系统用户详情 */
+export function getAdminUserApi(id: number) {
+  return requestClient.get<AdminUserItem>(`/admin-users/${id}`);
+}
+
 // ── Invite Codes ─────────────────────────────────────
 
 export interface InviteCodeItem {
