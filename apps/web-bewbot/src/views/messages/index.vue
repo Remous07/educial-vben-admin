@@ -64,13 +64,6 @@ async function handleUnblock(record: Conversation) {
 
 const columns: TableColumnsType = [
   {
-    title: 'TG ID',
-    dataIndex: 'telegram_id',
-    key: 'telegram_id',
-    width: 80,
-    align: 'center',
-  },
-  {
     title: '',
     key: 'status',
     width: 28,
@@ -90,6 +83,13 @@ const columns: TableColumnsType = [
         },
       });
     },
+  },
+  {
+    title: 'TG ID',
+    dataIndex: 'telegram_id',
+    key: 'telegram_id',
+    width: 80,
+    align: 'center',
   },
   {
     title: '昵称',
