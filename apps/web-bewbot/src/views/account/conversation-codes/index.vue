@@ -295,7 +295,7 @@ async function handleEditSave() {
     await editConversationCodeApi(editingCode.value.id, {
       expires_at: editExpiresAt.value?.toISOString?.() ?? '',
       max_uses: editMaxUses.value,
-      remark: editRemark.value || undefined,
+      remark: editRemark.value || '',
     });
     message.success('保存成功');
     editModalVisible.value = false;
