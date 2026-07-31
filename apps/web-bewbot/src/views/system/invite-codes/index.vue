@@ -92,7 +92,9 @@ const remark = ref('');
 const saving = ref(false);
 
 function onExpiresAtChange(d: any) {
-  expiresDays.value = d ? Math.max(0, d.diff(dayjs(), 'day')) : 0;
+  expiresDays.value = d
+    ? Math.max(0, Math.round(d.diff(dayjs(), 'day', true)))
+    : 0;
 }
 function onExpiresDaysChange() {
   expiresAt.value =
@@ -298,7 +300,9 @@ const editExpiresDays = ref(0);
 const editRemark = ref('');
 
 function onEditExpiresAtChange(d: any) {
-  editExpiresDays.value = d ? Math.max(0, d.diff(dayjs(), 'day')) : 0;
+  editExpiresDays.value = d
+    ? Math.max(0, Math.round(d.diff(dayjs(), 'day', true)))
+    : 0;
 }
 function onEditExpiresDaysChange() {
   editExpiresAt.value =
