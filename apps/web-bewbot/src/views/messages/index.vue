@@ -69,22 +69,26 @@ const columns: TableColumnsType = [
     key: 'telegram_id',
     width: 80,
     align: 'center',
+  },
+  {
+    title: '',
+    key: 'status',
+    width: 28,
+    align: 'center',
     customRender: ({ record }: { record: Conversation }) => {
-      const tip = timeoutTip(record.conv_timeout_remaining);
-      return h('span', { title: tip || undefined }, [
-        h('span', {
-          style: {
-            display: 'inline-block',
-            width: '8px',
-            height: '8px',
-            borderRadius: '50%',
-            backgroundColor: record.is_active ? '#52c41a' : 'transparent',
-            marginRight: '4px',
-            verticalAlign: 'middle',
-          },
-        }),
-        record.telegram_id,
-      ]);
+      const active = (record.conv_timeout_remaining ?? 0) > 0;
+      const tip = active ? timeoutTip(record.conv_timeout_remaining) : '';
+      return h('span', {
+        title: tip || undefined,
+        style: {
+          display: 'inline-block',
+          width: '10px',
+          height: '10px',
+          borderRadius: '50%',
+          backgroundColor: active ? '#52c41a' : '#d9d9d9',
+          verticalAlign: 'middle',
+        },
+      });
     },
   },
   {
