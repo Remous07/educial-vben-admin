@@ -26,6 +26,7 @@ interface Conversation {
   message_count: number;
   last_message_at: null | string;
   last_message_preview: string;
+  is_active: boolean;
 }
 
 const conversations = ref<Conversation[]>([]);
@@ -60,6 +61,23 @@ const columns: TableColumnsType = [
     key: 'telegram_id',
     width: 80,
     align: 'center',
+    customRender: ({ record }: { record: Conversation }) =>
+      h('span', [
+        record.is_active
+          ? h('span', {
+              style: {
+                display: 'inline-block',
+                width: '6px',
+                height: '6px',
+                borderRadius: '50%',
+                backgroundColor: '#52c41a',
+                marginRight: '4px',
+                verticalAlign: 'middle',
+              },
+            })
+          : null,
+        record.telegram_id,
+      ]),
   },
   {
     title: '昵称',
