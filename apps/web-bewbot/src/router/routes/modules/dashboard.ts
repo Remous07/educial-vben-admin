@@ -6,6 +6,7 @@ const routes: RouteRecordRaw[] = [
   {
     component: () => import('#/views/dashboard/index.vue'),
     meta: {
+      authority: ['superadmin', 'operator'],
       icon: 'lucide:layout-dashboard',
       title: $t('page.dashboard.title'),
       order: 10,

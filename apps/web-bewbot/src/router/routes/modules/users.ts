@@ -4,6 +4,7 @@ const routes: RouteRecordRaw[] = [
   {
     component: () => import('#/views/users/index.vue'),
     meta: {
+      authority: ['superadmin', 'operator'],
       icon: 'lucide:users',
       title: 'TG用户',
       order: 20,
