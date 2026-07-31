@@ -45,7 +45,31 @@ defineOptions({ name: 'ConversationCodes' });
 const codes = ref<ConversationCodeItem[]>([]);
 const loading = ref(false);
 
-// ── helpers ──
+// ── avatar helpers ──
+
+const AVATAR_COLORS = [
+  '#1677ff',
+  '#52c41a',
+  '#fa8c16',
+  '#722ed1',
+  '#eb2f96',
+  '#13c2c2',
+  '#f5222d',
+  '#2f54eb',
+];
+
+function avatarChar(firstName: null | string, username: null | string): string {
+  const source = firstName || username || '';
+  const match = source.match(/\p{L}/u);
+  return match ? match[0].toUpperCase() : '?';
+}
+
+function avatarColor(tgUserId: number): string {
+  const idx = tgUserId % AVATAR_COLORS.length;
+  return AVATAR_COLORS[idx] ?? '#1677ff';
+}
+
+// ── code helpers ──
 
 const CODE_PATTERN = /^[a-zA-Z0-9_-]{8,16}$/;
 
@@ -727,8 +751,10 @@ onMounted(fetchData);
                     width: '32px',
                     height: '32px',
                     borderRadius: '50%',
-                    background: r.is_blocked ? '#f0f0f0' : '#e6f4ff',
-                    color: r.is_blocked ? '#bbb' : '#1677ff',
+                    background: r.is_blocked
+                      ? '#f0f0f0'
+                      : avatarColor(r.tg_user_id),
+                    color: r.is_blocked ? '#bbb' : '#fff',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -736,7 +762,7 @@ onMounted(fetchData);
                     fontWeight: 'bold',
                   }"
                 >
-                  {{ (r.first_name || r.username || '?')[0].toUpperCase() }}
+                  {{ avatarChar(r.first_name, r.username) }}
                 </div>
               </template>
               <template #title>
