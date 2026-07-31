@@ -30,11 +30,13 @@ interface Conversation {
   conv_timeout_remaining: null | number;
 }
 
-function timeoutTip(seconds: null | number): string {
-  if (seconds === null || seconds === undefined || seconds <= 0) return '';
-  if (seconds < 60) return '剩余不到 1 分钟';
-  if (seconds < 3600) return `剩余约 ${Math.ceil(seconds / 60)} 分钟`;
-  return `剩余约 ${Math.ceil(seconds / 3600)} 小时`;
+function timeoutTip(r: Conversation): string {
+  if (!r.is_active) return '';
+  const s = r.conv_timeout_remaining;
+  if (s === null || s === undefined || s <= 0) return '活跃中';
+  if (s < 60) return '剩余不到 1 分钟';
+  if (s < 3600) return `剩余约 ${Math.ceil(s / 60)} 分钟`;
+  return `剩余约 ${Math.ceil(s / 3600)} 小时`;
 }
 
 const conversations = ref<Conversation[]>([]);
@@ -69,7 +71,7 @@ const columns: TableColumnsType = [
     width: 28,
     align: 'center',
     customRender: ({ record }: { record: Conversation }) => {
-      const tip = timeoutTip(record.conv_timeout_remaining);
+      const tip = timeoutTip(record);
       return h('span', {
         title: tip || undefined,
         style: {
