@@ -201,7 +201,7 @@ const columns: TableColumnsType = [
       const elapsed = now - created;
       const pct = Math.round((elapsed / total) * 100);
       const remaining = Math.max(0, expires - now);
-      const days = Math.ceil(remaining / 86_400_000);
+      const days = Math.round(remaining / 86_400_000);
       const fullDate = new Date(record.expires_at).toLocaleString('zh-CN');
       let strokeColor: string;
       if (pct >= 90) strokeColor = '#f5222d';
