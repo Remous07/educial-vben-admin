@@ -174,6 +174,13 @@ export function permanentlyDeleteInviteCodeApi(id: number) {
   return requestClient.delete(`/invite-codes/${id}/permanent`);
 }
 
+/** 批量获取系统设置 */
+export function getSystemSettingsBatchApi(keys: string[]) {
+  return requestClient.get<Record<string, string>>(
+    `/system-settings/batch?keys=${keys.join(',')}`,
+  );
+}
+
 /** 获取系统设置 */
 export function getSystemSettingApi(key: string) {
   return requestClient.get<string>(`/system-settings/${key}`);

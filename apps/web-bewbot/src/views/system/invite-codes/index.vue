@@ -32,7 +32,7 @@ import {
   editInviteCodeApi,
   getAvailableRolesApi,
   getInviteCodesApi,
-  getSystemSettingApi,
+  getSystemSettingsBatchApi,
   getUsersByInviteCodeApi,
   permanentlyDeleteInviteCodeApi,
   reactivateInviteCodeApi,
@@ -92,8 +92,14 @@ const fallbackRoleId = ref<number | undefined>(undefined);
 
 async function handleFallbackRoleChange(val: any) {
   if (val === undefined || val === null) return;
-  await setSystemSettingApi('default_registration_role', String(val));
-  message.success('已更新降级注册角色');
+  try {
+    await setSystemSettingApi('default_registration_role', String(val));
+    fallbackRoleId.value = val;
+    message.success('已更新降级注册角色');
+  } catch {
+    // revert on failure
+    fallbackRoleId.value = undefined;
+  }
 }
 
 // ── create modal ──
@@ -433,20 +439,21 @@ async function handleDelete(code: InviteCodeItem) {
 async function fetchData() {
   loading.value = true;
   try {
-    const [codesData, requiredStr, openRegStr, roles, fallbackRoleStr] =
-      await Promise.all([
-        getInviteCodesApi(),
-        getSystemSettingApi('require_invite_code'),
-        getSystemSettingApi('open_registration'),
-        getAvailableRolesApi(),
-        getSystemSettingApi('default_registration_role'),
-      ]);
+    const [codesData, settings, roles] = await Promise.all([
+      getInviteCodesApi(),
+      getSystemSettingsBatchApi([
+        'require_invite_code',
+        'open_registration',
+        'default_registration_role',
+      ]),
+      getAvailableRolesApi(),
+    ]);
     codes.value = codesData;
-    inviteRequired.value = requiredStr === 'true';
-    openRegistration.value = openRegStr !== 'false';
+    inviteRequired.value = settings.require_invite_code === 'true';
+    openRegistration.value = settings.open_registration !== 'false';
     availableRoles.value = roles;
-    fallbackRoleId.value = fallbackRoleStr
-      ? Number(fallbackRoleStr)
+    fallbackRoleId.value = settings.default_registration_role
+      ? Number(settings.default_registration_role)
       : undefined;
   } finally {
     loading.value = false;
