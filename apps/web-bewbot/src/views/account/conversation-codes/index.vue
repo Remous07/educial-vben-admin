@@ -264,6 +264,7 @@ async function handleCreate() {
     maxUses.value = 1;
     remark.value = '';
     expiresAt.value = dayjs().add(7, 'day');
+    expiresDays.value = 7;
     fetchData();
   } catch {
     // error handled by interceptor
@@ -281,7 +282,7 @@ function openEditModal(code: ConversationCodeItem) {
   editMaxUses.value = code.max_uses;
   editExpiresAt.value = code.expires_at ? dayjs(code.expires_at) : null;
   editExpiresDays.value = code.expires_at
-    ? Math.max(0, dayjs(code.expires_at).diff(dayjs(), 'day'))
+    ? Math.max(0, Math.round(dayjs(code.expires_at).diff(dayjs(), 'day', true)))
     : 0;
   editRemark.value = code.remark || '';
   editModalVisible.value = true;

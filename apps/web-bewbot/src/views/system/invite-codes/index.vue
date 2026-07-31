@@ -334,7 +334,7 @@ function openEditModal(code: InviteCodeItem) {
   editMaxUses.value = code.max_uses;
   editExpiresAt.value = code.expires_at ? dayjs(code.expires_at) : null;
   editExpiresDays.value = code.expires_at
-    ? Math.max(0, dayjs(code.expires_at).diff(dayjs(), 'day'))
+    ? Math.max(0, Math.round(dayjs(code.expires_at).diff(dayjs(), 'day', true)))
     : 0;
   editRemark.value = code.remark || '';
   editModalVisible.value = true;
@@ -371,6 +371,7 @@ async function handleCreate() {
     modalVisible.value = false;
     maxUses.value = 1;
     expiresAt.value = dayjs().add(7, 'day');
+    expiresDays.value = 7;
     remark.value = '';
     fetchData();
   } catch {
