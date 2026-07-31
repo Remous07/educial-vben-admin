@@ -76,8 +76,8 @@ const columns: TableColumnsType = [
           title: tip || undefined,
           style: {
             display: 'inline-block',
-            width: '6px',
-            height: '6px',
+            width: '8px',
+            height: '8px',
             borderRadius: '50%',
             backgroundColor: record.is_active ? '#52c41a' : 'transparent',
             marginRight: '4px',
