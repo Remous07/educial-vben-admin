@@ -478,6 +478,7 @@ onMounted(fetchData);
           show-time
           format="YYYY-MM-DD HH:mm"
           placeholder="永不过期"
+          allow-clear
           style="width: 100%; margin-top: 4px"
         />
       </div>
@@ -516,6 +517,7 @@ onMounted(fetchData);
           show-time
           format="YYYY-MM-DD HH:mm"
           placeholder="不变"
+          allow-clear
           style="width: 100%; margin-top: 4px"
         />
       </div>
