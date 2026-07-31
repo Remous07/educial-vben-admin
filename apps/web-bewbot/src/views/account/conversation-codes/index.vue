@@ -48,16 +48,36 @@ const loading = ref(false);
 // Create modal
 const modalVisible = ref(false);
 const maxUses = ref(1);
-const expiresAt = ref(dayjs().add(7, 'day'));
+const expiresAt = ref<any>(dayjs().add(7, 'day'));
+const expiresDays = ref(7);
 const remark = ref('');
 const saving = ref(false);
+
+function onExpiresAtChange(d: any) {
+  expiresDays.value = d ? Math.max(0, d.diff(dayjs(), 'day')) : 0;
+}
+function onExpiresDaysChange() {
+  expiresAt.value =
+    expiresDays.value > 0 ? dayjs().add(expiresDays.value, 'day') : null;
+}
 
 // Edit modal (temp codes)
 const editModalVisible = ref(false);
 const editingCode = ref<ConversationCodeItem | null>(null);
 const editMaxUses = ref(0);
 const editExpiresAt = ref<any>(null);
+const editExpiresDays = ref(0);
 const editRemark = ref('');
+
+function onEditExpiresAtChange(d: any) {
+  editExpiresDays.value = d ? Math.max(0, d.diff(dayjs(), 'day')) : 0;
+}
+function onEditExpiresDaysChange() {
+  editExpiresAt.value =
+    editExpiresDays.value > 0
+      ? dayjs().add(editExpiresDays.value, 'day')
+      : null;
+}
 
 // Edit default code modal
 const defaultEditVisible = ref(false);
@@ -256,6 +276,9 @@ function openEditModal(code: ConversationCodeItem) {
   editingCode.value = code;
   editMaxUses.value = code.max_uses;
   editExpiresAt.value = code.expires_at ? dayjs(code.expires_at) : null;
+  editExpiresDays.value = code.expires_at
+    ? Math.max(0, dayjs(code.expires_at).diff(dayjs(), 'day'))
+    : 0;
   editRemark.value = code.remark || '';
   editModalVisible.value = true;
 }
@@ -486,15 +509,26 @@ onMounted(fetchData);
       </div>
       <div>
         <label>过期时间</label>
-        <DatePicker
-          v-model:value="expiresAt"
-          show-time
-          format="YYYY-MM-DD HH:mm:ss"
-          placeholder="永不过期"
-          allow-clear
-          style="width: 100%; margin-top: 4px"
-          :disabled-date="(d: any) => d.isBefore(dayjs().startOf('day'))"
-        />
+        <div style="display: flex; gap: 8px; margin-top: 4px">
+          <DatePicker
+            v-model:value="expiresAt"
+            show-time
+            format="YYYY-MM-DD HH:mm:ss"
+            placeholder="永不过期"
+            allow-clear
+            style="flex: 1"
+            :disabled-date="(d: any) => d.isBefore(dayjs().startOf('day'))"
+            @change="onExpiresAtChange"
+          />
+          <InputNumber
+            v-model:value="expiresDays"
+            :min="0"
+            :max="365"
+            addon-after="天后过期"
+            style="width: 140px"
+            @change="onExpiresDaysChange"
+          />
+        </div>
       </div>
       <div style="margin-top: 12px">
         <label>备注</label>
@@ -525,15 +559,26 @@ onMounted(fetchData);
       </div>
       <div>
         <label>过期时间</label>
-        <DatePicker
-          v-model:value="editExpiresAt"
-          show-time
-          format="YYYY-MM-DD HH:mm:ss"
-          placeholder="永不过期"
-          allow-clear
-          style="width: 100%; margin-top: 4px"
-          :disabled-date="(d: any) => d.isBefore(dayjs().startOf('day'))"
-        />
+        <div style="display: flex; gap: 8px; margin-top: 4px">
+          <DatePicker
+            v-model:value="editExpiresAt"
+            show-time
+            format="YYYY-MM-DD HH:mm:ss"
+            placeholder="永不过期"
+            allow-clear
+            style="flex: 1"
+            :disabled-date="(d: any) => d.isBefore(dayjs().startOf('day'))"
+            @change="onEditExpiresAtChange"
+          />
+          <InputNumber
+            v-model:value="editExpiresDays"
+            :min="0"
+            :max="365"
+            addon-after="天后过期"
+            style="width: 140px"
+            @change="onEditExpiresDaysChange"
+          />
+        </div>
       </div>
       <div style="margin-top: 12px">
         <label>备注</label>
