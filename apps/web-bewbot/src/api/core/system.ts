@@ -112,6 +112,21 @@ export interface InviteCodeItem {
   remark: null | string;
   created_at: null | string;
   created_by_username: null | string;
+  default_role_id: null | number;
+  default_role_name: null | string;
+}
+
+export interface AvailableRoleItem {
+  id: number;
+  name: string;
+  description?: string;
+}
+
+/** 获取可分配的角色（排除 superadmin） */
+export function getAvailableRolesApi() {
+  return requestClient.get<AvailableRoleItem[]>(
+    '/invite-codes/available-roles',
+  );
 }
 
 /** 获取邀请码列表 */
@@ -121,6 +136,7 @@ export function getInviteCodesApi() {
 
 /** 生成邀请码 */
 export function createInviteCodeApi(payload: {
+  default_role_id: number;
   expires_at?: string;
   expires_days?: number;
   max_uses?: number;
@@ -133,6 +149,7 @@ export function createInviteCodeApi(payload: {
 export function editInviteCodeApi(
   id: number,
   payload: {
+    default_role_id?: number;
     expires_at?: string;
     expires_days?: null | number;
     max_uses: number;

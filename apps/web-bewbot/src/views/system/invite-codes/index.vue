@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { TableColumnsType } from 'ant-design-vue';
 
-import type { InviteCodeItem } from '#/api/core';
+import type { AvailableRoleItem, InviteCodeItem } from '#/api/core';
 
 import { h, onMounted, ref } from 'vue';
 
@@ -17,6 +17,7 @@ import {
   message,
   Modal,
   Progress,
+  Select,
   Space,
   Switch,
   Table,
@@ -29,6 +30,7 @@ import {
   createInviteCodeApi,
   deleteInviteCodeApi,
   editInviteCodeApi,
+  getAvailableRolesApi,
   getInviteCodesApi,
   getSystemSettingApi,
   getUsersByInviteCodeApi,
@@ -83,8 +85,14 @@ async function toggleOpenRegistration(val: boolean) {
   }
 }
 
-// Create modal
+// ── roles ──
+
+const availableRoles = ref<AvailableRoleItem[]>([]);
+
+// ── create modal ──
+
 const modalVisible = ref(false);
+const defaultRoleId = ref<number | undefined>(undefined);
 const maxUses = ref(1);
 const expiresAt = ref<any>(dayjs().add(7, 'day'));
 const expiresDays = ref(7);
@@ -126,6 +134,15 @@ const columns: TableColumnsType = [
     sorter: (a: InviteCodeItem, b: InviteCodeItem) =>
       Number(b.is_active) - Number(a.is_active),
     sortDirections: ['ascend', 'descend'],
+  },
+  {
+    title: '默认角色',
+    key: 'default_role',
+    width: 100,
+    customRender: ({ record }: { record: InviteCodeItem }) => {
+      if (!record.default_role_name) return '-';
+      return h(Tag, { color: 'blue' }, () => record.default_role_name);
+    },
   },
   {
     title: '使用',
@@ -294,6 +311,7 @@ async function handlePermanentDelete(code: InviteCodeItem) {
 // Edit modal
 const editModalVisible = ref(false);
 const editingCode = ref<InviteCodeItem | null>(null);
+const editDefaultRoleId = ref<number | undefined>(undefined);
 const editMaxUses = ref(1);
 const editExpiresAt = ref<any>(null);
 const editExpiresDays = ref(0);
@@ -331,6 +349,7 @@ function openEditModal(code: InviteCodeItem) {
     return;
   }
   editingCode.value = code;
+  editDefaultRoleId.value = code.default_role_id ?? undefined;
   editMaxUses.value = code.max_uses;
   editExpiresAt.value = code.expires_at ? dayjs(code.expires_at) : null;
   editExpiresDays.value = code.expires_at
@@ -345,6 +364,10 @@ async function handleEditSave() {
   saving.value = true;
   try {
     await editInviteCodeApi(editingCode.value.id, {
+      default_role_id:
+        editDefaultRoleId.value === editingCode.value.default_role_id
+          ? undefined
+          : editDefaultRoleId.value,
       expires_at: editExpiresAt.value?.toISOString?.() ?? '',
       max_uses: editMaxUses.value,
       remark: editRemark.value || '',
@@ -360,15 +383,21 @@ async function handleEditSave() {
 }
 
 async function handleCreate() {
+  if (!defaultRoleId.value) {
+    message.error('请选择默认角色');
+    return;
+  }
   saving.value = true;
   try {
     await createInviteCodeApi({
+      default_role_id: defaultRoleId.value,
       expires_at: expiresAt.value?.toISOString?.() ?? undefined,
       max_uses: maxUses.value,
       remark: remark.value || undefined,
     });
     message.success('邀请码已生成');
     modalVisible.value = false;
+    defaultRoleId.value = undefined;
     maxUses.value = 1;
     expiresAt.value = dayjs().add(7, 'day');
     expiresDays.value = 7;
@@ -397,14 +426,16 @@ async function handleDelete(code: InviteCodeItem) {
 async function fetchData() {
   loading.value = true;
   try {
-    const [codesData, requiredStr, openRegStr] = await Promise.all([
+    const [codesData, requiredStr, openRegStr, roles] = await Promise.all([
       getInviteCodesApi(),
       getSystemSettingApi('require_invite_code'),
       getSystemSettingApi('open_registration'),
+      getAvailableRolesApi(),
     ]);
     codes.value = codesData;
     inviteRequired.value = requiredStr === 'true';
     openRegistration.value = openRegStr !== 'false';
+    availableRoles.value = roles;
   } finally {
     loading.value = false;
   }
@@ -491,6 +522,15 @@ onMounted(fetchData);
       :confirm-loading="saving"
     >
       <div style="margin-bottom: 12px">
+        <label>默认角色</label>
+        <Select
+          v-model:value="defaultRoleId"
+          placeholder="请选择角色"
+          style="width: 100%; margin-top: 4px"
+          :options="availableRoles.map((r) => ({ label: r.name, value: r.id }))"
+        />
+      </div>
+      <div style="margin-bottom: 12px">
         <label>最大使用次数（0 = 不限）</label>
         <InputNumber
           v-model:value="maxUses"
@@ -540,6 +580,22 @@ onMounted(fetchData);
       <div style="margin-bottom: 12px">
         <label>邀请码</label>
         <Input :value="editingCode?.code" disabled style="margin-top: 4px" />
+      </div>
+      <div style="margin-bottom: 12px">
+        <label>默认角色</label>
+        <Select
+          v-model:value="editDefaultRoleId"
+          placeholder="请选择角色"
+          :disabled="(editingCode?.used_count ?? 0) > 0"
+          style="width: 100%; margin-top: 4px"
+          :options="availableRoles.map((r) => ({ label: r.name, value: r.id }))"
+        />
+        <span
+          v-if="(editingCode?.used_count ?? 0) > 0"
+          style=" font-size: 12px;color: #999"
+        >
+          已有用户使用，不可修改默认角色
+        </span>
       </div>
       <div style="margin-bottom: 12px">
         <label>最大使用次数（0 = 不限）</label>
