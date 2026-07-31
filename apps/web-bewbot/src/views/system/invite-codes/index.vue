@@ -88,6 +88,13 @@ async function toggleOpenRegistration(val: boolean) {
 // ── roles ──
 
 const availableRoles = ref<AvailableRoleItem[]>([]);
+const fallbackRoleId = ref<number | undefined>(undefined);
+
+async function handleFallbackRoleChange(val: any) {
+  if (val === undefined || val === null) return;
+  await setSystemSettingApi('default_registration_role', String(val));
+  message.success('已更新降级注册角色');
+}
 
 // ── create modal ──
 
@@ -426,16 +433,21 @@ async function handleDelete(code: InviteCodeItem) {
 async function fetchData() {
   loading.value = true;
   try {
-    const [codesData, requiredStr, openRegStr, roles] = await Promise.all([
-      getInviteCodesApi(),
-      getSystemSettingApi('require_invite_code'),
-      getSystemSettingApi('open_registration'),
-      getAvailableRolesApi(),
-    ]);
+    const [codesData, requiredStr, openRegStr, roles, fallbackRoleStr] =
+      await Promise.all([
+        getInviteCodesApi(),
+        getSystemSettingApi('require_invite_code'),
+        getSystemSettingApi('open_registration'),
+        getAvailableRolesApi(),
+        getSystemSettingApi('default_registration_role'),
+      ]);
     codes.value = codesData;
     inviteRequired.value = requiredStr === 'true';
     openRegistration.value = openRegStr !== 'false';
     availableRoles.value = roles;
+    fallbackRoleId.value = fallbackRoleStr
+      ? Number(fallbackRoleStr)
+      : undefined;
   } finally {
     loading.value = false;
   }
@@ -460,6 +472,16 @@ onMounted(fetchData);
         <Switch
           :checked="inviteRequired"
           @change="toggleInviteRequired as any"
+        />
+      </Space>
+      <Space>
+        <span>降级注册角色</span>
+        <Select
+          :value="fallbackRoleId"
+          placeholder="选择角色"
+          style="width: 140px"
+          :options="availableRoles.map((r) => ({ label: r.name, value: r.id }))"
+          @change="handleFallbackRoleChange"
         />
       </Space>
     </Space>
@@ -592,7 +614,7 @@ onMounted(fetchData);
         />
         <span
           v-if="(editingCode?.used_count ?? 0) > 0"
-          style=" font-size: 12px;color: #999"
+          style="font-size: 12px; color: #999"
         >
           已有用户使用，不可修改默认角色
         </span>
