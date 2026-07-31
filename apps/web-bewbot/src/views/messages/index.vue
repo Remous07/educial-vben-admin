@@ -71,9 +71,8 @@ const columns: TableColumnsType = [
     align: 'center',
     customRender: ({ record }: { record: Conversation }) => {
       const tip = timeoutTip(record.conv_timeout_remaining);
-      return h('span', [
+      return h('span', { title: tip || undefined }, [
         h('span', {
-          title: tip || undefined,
           style: {
             display: 'inline-block',
             width: '8px',
