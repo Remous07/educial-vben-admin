@@ -58,7 +58,7 @@ const columns: TableColumnsType = [
     key: 'telegram_id',
     width: 120,
   },
-  { title: '名称', dataIndex: 'first_name', key: 'first_name', width: 100 },
+  { title: '昵称', dataIndex: 'first_name', key: 'first_name', width: 100 },
   {
     title: '用户名',
     dataIndex: 'username',
