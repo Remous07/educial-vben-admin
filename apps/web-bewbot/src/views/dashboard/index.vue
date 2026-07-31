@@ -119,7 +119,7 @@ onMounted(fetchStats);
       <Col :span="6">
         <Card>
           <Statistic
-            title="消息总数"
+            title="会话总数"
             :loading="loading"
             :value="stats.message_count"
           >
