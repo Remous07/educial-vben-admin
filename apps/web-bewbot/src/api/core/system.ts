@@ -109,6 +109,7 @@ export interface InviteCodeItem {
   used_count: number;
   is_active: boolean;
   expires_at: null | string;
+  remark: null | string;
   created_at: null | string;
   created_by_username: null | string;
 }
@@ -123,6 +124,7 @@ export function createInviteCodeApi(payload: {
   expires_at?: string;
   expires_days?: number;
   max_uses?: number;
+  remark?: string;
 }) {
   return requestClient.post<InviteCodeItem>('/invite-codes', payload);
 }
@@ -134,6 +136,7 @@ export function editInviteCodeApi(
     expires_at?: string;
     expires_days?: null | number;
     max_uses: number;
+    remark?: string;
   },
 ) {
   return requestClient.put(`/invite-codes/${id}`, payload);

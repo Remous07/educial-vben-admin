@@ -87,6 +87,7 @@ async function toggleOpenRegistration(val: boolean) {
 const modalVisible = ref(false);
 const maxUses = ref(1);
 const expiresAt = ref(dayjs().add(7, 'day'));
+const remark = ref('');
 const saving = ref(false);
 
 const columns: TableColumnsType = [
@@ -214,6 +215,13 @@ const columns: TableColumnsType = [
     },
   },
   {
+    title: '备注',
+    dataIndex: 'remark',
+    key: 'remark',
+    width: 120,
+    customRender: ({ text }: { text: null | string }) => text || '-',
+  },
+  {
     title: '创建时间',
     dataIndex: 'created_at',
     key: 'created_at',
@@ -277,6 +285,7 @@ const editModalVisible = ref(false);
 const editingCode = ref<InviteCodeItem | null>(null);
 const editMaxUses = ref(1);
 const editExpiresAt = ref<any>(null);
+const editRemark = ref('');
 
 function openEditModal(code: InviteCodeItem) {
   if (!code.is_active) {
@@ -300,6 +309,7 @@ function openEditModal(code: InviteCodeItem) {
   editingCode.value = code;
   editMaxUses.value = code.max_uses;
   editExpiresAt.value = code.expires_at ? dayjs(code.expires_at) : null;
+  editRemark.value = code.remark || '';
   editModalVisible.value = true;
 }
 
@@ -310,6 +320,7 @@ async function handleEditSave() {
     await editInviteCodeApi(editingCode.value.id, {
       expires_at: editExpiresAt.value?.toISOString?.() ?? '',
       max_uses: editMaxUses.value,
+      remark: editRemark.value || undefined,
     });
     message.success('保存成功');
     editModalVisible.value = false;
@@ -327,11 +338,13 @@ async function handleCreate() {
     await createInviteCodeApi({
       expires_at: expiresAt.value?.toISOString?.() ?? undefined,
       max_uses: maxUses.value,
+      remark: remark.value || undefined,
     });
     message.success('邀请码已生成');
     modalVisible.value = false;
     maxUses.value = 1;
     expiresAt.value = dayjs().add(7, 'day');
+    remark.value = '';
     fetchData();
   } catch {
     // error handled by interceptor
@@ -468,6 +481,14 @@ onMounted(fetchData);
           style="width: 100%; margin-top: 4px"
         />
       </div>
+      <div style="margin-top: 12px">
+        <label>备注</label>
+        <Input
+          v-model:value="remark"
+          placeholder="可选"
+          style="margin-top: 4px"
+        />
+      </div>
     </Modal>
 
     <Modal
@@ -488,7 +509,7 @@ onMounted(fetchData);
           style="width: 100%; margin-top: 4px"
         />
       </div>
-      <div>
+      <div style="margin-bottom: 12px">
         <label>过期时间（留空 = 不变，选择 "datetime" 清空 = 永不过期）</label>
         <DatePicker
           v-model:value="editExpiresAt"
@@ -496,6 +517,14 @@ onMounted(fetchData);
           format="YYYY-MM-DD HH:mm"
           placeholder="不变"
           style="width: 100%; margin-top: 4px"
+        />
+      </div>
+      <div>
+        <label>备注</label>
+        <Input
+          v-model:value="editRemark"
+          placeholder="可选"
+          style="margin-top: 4px"
         />
       </div>
     </Modal>
