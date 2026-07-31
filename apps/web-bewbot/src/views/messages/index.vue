@@ -5,7 +5,7 @@ import { h, onMounted, ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
 
-import { Button, message, Modal, Table, Tag } from 'ant-design-vue';
+import { Button, message, Modal, Table, Tag, Tooltip } from 'ant-design-vue';
 
 import {
   blockVisitorApi,
@@ -27,6 +27,14 @@ interface Conversation {
   last_message_at: null | string;
   last_message_preview: string;
   is_active: boolean;
+  conv_timeout_remaining: null | number;
+}
+
+function timeoutTip(seconds: null | number): string {
+  if (seconds === null || seconds === undefined || seconds <= 0) return '';
+  if (seconds < 0) return '永不超时';
+  if (seconds < 3600) return `${Math.ceil(seconds / 60)} 分钟后超时`;
+  return `${Math.ceil(seconds / 3600)} 小时后超时`;
 }
 
 const conversations = ref<Conversation[]>([]);
@@ -61,23 +69,27 @@ const columns: TableColumnsType = [
     key: 'telegram_id',
     width: 80,
     align: 'center',
-    customRender: ({ record }: { record: Conversation }) =>
-      h('span', [
-        record.is_active
-          ? h('span', {
-              style: {
-                display: 'inline-block',
-                width: '6px',
-                height: '6px',
-                borderRadius: '50%',
-                backgroundColor: '#52c41a',
-                marginRight: '4px',
-                verticalAlign: 'middle',
-              },
-            })
-          : null,
+    customRender: ({ record }: { record: Conversation }) => {
+      const dot = record.is_active
+        ? h('span', {
+            style: {
+              display: 'inline-block',
+              width: '6px',
+              height: '6px',
+              borderRadius: '50%',
+              backgroundColor: '#52c41a',
+              marginRight: '4px',
+              verticalAlign: 'middle',
+            },
+          })
+        : null;
+
+      const tip = timeoutTip(record.conv_timeout_remaining);
+      return h('span', [
+        tip ? h(Tooltip, { title: tip }, { default: () => dot }) : dot,
         record.telegram_id,
-      ]),
+      ]);
+    },
   },
   {
     title: '昵称',
