@@ -17,6 +17,7 @@ import {
   Space,
   Table,
   Tag,
+  Tooltip,
 } from 'ant-design-vue';
 
 import {
@@ -24,6 +25,7 @@ import {
   deleteRoleApi,
   getPermissionsApi,
   getRolesApi,
+  getSystemSettingsBatchApi,
   updateRoleApi,
 } from '#/api/core';
 
@@ -32,6 +34,7 @@ defineOptions({ name: 'RoleManagement' });
 const roles = ref<RoleItem[]>([]);
 const permissions = ref<PermissionItem[]>([]);
 const loading = ref(false);
+const fallbackRoleId = ref<null | number>(null);
 
 const modalVisible = ref(false);
 const editingRole = ref<null | RoleItem>(null);
@@ -149,23 +152,46 @@ async function handleSave() {
 }
 
 async function handleDelete(role: RoleItem) {
-  Modal.confirm({
-    title: `确定删除角色「${role.name}」？`,
-    onOk: async () => {
-      await deleteRoleApi(role.id);
-      message.success('已删除');
-      fetchData();
-    },
-  });
+  deleteTarget.value = role;
+  deleteConfirmName.value = '';
+  deleteModalVisible.value = true;
+}
+
+// ── delete confirmation modal ──
+
+const deleteModalVisible = ref(false);
+const deleteTarget = ref<null | RoleItem>(null);
+const deleteConfirmName = ref('');
+const deleting = ref(false);
+
+async function confirmDelete() {
+  if (!deleteTarget.value) return;
+  deleting.value = true;
+  try {
+    await deleteRoleApi(deleteTarget.value.id);
+    message.success('已删除');
+    deleteModalVisible.value = false;
+    fetchData();
+  } catch {
+    message.error('删除失败');
+  } finally {
+    deleting.value = false;
+  }
 }
 
 async function fetchData() {
   loading.value = true;
   try {
-    [roles.value, permissions.value] = await Promise.all([
+    const [rolesData, permsData, settings] = await Promise.all([
       getRolesApi(),
       getPermissionsApi(),
+      getSystemSettingsBatchApi(['default_registration_role']),
     ]);
+    roles.value = rolesData;
+    permissions.value = permsData;
+    fallbackRoleId.value = settings.default_registration_role
+      ? Number(settings.default_registration_role)
+      : null;
   } finally {
     loading.value = false;
   }
@@ -193,7 +219,14 @@ onMounted(fetchData);
             <Button size="small" @click="openEditModal(record as RoleItem)">
               编辑
             </Button>
+            <Tooltip
+              v-if="fallbackRoleId === (record as RoleItem).id"
+              title="该角色为降级注册角色，不可删除"
+            >
+              <Button size="small" danger disabled> 删除 </Button>
+            </Tooltip>
             <Button
+              v-else
               size="small"
               danger
               @click="handleDelete(record as RoleItem)"
@@ -290,6 +323,36 @@ onMounted(fetchData);
             </div>
           </Collapse.Panel>
         </Collapse>
+      </div>
+    </Modal>
+
+    <Modal
+      v-model:open="deleteModalVisible"
+      title="删除角色"
+      :confirm-loading="deleting"
+      :ok-button-props="{
+        disabled: deleteConfirmName !== deleteTarget?.name,
+        danger: true,
+      }"
+      ok-text="删除"
+      @ok="confirmDelete"
+    >
+      <p>确定删除角色「{{ deleteTarget?.name }}」？此操作不可恢复。</p>
+      <p
+        v-if="(deleteTarget?.permissions?.length ?? 0) > 0"
+        style="color: #999"
+      >
+        该角色拥有
+        {{ deleteTarget?.permissions.length }}
+        个权限，删除后关联用户将失去这些权限。
+      </p>
+      <div style="margin-top: 12px">
+        <label>请输入角色名称以确认：</label>
+        <Input
+          v-model:value="deleteConfirmName"
+          :placeholder="deleteTarget?.name"
+          style="margin-top: 4px"
+        />
       </div>
     </Modal>
   </Page>
