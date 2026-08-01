@@ -165,7 +165,7 @@ async function handleFallbackRoleChange(val: any) {
 
 const auditModalVisible = ref(false);
 const auditEnabled = ref(false);
-const auditProvider = ref('openai');
+const auditBaseUrl = ref('');
 const auditModel = ref('');
 const auditApiKey = ref('');
 const auditPrompt = ref('');
@@ -173,7 +173,7 @@ const auditFailOpen = ref(true);
 
 function openAuditModal() {
   auditEnabled.value = auditSettings.value.enabled === 'true';
-  auditProvider.value = auditSettings.value.provider || 'openai';
+  auditBaseUrl.value = auditSettings.value.base_url || '';
   auditModel.value = auditSettings.value.model || '';
   auditApiKey.value = auditSettings.value.api_key || '';
   auditPrompt.value = auditSettings.value.prompt || '';
@@ -184,7 +184,7 @@ function openAuditModal() {
 async function saveAuditSettings() {
   await Promise.all([
     setSystemSettingApi('username_audit_enabled', String(auditEnabled.value)),
-    setSystemSettingApi('username_audit_provider', auditProvider.value),
+    setSystemSettingApi('username_audit_base_url', auditBaseUrl.value),
     setSystemSettingApi('username_audit_model', auditModel.value),
     setSystemSettingApi('username_audit_api_key', auditApiKey.value),
     setSystemSettingApi('username_audit_prompt', auditPrompt.value),
@@ -193,9 +193,8 @@ async function saveAuditSettings() {
       String(auditFailOpen.value),
     ),
   ]);
-  // Refresh stored values
   auditSettings.value.enabled = String(auditEnabled.value);
-  auditSettings.value.provider = auditProvider.value;
+  auditSettings.value.base_url = auditBaseUrl.value;
   auditSettings.value.model = auditModel.value;
   auditSettings.value.api_key = auditApiKey.value;
   auditSettings.value.prompt = auditPrompt.value;
@@ -553,7 +552,7 @@ async function fetchData() {
         'email_domain_whitelist',
         'email_domain_blacklist',
         'username_audit_enabled',
-        'username_audit_provider',
+        'username_audit_base_url',
         'username_audit_model',
         'username_audit_api_key',
         'username_audit_prompt',
@@ -573,11 +572,11 @@ async function fetchData() {
     emailDomainBlacklist.value = settings.email_domain_blacklist || '';
     auditSettings.value = {
       api_key: settings.username_audit_api_key || '',
+      base_url: settings.username_audit_base_url || '',
       enabled: settings.username_audit_enabled || 'false',
       fail_open: settings.username_audit_fail_open || 'true',
       model: settings.username_audit_model || '',
       prompt: settings.username_audit_prompt || '',
-      provider: settings.username_audit_provider || 'openai',
     };
   } finally {
     loading.value = false;
@@ -881,21 +880,19 @@ onMounted(fetchData);
         />
       </div>
       <div style="margin-bottom: 12px">
-        <label>AI 提供商</label>
-        <Select
-          v-model:value="auditProvider"
-          style="width: 100%; margin-top: 4px"
-          :options="[
-            { label: 'OpenAI', value: 'openai' },
-            { label: 'Anthropic', value: 'anthropic' },
-          ]"
+        <label>API 地址</label>
+        <Input
+          v-model:value="auditBaseUrl"
+          placeholder="https://api.openai.com/v1"
+          style="margin-top: 4px"
         />
+        <span style="font-size: 12px; color: #999">兼容 OpenAI 接口格式的 API 地址</span>
       </div>
       <div style="margin-bottom: 12px">
         <label>模型</label>
         <Input
           v-model:value="auditModel"
-          placeholder="claude-haiku-4-5-20251001 或 gpt-4o-mini"
+          placeholder="gpt-4o-mini"
           style="margin-top: 4px"
         />
       </div>
