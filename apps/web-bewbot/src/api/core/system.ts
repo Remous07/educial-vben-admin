@@ -174,6 +174,14 @@ export function permanentlyDeleteInviteCodeApi(id: number) {
   return requestClient.delete(`/invite-codes/${id}/permanent`);
 }
 
+/** 获取 AI 模型列表 */
+export function fetchAiModelsApi(baseUrl: string, apiKey: string) {
+  return requestClient.post<string[]>('/system-settings/fetch-ai-models', {
+    api_key: apiKey,
+    base_url: baseUrl,
+  });
+}
+
 /** 批量获取系统设置 */
 export function getSystemSettingsBatchApi(keys: string[]) {
   return requestClient.get<Record<string, string>>(

@@ -8,6 +8,7 @@ import { h, onMounted, ref } from 'vue';
 import { Page } from '@vben/common-ui';
 
 import {
+  AutoComplete,
   Button,
   DatePicker,
   Drawer,
@@ -30,6 +31,7 @@ import {
   createInviteCodeApi,
   deleteInviteCodeApi,
   editInviteCodeApi,
+  fetchAiModelsApi,
   getAvailableRolesApi,
   getInviteCodesApi,
   getSystemSettingsBatchApi,
@@ -170,6 +172,28 @@ const auditModel = ref('');
 const auditApiKey = ref('');
 const auditPrompt = ref('');
 const auditFailOpen = ref(true);
+const auditModelOptions = ref<{ label: string; value: string }[]>([]);
+const fetchingModels = ref(false);
+
+async function handleFetchModels() {
+  if (!auditBaseUrl.value || !auditApiKey.value) {
+    message.warning('请先填写 API 地址和 API Key');
+    return;
+  }
+  fetchingModels.value = true;
+  try {
+    const models = await fetchAiModelsApi(
+      auditBaseUrl.value,
+      auditApiKey.value,
+    );
+    auditModelOptions.value = models.map((m) => ({ label: m, value: m }));
+    message.success(`获取到 ${models.length} 个模型`);
+  } catch {
+    message.error('获取模型列表失败，请检查地址和 Key');
+  } finally {
+    fetchingModels.value = false;
+  }
+}
 
 function openAuditModal() {
   auditEnabled.value = auditSettings.value.enabled === 'true';
@@ -890,11 +914,18 @@ onMounted(fetchData);
       </div>
       <div style="margin-bottom: 12px">
         <label>模型</label>
-        <Input
-          v-model:value="auditModel"
-          placeholder="gpt-4o-mini"
-          style="margin-top: 4px"
-        />
+        <div style="display: flex; gap: 8px; margin-top: 4px">
+          <AutoComplete
+            v-model:value="auditModel"
+            :options="auditModelOptions"
+            placeholder="gpt-4o-mini"
+            style="flex: 1"
+            allow-clear
+          />
+          <Button :loading="fetchingModels" @click="handleFetchModels">
+            获取模型列表
+          </Button>
+        </div>
       </div>
       <div style="margin-bottom: 12px">
         <label>API Key</label>
