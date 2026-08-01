@@ -48,6 +48,43 @@ const openRegistration = ref(true);
 const emailDomainMode = ref<string>('off');
 const emailDomainList = ref('');
 
+// ── email domain modal ──
+
+const emailDomainModalVisible = ref(false);
+const emailDomainModalMode = ref<string>('off');
+const emailDomainModalList = ref('');
+
+function openEmailDomainModal() {
+  emailDomainModalMode.value = emailDomainMode.value;
+  // Convert comma-separated from API to newline-separated for editing
+  emailDomainModalList.value = emailDomainList.value
+    .split(',')
+    .map((d) => d.trim())
+    .filter(Boolean)
+    .join('\n');
+  emailDomainModalVisible.value = true;
+}
+
+async function saveEmailDomainSettings() {
+  await setSystemSettingApi('email_domain_mode', emailDomainModalMode.value);
+  await setSystemSettingApi(
+    'email_domain_list',
+    emailDomainModalList.value
+      .split('\n')
+      .map((d) => d.trim())
+      .filter(Boolean)
+      .join(','),
+  );
+  emailDomainMode.value = emailDomainModalMode.value;
+  emailDomainList.value = emailDomainModalList.value
+    .split('\n')
+    .map((d) => d.trim())
+    .filter(Boolean)
+    .join(',');
+  emailDomainModalVisible.value = false;
+  message.success('已更新邮箱域名过滤');
+}
+
 // Code users drawer
 const userDrawerVisible = ref(false);
 const userDrawerCode = ref('');
@@ -91,17 +128,6 @@ async function toggleOpenRegistration(val: boolean) {
 
 const availableRoles = ref<AvailableRoleItem[]>([]);
 const fallbackRoleId = ref<number | undefined>(undefined);
-
-async function handleEmailDomainModeChange(val: any) {
-  await setSystemSettingApi('email_domain_mode', val);
-  emailDomainMode.value = val;
-  message.success('已更新邮箱域名过滤模式');
-}
-
-async function handleEmailDomainListChange() {
-  await setSystemSettingApi('email_domain_list', emailDomainList.value);
-  message.success('已更新域名列表');
-}
 
 async function handleFallbackRoleChange(val: any) {
   if (val === undefined || val === null) return;
@@ -509,29 +535,15 @@ onMounted(fetchData);
         />
       </Space>
     </Space>
-    <div style="margin-top: 8px">
-      <Space>
-        <span>注册邮箱过滤</span>
-        <Select
-          :value="emailDomainMode"
-          style="width: 120px"
-          :options="[
-            { label: '不开启', value: 'off' },
-            { label: '白名单', value: 'whitelist' },
-            { label: '黑名单', value: 'blacklist' },
-          ]"
-          @change="handleEmailDomainModeChange"
-        />
-        <Input
-          v-if="emailDomainMode !== 'off'"
-          v-model:value="emailDomainList"
-          placeholder="gmail.com, outlook.com"
-          style="width: 260px"
-          @blur="handleEmailDomainListChange"
-          @press-enter="handleEmailDomainListChange"
-        />
-      </Space>
-    </div>
+    <Button @click="openEmailDomainModal">
+      邮箱过滤{{
+        emailDomainMode === 'whitelist'
+          ? '：白名单'
+          : emailDomainMode === 'blacklist'
+            ? '：黑名单'
+            : ''
+      }}
+    </Button>
 
     <Table
       :columns="columns"
@@ -735,5 +747,35 @@ onMounted(fetchData);
         </template>
       </List>
     </Drawer>
+
+    <!-- Email domain filter modal -->
+    <Modal
+      v-model:open="emailDomainModalVisible"
+      title="邮箱域名过滤"
+      @ok="saveEmailDomainSettings"
+    >
+      <div style="margin-bottom: 12px">
+        <label>过滤模式</label>
+        <Select
+          v-model:value="emailDomainModalMode"
+          style="width: 100%; margin-top: 4px"
+          :options="[
+            { label: '不开启', value: 'off' },
+            { label: '白名单', value: 'whitelist' },
+            { label: '黑名单', value: 'blacklist' },
+          ]"
+        />
+      </div>
+      <div v-if="emailDomainModalMode !== 'off'">
+        <label>域名列表</label>
+        <Input.TextArea
+          v-model:value="emailDomainModalList"
+          :rows="6"
+          placeholder="gmail.com&#10;outlook.com"
+          style="margin-top: 4px"
+        />
+        <span style=" font-size: 12px;color: #999">每行一个域名，如 gmail.com</span>
+      </div>
+    </Modal>
   </Page>
 </template>
