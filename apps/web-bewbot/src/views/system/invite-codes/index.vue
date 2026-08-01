@@ -45,6 +45,8 @@ const codes = ref<InviteCodeItem[]>([]);
 const loading = ref(false);
 const inviteRequired = ref(false);
 const openRegistration = ref(true);
+const emailDomainMode = ref<string>('off');
+const emailDomainList = ref('');
 
 // Code users drawer
 const userDrawerVisible = ref(false);
@@ -89,6 +91,17 @@ async function toggleOpenRegistration(val: boolean) {
 
 const availableRoles = ref<AvailableRoleItem[]>([]);
 const fallbackRoleId = ref<number | undefined>(undefined);
+
+async function handleEmailDomainModeChange(val: any) {
+  await setSystemSettingApi('email_domain_mode', val);
+  emailDomainMode.value = val;
+  message.success('已更新邮箱域名过滤模式');
+}
+
+async function handleEmailDomainListChange() {
+  await setSystemSettingApi('email_domain_list', emailDomainList.value);
+  message.success('已更新域名列表');
+}
 
 async function handleFallbackRoleChange(val: any) {
   if (val === undefined || val === null) return;
@@ -445,6 +458,8 @@ async function fetchData() {
         'require_invite_code',
         'open_registration',
         'default_registration_role',
+        'email_domain_mode',
+        'email_domain_list',
       ]),
       getAvailableRolesApi(),
     ]);
@@ -455,6 +470,8 @@ async function fetchData() {
     fallbackRoleId.value = settings.default_registration_role
       ? Number(settings.default_registration_role)
       : undefined;
+    emailDomainMode.value = settings.email_domain_mode || 'off';
+    emailDomainList.value = settings.email_domain_list || '';
   } finally {
     loading.value = false;
   }
@@ -492,6 +509,29 @@ onMounted(fetchData);
         />
       </Space>
     </Space>
+    <div style="margin-top: 8px">
+      <Space>
+        <span>注册邮箱过滤</span>
+        <Select
+          :value="emailDomainMode"
+          style="width: 120px"
+          :options="[
+            { label: '不开启', value: 'off' },
+            { label: '白名单', value: 'whitelist' },
+            { label: '黑名单', value: 'blacklist' },
+          ]"
+          @change="handleEmailDomainModeChange"
+        />
+        <Input
+          v-if="emailDomainMode !== 'off'"
+          v-model:value="emailDomainList"
+          placeholder="gmail.com, outlook.com"
+          style="width: 260px"
+          @blur="handleEmailDomainListChange"
+          @press-enter="handleEmailDomainListChange"
+        />
+      </Space>
+    </div>
 
     <Table
       :columns="columns"
