@@ -6,6 +6,7 @@ import type { PermissionItem, RoleItem } from '#/api/core';
 import { computed, onMounted, ref } from 'vue';
 
 import { Page, VbenDescriptions } from '@vben/common-ui';
+import { IconifyIcon } from '@vben/icons';
 
 import {
   Button,
@@ -339,7 +340,10 @@ onMounted(fetchData);
     >
       <template #title>
         <Space align="center" :size="8">
-          <span style="font-size: 18px; color: #faad14">⚠</span>
+          <IconifyIcon
+            icon="ant-design:warning-filled"
+            style=" font-size: 18px;color: #faad14"
+          />
           <span>删除角色</span>
         </Space>
       </template>
