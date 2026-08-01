@@ -46,7 +46,8 @@ const loading = ref(false);
 const inviteRequired = ref(false);
 const openRegistration = ref(true);
 const emailDomainMode = ref<string>('off');
-const emailDomainList = ref('');
+const emailDomainWhitelist = ref('');
+const emailDomainBlacklist = ref('');
 
 // ── email domain modal ──
 
@@ -54,9 +55,15 @@ const emailDomainModalVisible = ref(false);
 const emailDomainModalMode = ref<string>('off');
 const emailDomainModalList = ref('');
 
+function _domainListForMode(mode: string): string {
+  return mode === 'whitelist'
+    ? emailDomainWhitelist.value
+    : emailDomainBlacklist.value;
+}
+
 function openEmailDomainModal() {
   emailDomainModalMode.value = emailDomainMode.value;
-  emailDomainModalList.value = emailDomainList.value
+  emailDomainModalList.value = _domainListForMode(emailDomainMode.value)
     .split(',')
     .map((d) => d.trim())
     .filter(Boolean)
@@ -65,25 +72,35 @@ function openEmailDomainModal() {
 }
 
 function onEmailDomainModeChange() {
-  emailDomainModalList.value = '';
+  // Switch to the saved list for the newly selected mode
+  emailDomainModalList.value = _domainListForMode(emailDomainModalMode.value)
+    .split(',')
+    .map((d) => d.trim())
+    .filter(Boolean)
+    .join('\n');
 }
 
 async function saveEmailDomainSettings() {
-  await setSystemSettingApi('email_domain_mode', emailDomainModalMode.value);
-  await setSystemSettingApi(
-    'email_domain_list',
-    emailDomainModalList.value
-      .split('\n')
-      .map((d) => d.trim())
-      .filter(Boolean)
-      .join(','),
-  );
-  emailDomainMode.value = emailDomainModalMode.value;
-  emailDomainList.value = emailDomainModalList.value
+  const normalized = emailDomainModalList.value
     .split('\n')
     .map((d) => d.trim())
     .filter(Boolean)
     .join(',');
+
+  await setSystemSettingApi('email_domain_mode', emailDomainModalMode.value);
+  // Save to mode-specific key
+  const listKey =
+    emailDomainModalMode.value === 'whitelist'
+      ? 'email_domain_whitelist'
+      : 'email_domain_blacklist';
+  await setSystemSettingApi(listKey, normalized);
+
+  emailDomainMode.value = emailDomainModalMode.value;
+  if (emailDomainModalMode.value === 'whitelist') {
+    emailDomainWhitelist.value = normalized;
+  } else {
+    emailDomainBlacklist.value = normalized;
+  }
   emailDomainModalVisible.value = false;
   message.success('已更新邮箱域名过滤');
 }
@@ -488,7 +505,8 @@ async function fetchData() {
         'open_registration',
         'default_registration_role',
         'email_domain_mode',
-        'email_domain_list',
+        'email_domain_whitelist',
+        'email_domain_blacklist',
       ]),
       getAvailableRolesApi(),
     ]);
@@ -500,7 +518,8 @@ async function fetchData() {
       ? Number(settings.default_registration_role)
       : undefined;
     emailDomainMode.value = settings.email_domain_mode || 'off';
-    emailDomainList.value = settings.email_domain_list || '';
+    emailDomainWhitelist.value = settings.email_domain_whitelist || '';
+    emailDomainBlacklist.value = settings.email_domain_blacklist || '';
   } finally {
     loading.value = false;
   }
