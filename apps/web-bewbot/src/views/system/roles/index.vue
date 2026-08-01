@@ -5,7 +5,7 @@ import type { PermissionItem, RoleItem } from '#/api/core';
 
 import { computed, onMounted, ref } from 'vue';
 
-import { Page } from '@vben/common-ui';
+import { Page, VbenDescriptions } from '@vben/common-ui';
 
 import {
   Button,
@@ -339,51 +339,28 @@ onMounted(fetchData);
     >
       <template #title>
         <Space align="center" :size="8">
-          <span style=" font-size: 18px;color: #faad14">⚠</span>
+          <span style="font-size: 18px; color: #faad14">⚠</span>
           <span>删除角色</span>
         </Space>
       </template>
 
-      <div
-        style="
-          padding: 16px;
-          margin-bottom: 16px;
-          background: #fffbe6;
-          border: 1px solid #ffe58f;
-          border-radius: 6px;
-        "
-      >
-        <div style="display: flex; flex-wrap: wrap; gap: 16px">
-          <div>
-            <span style="font-size: 12px; color: #999">角色名</span>
-            <div style="font-size: 15px; font-weight: 600; color: #1d1d1d">
-              {{ deleteTarget?.name }}
-            </div>
-          </div>
-          <div>
-            <span style="font-size: 12px; color: #999">权限</span>
-            <div style="font-size: 15px; font-weight: 600">
-              <Tag color="processing">
-                {{ deleteTarget?.permissions?.length ?? 0 }}
-              </Tag>
-            </div>
-          </div>
-          <div>
-            <span style="font-size: 12px; color: #999">用户</span>
-            <div style="font-size: 15px; font-weight: 600">
-              <Tag
-                :color="
-                  (deleteTarget?.admin_user_count ?? 0) > 0
-                    ? 'orange'
-                    : 'default'
-                "
-              >
-                {{ deleteTarget?.admin_user_count ?? 0 }}
-              </Tag>
-            </div>
-          </div>
-        </div>
-      </div>
+      <VbenDescriptions
+        :column="3"
+        bordered
+        size="small"
+        :items="[
+          { label: '角色名', content: () => deleteTarget?.name ?? '-' },
+          {
+            label: '权限数',
+            content: () => deleteTarget?.permissions?.length ?? 0,
+          },
+          {
+            label: '用户数',
+            content: () => deleteTarget?.admin_user_count ?? 0,
+          },
+        ]"
+        style="margin-bottom: 16px"
+      />
 
       <div
         style="
