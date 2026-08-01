@@ -27,7 +27,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('#/views/system/invite-codes/index.vue'),
     meta: {
       authority: ['superadmin'],
-      icon: 'lucide:ticket',
+      icon: 'lucide:user-plus',
       title: '注册设置',
       order: 93,
     },
