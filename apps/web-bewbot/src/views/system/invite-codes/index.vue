@@ -1018,11 +1018,8 @@ onMounted(fetchData);
           <Tag :color="testAuditResult.approved ? 'green' : 'red'">
             {{ testAuditResult.approved ? '通过' : '拒绝' }}
           </Tag>
-          <span
-            v-if="testAuditResult.reason"
-            style="margin-left: 8px; color: #666"
-          >
-            {{ testAuditResult.reason }}
+          <span style="margin-left: 8px; color: #666">
+            {{ testAuditResult.reason || '审核完成' }}
           </span>
         </div>
       </div>
