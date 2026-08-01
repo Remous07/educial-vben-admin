@@ -344,14 +344,14 @@ onMounted(fetchData);
             icon="ant-design:warning-filled"
             style="font-size: 18px; color: #faad14"
           />
-          <span style=" font-size: 16px;font-weight: 600">删除角色</span>
+          <span style="font-size: 16px; font-weight: 600">删除角色</span>
         </Space>
       </template>
 
       <VbenDescriptions
         :column="3"
-        bordered
         size="small"
+        :colon="false"
         :items="[
           { label: '角色名', content: () => deleteTarget?.name ?? '-' },
           {
