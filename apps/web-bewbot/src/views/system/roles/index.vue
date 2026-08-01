@@ -328,30 +328,88 @@ onMounted(fetchData);
 
     <Modal
       v-model:open="deleteModalVisible"
-      title="删除角色"
       :confirm-loading="deleting"
       :ok-button-props="{
         disabled: deleteConfirmName !== deleteTarget?.name,
         danger: true,
       }"
       ok-text="删除"
+      cancel-text="取消"
       @ok="confirmDelete"
     >
-      <p>确定删除角色「{{ deleteTarget?.name }}」？此操作不可恢复。</p>
-      <p
-        v-if="(deleteTarget?.permissions?.length ?? 0) > 0"
-        style="color: #999"
+      <template #title>
+        <Space align="center" :size="8">
+          <span style=" font-size: 18px;color: #faad14">⚠</span>
+          <span>删除角色</span>
+        </Space>
+      </template>
+
+      <div
+        style="
+          padding: 16px;
+          margin-bottom: 16px;
+          background: #fffbe6;
+          border: 1px solid #ffe58f;
+          border-radius: 6px;
+        "
       >
-        该角色拥有
-        {{ deleteTarget?.permissions.length }}
-        个权限，删除后关联用户将失去这些权限。
-      </p>
+        <div style="display: flex; flex-wrap: wrap; gap: 16px">
+          <div>
+            <span style="font-size: 12px; color: #999">角色名</span>
+            <div style="font-size: 15px; font-weight: 600; color: #1d1d1d">
+              {{ deleteTarget?.name }}
+            </div>
+          </div>
+          <div>
+            <span style="font-size: 12px; color: #999">权限</span>
+            <div style="font-size: 15px; font-weight: 600">
+              <Tag color="processing">
+                {{ deleteTarget?.permissions?.length ?? 0 }}
+              </Tag>
+            </div>
+          </div>
+          <div>
+            <span style="font-size: 12px; color: #999">用户</span>
+            <div style="font-size: 15px; font-weight: 600">
+              <Tag
+                :color="
+                  (deleteTarget?.admin_user_count ?? 0) > 0
+                    ? 'orange'
+                    : 'default'
+                "
+              >
+                {{ deleteTarget?.admin_user_count ?? 0 }}
+              </Tag>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        style="
+          margin-bottom: 8px;
+          font-size: 13px;
+          line-height: 1.8;
+          color: #ff4d4f;
+        "
+      >
+        <div v-if="(deleteTarget?.admin_user_count ?? 0) > 0">
+          该角色当前被
+          <strong>{{ deleteTarget?.admin_user_count }}</strong>
+          个用户使用，删除后这些用户将失去该角色的全部权限。
+        </div>
+        <div v-else>该角色当前无用户使用，可以安全删除。</div>
+        <div>此操作不可恢复。</div>
+      </div>
+
       <div style="margin-top: 12px">
-        <label>请输入角色名称以确认：</label>
+        <label style="font-size: 13px; color: #666">
+          请输入 <strong>{{ deleteTarget?.name }}</strong> 确认：
+        </label>
         <Input
           v-model:value="deleteConfirmName"
           :placeholder="deleteTarget?.name"
-          style="margin-top: 4px"
+          style="margin-top: 6px"
         />
       </div>
     </Modal>

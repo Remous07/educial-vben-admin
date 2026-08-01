@@ -11,6 +11,7 @@ export interface RoleItem {
   id: number;
   name: string;
   description?: string;
+  admin_user_count?: number;
   permissions: PermissionItem[];
 }
 
