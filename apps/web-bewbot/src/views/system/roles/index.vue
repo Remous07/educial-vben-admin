@@ -16,6 +16,7 @@ import {
   Modal,
   Space,
   Table,
+  Tag,
 } from 'ant-design-vue';
 
 import {
@@ -73,12 +74,15 @@ const permissionGroups = computed(() => {
     if (!groups[prefix]) groups[prefix] = [];
     groups[prefix].push(perm);
   }
-  // Sort by category label order
   return Object.entries(groups).toSorted(([a], [b]) => {
     const labels = Object.keys(CATEGORY_LABELS);
     return labels.indexOf(a) - labels.indexOf(b);
   });
 });
+
+function selectedCount(perms: PermissionItem[]): number {
+  return perms.filter((p) => formPermissionIds.value.includes(p.id)).length;
+}
 
 const columns: TableColumnsType = [
   { title: 'ID', dataIndex: 'id', key: 'id', width: 60 },
@@ -243,13 +247,29 @@ onMounted(fetchData);
           <Collapse.Panel
             v-for="[prefix, perms] in permissionGroups"
             :key="prefix"
-            :header="`${CATEGORY_LABELS[prefix] || prefix} (${perms.length})`"
           >
-            <div style="display: flex; flex-direction: column; gap: 4px">
+            <template #header>
+              <span style="font-weight: 500">
+                {{ CATEGORY_LABELS[prefix] || prefix }}
+              </span>
+              <Tag style="margin-left: 8px">
+                {{ selectedCount(perms) }} / {{ perms.length }}
+              </Tag>
+            </template>
+            <div
+              v-for="(perm, idx) in perms"
+              :key="perm.id"
+              :style="{
+                display: 'flex',
+                alignItems: 'center',
+                padding: '6px 0',
+                borderBottom:
+                  idx < perms.length - 1 ? '1px solid #f0f0f0' : 'none',
+              }"
+            >
               <Checkbox
-                v-for="perm in perms"
-                :key="perm.id"
                 :checked="formPermissionIds.includes(perm.id)"
+                style="flex-shrink: 0; width: 140px"
                 @change="
                   (e: any) => {
                     if (e.target.checked) {
@@ -262,8 +282,9 @@ onMounted(fetchData);
                   }
                 "
               >
-                {{ perm.code }} — {{ perm.name }}
+                <Tag color="processing">{{ perm.code }}</Tag>
               </Checkbox>
+              <span style=" font-size: 13px;color: #666">{{ perm.name }}</span>
             </div>
           </Collapse.Panel>
         </Collapse>
