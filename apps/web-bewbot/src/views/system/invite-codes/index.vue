@@ -914,6 +914,7 @@ onMounted(fetchData);
         <Input
           v-model:value="auditProvider"
           placeholder="OpenAI / Azure / Ollama"
+          allow-clear
           style="margin-top: 4px"
         />
       </div>
@@ -922,6 +923,7 @@ onMounted(fetchData);
         <Input
           v-model:value="auditBaseUrl"
           placeholder="https://api.openai.com/v1"
+          allow-clear
           style="margin-top: 4px"
         />
         <span style="font-size: 12px; color: #999">兼容 OpenAI 接口格式</span>
@@ -931,6 +933,7 @@ onMounted(fetchData);
         <Input.Password
           v-model:value="auditApiKey"
           placeholder="sk-..."
+          allow-clear
           style="margin-top: 4px"
         />
       </div>
