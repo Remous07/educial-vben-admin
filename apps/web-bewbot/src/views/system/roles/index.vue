@@ -106,6 +106,7 @@ function openCreateModal() {
   formName.value = '';
   formRemark.value = '';
   formPermissionIds.value = [];
+  activePermGroups.value = [];
   modalVisible.value = true;
 }
 
@@ -114,6 +115,7 @@ function openEditModal(role: RoleItem) {
   formName.value = role.name;
   formRemark.value = role.description || '';
   formPermissionIds.value = role.permissions.map((p) => p.id);
+  activePermGroups.value = [];
   modalVisible.value = true;
 }
 
