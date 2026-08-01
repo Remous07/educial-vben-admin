@@ -7,11 +7,7 @@ import { Page } from '@vben/common-ui';
 
 import { Button, message, Modal, Table, Tag } from 'ant-design-vue';
 
-import {
-  blockVisitorApi,
-  getBlockedVisitorsApi,
-  unblockVisitorApi,
-} from '#/api/core';
+import { blockVisitorApi, unblockVisitorApi } from '#/api/core';
 import { requestClient } from '#/api/request';
 
 defineOptions({ name: 'MessageHistory' });
@@ -28,6 +24,7 @@ interface Conversation {
   last_message_preview: string;
   is_active: boolean;
   conv_timeout_remaining: null | number;
+  is_blocked: boolean;
 }
 
 function timeoutTip(r: Conversation): string {
@@ -40,7 +37,6 @@ function timeoutTip(r: Conversation): string {
 }
 
 const conversations = ref<Conversation[]>([]);
-const blockedIds = ref<Set<number>>(new Set());
 const loading = ref(false);
 
 async function handleBlock(record: Conversation) {
@@ -52,7 +48,7 @@ async function handleBlock(record: Conversation) {
     cancelText: '取消',
     onOk: async () => {
       await blockVisitorApi(record.telegram_id);
-      blockedIds.value.add(record.telegram_id);
+      record.is_blocked = true;
       message.success('已拉黑');
     },
   });
@@ -60,7 +56,7 @@ async function handleBlock(record: Conversation) {
 
 async function handleUnblock(record: Conversation) {
   await unblockVisitorApi(record.telegram_id);
-  blockedIds.value.delete(record.telegram_id);
+  record.is_blocked = false;
   message.success('已取消拉黑');
 }
 
@@ -167,12 +163,7 @@ const columns: TableColumnsType = [
 async function fetchConversations() {
   loading.value = true;
   try {
-    const [convs, blocked] = await Promise.all([
-      requestClient.get('/my-conversations'),
-      getBlockedVisitorsApi(),
-    ]);
-    conversations.value = convs;
-    blockedIds.value = new Set(blocked.map((b: any) => b.tg_user_id));
+    conversations.value = await requestClient.get('/my-conversations');
   } finally {
     loading.value = false;
   }
@@ -192,7 +183,7 @@ onMounted(fetchConversations);
     >
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'action'">
-          <template v-if="blockedIds.has((record as Conversation).telegram_id)">
+          <template v-if="(record as Conversation).is_blocked">
             <Button
               size="small"
               type="primary"
