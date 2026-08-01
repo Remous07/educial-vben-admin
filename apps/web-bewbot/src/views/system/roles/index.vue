@@ -269,7 +269,7 @@ onMounted(fetchData);
             >
               <Checkbox
                 :checked="formPermissionIds.includes(perm.id)"
-                style="flex-shrink: 0; width: 140px"
+                style="flex-shrink: 0; min-width: 170px"
                 @change="
                   (e: any) => {
                     if (e.target.checked) {
@@ -284,7 +284,7 @@ onMounted(fetchData);
               >
                 <Tag color="processing">{{ perm.code }}</Tag>
               </Checkbox>
-              <span style=" font-size: 13px;color: #666">{{ perm.name }}</span>
+              <span style="font-size: 13px; color: #666">{{ perm.name }}</span>
             </div>
           </Collapse.Panel>
         </Collapse>
