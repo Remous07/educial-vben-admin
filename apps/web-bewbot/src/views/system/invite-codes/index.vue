@@ -161,6 +161,51 @@ async function handleFallbackRoleChange(val: any) {
   }
 }
 
+// ── username audit modal ──
+
+const auditModalVisible = ref(false);
+const auditEnabled = ref(false);
+const auditProvider = ref('openai');
+const auditModel = ref('');
+const auditApiKey = ref('');
+const auditPrompt = ref('');
+const auditFailOpen = ref(true);
+
+function openAuditModal() {
+  auditEnabled.value = auditSettings.value.enabled === 'true';
+  auditProvider.value = auditSettings.value.provider || 'openai';
+  auditModel.value = auditSettings.value.model || '';
+  auditApiKey.value = auditSettings.value.api_key || '';
+  auditPrompt.value = auditSettings.value.prompt || '';
+  auditFailOpen.value = auditSettings.value.fail_open !== 'false';
+  auditModalVisible.value = true;
+}
+
+async function saveAuditSettings() {
+  await Promise.all([
+    setSystemSettingApi('username_audit_enabled', String(auditEnabled.value)),
+    setSystemSettingApi('username_audit_provider', auditProvider.value),
+    setSystemSettingApi('username_audit_model', auditModel.value),
+    setSystemSettingApi('username_audit_api_key', auditApiKey.value),
+    setSystemSettingApi('username_audit_prompt', auditPrompt.value),
+    setSystemSettingApi(
+      'username_audit_fail_open',
+      String(auditFailOpen.value),
+    ),
+  ]);
+  // Refresh stored values
+  auditSettings.value.enabled = String(auditEnabled.value);
+  auditSettings.value.provider = auditProvider.value;
+  auditSettings.value.model = auditModel.value;
+  auditSettings.value.api_key = auditApiKey.value;
+  auditSettings.value.prompt = auditPrompt.value;
+  auditSettings.value.fail_open = String(auditFailOpen.value);
+  auditModalVisible.value = false;
+  message.success('已更新用户名审核设置');
+}
+
+const auditSettings = ref<Record<string, string>>({});
+
 // ── create modal ──
 
 const modalVisible = ref(false);
@@ -507,6 +552,12 @@ async function fetchData() {
         'email_domain_mode',
         'email_domain_whitelist',
         'email_domain_blacklist',
+        'username_audit_enabled',
+        'username_audit_provider',
+        'username_audit_model',
+        'username_audit_api_key',
+        'username_audit_prompt',
+        'username_audit_fail_open',
       ]),
       getAvailableRolesApi(),
     ]);
@@ -520,6 +571,14 @@ async function fetchData() {
     emailDomainMode.value = settings.email_domain_mode || 'off';
     emailDomainWhitelist.value = settings.email_domain_whitelist || '';
     emailDomainBlacklist.value = settings.email_domain_blacklist || '';
+    auditSettings.value = {
+      api_key: settings.username_audit_api_key || '',
+      enabled: settings.username_audit_enabled || 'false',
+      fail_open: settings.username_audit_fail_open || 'true',
+      model: settings.username_audit_model || '',
+      prompt: settings.username_audit_prompt || '',
+      provider: settings.username_audit_provider || 'openai',
+    };
   } finally {
     loading.value = false;
   }
@@ -568,6 +627,9 @@ onMounted(fetchData);
             ? '：黑名单'
             : ''
       }}
+    </Button>
+    <Button style="margin-top: 12px; margin-left: 8px" @click="openAuditModal">
+      用户名审核{{ auditSettings.enabled === 'true' ? '：已启用' : '' }}
     </Button>
 
     <Table
@@ -801,6 +863,66 @@ onMounted(fetchData);
           style="margin-top: 4px"
         />
         <span style="font-size: 12px; color: #999">每行一个域名，如 gmail.com</span>
+      </div>
+    </Modal>
+
+    <!-- Username audit modal -->
+    <Modal
+      v-model:open="auditModalVisible"
+      title="用户名 AI 审核"
+      @ok="saveAuditSettings"
+    >
+      <div style="margin-bottom: 12px">
+        <label>启用审核</label>
+        <Switch
+          :checked="auditEnabled"
+          @change="auditEnabled = $event as boolean"
+          style="margin-left: 8px"
+        />
+      </div>
+      <div style="margin-bottom: 12px">
+        <label>AI 提供商</label>
+        <Select
+          v-model:value="auditProvider"
+          style="width: 100%; margin-top: 4px"
+          :options="[
+            { label: 'OpenAI', value: 'openai' },
+            { label: 'Anthropic', value: 'anthropic' },
+          ]"
+        />
+      </div>
+      <div style="margin-bottom: 12px">
+        <label>模型</label>
+        <Input
+          v-model:value="auditModel"
+          placeholder="claude-haiku-4-5-20251001 或 gpt-4o-mini"
+          style="margin-top: 4px"
+        />
+      </div>
+      <div style="margin-bottom: 12px">
+        <label>API Key</label>
+        <Input.Password
+          v-model:value="auditApiKey"
+          placeholder="sk-..."
+          style="margin-top: 4px"
+        />
+      </div>
+      <div style="margin-bottom: 12px">
+        <label>审核 Prompt（{username} 会被替换为实际用户名）</label>
+        <Input.TextArea
+          v-model:value="auditPrompt"
+          :rows="4"
+          placeholder="请审核用户名是否合适，拒绝侮辱性、冒充官方、垃圾广告类用户名"
+          style="margin-top: 4px"
+        />
+      </div>
+      <div style="margin-bottom: 12px">
+        <label>审核失败时放行</label>
+        <Switch
+          :checked="auditFailOpen"
+          @change="auditFailOpen = $event as boolean"
+          style="margin-left: 8px"
+        />
       </div>
     </Modal>
   </Page>
