@@ -181,7 +181,7 @@ const testingAudit = ref(false);
 const testAuditResult = ref<null | { approved: boolean; reason: string }>(null);
 
 async function handleTestAudit() {
-  await saveAuditSettings();
+  await _saveAuditSettings(false);
   testingAudit.value = true;
   testAuditResult.value = null;
   try {
@@ -224,7 +224,7 @@ function openAuditModal() {
   auditModalVisible.value = true;
 }
 
-async function saveAuditSettings() {
+async function _saveAuditSettings(closeModal: boolean) {
   await Promise.all([
     setSystemSettingApi('username_audit_enabled', String(auditEnabled.value)),
     setSystemSettingApi('username_audit_provider', auditProvider.value),
@@ -244,8 +244,14 @@ async function saveAuditSettings() {
   auditSettings.value.api_key = auditApiKey.value;
   auditSettings.value.prompt = auditPrompt.value;
   auditSettings.value.fail_open = String(auditFailOpen.value);
-  auditModalVisible.value = false;
-  message.success('已更新用户名审核设置');
+  if (closeModal) {
+    auditModalVisible.value = false;
+    message.success('已更新用户名审核设置');
+  }
+}
+
+function saveAuditSettings() {
+  return _saveAuditSettings(true);
 }
 
 const auditSettings = ref<Record<string, string>>({});
