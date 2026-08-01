@@ -350,6 +350,7 @@ onMounted(fetchData);
 
       <VbenDescriptions
         :column="3"
+        bordered
         size="small"
         :colon="false"
         :items="[
