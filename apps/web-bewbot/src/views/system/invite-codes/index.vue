@@ -535,7 +535,10 @@ onMounted(fetchData);
         />
       </Space>
     </Space>
-    <Button style="margin-top: 8px" @click="openEmailDomainModal">
+    <Button
+      style="margin-top: 12px; margin-left: 8px"
+      @click="openEmailDomainModal"
+    >
       邮箱过滤{{
         emailDomainMode === 'whitelist'
           ? '：白名单'
