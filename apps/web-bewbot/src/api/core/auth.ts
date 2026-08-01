@@ -302,8 +302,11 @@ export interface ConversationCodeItem {
 export function getRegistrationStatusApi() {
   return baseRequestClient.get<{
     data: {
-      open_registration: boolean;
-      require_invite_code: boolean;
+      code: number;
+      data: {
+        open_registration: boolean;
+        require_invite_code: boolean;
+      };
     };
   }>('/auth/registration-status');
 }

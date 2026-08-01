@@ -25,7 +25,7 @@ onMounted(async () => {
   try {
     const res = await getRegistrationStatusApi();
     if (res) {
-      registrationOpen.value = res.data.open_registration;
+      registrationOpen.value = res.data.data.open_registration;
     }
   } catch {
     // If the request fails, default to showing registration (safe default)

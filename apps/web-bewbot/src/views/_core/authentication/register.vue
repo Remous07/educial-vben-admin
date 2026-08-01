@@ -24,7 +24,7 @@ const checkingAccess = ref(true);
 onMounted(async () => {
   try {
     const res = await getRegistrationStatusApi();
-    if (res && !res.data.open_registration) {
+    if (res && !res.data.data.open_registration) {
       message.warning('注册已关闭');
       router.replace('/auth/login');
       return;
