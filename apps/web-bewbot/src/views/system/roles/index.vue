@@ -342,9 +342,9 @@ onMounted(fetchData);
         <Space align="center" :size="8">
           <IconifyIcon
             icon="ant-design:warning-filled"
-            style=" font-size: 18px;color: #faad14"
+            style="font-size: 18px; color: #faad14"
           />
-          <span>删除角色</span>
+          <span style=" font-size: 16px;font-weight: 600">删除角色</span>
         </Space>
       </template>
 
