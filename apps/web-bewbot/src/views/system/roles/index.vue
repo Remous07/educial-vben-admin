@@ -138,6 +138,7 @@ async function handleSave() {
       await createRoleApi(payload);
       message.success('角色已创建');
     }
+    activePermGroups.value = [];
     modalVisible.value = false;
     fetchData();
   } catch {
@@ -208,6 +209,7 @@ onMounted(fetchData);
       v-model:open="modalVisible"
       :title="isEditing ? '编辑角色' : '创建角色'"
       @ok="handleSave"
+      @cancel="activePermGroups = []"
       :confirm-loading="saving"
     >
       <div style="margin-bottom: 12px">
