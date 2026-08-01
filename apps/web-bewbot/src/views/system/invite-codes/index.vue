@@ -535,7 +535,7 @@ onMounted(fetchData);
         />
       </Space>
     </Space>
-    <Button @click="openEmailDomainModal">
+    <Button style="margin-top: 8px" @click="openEmailDomainModal">
       邮箱过滤{{
         emailDomainMode === 'whitelist'
           ? '：白名单'
@@ -774,7 +774,7 @@ onMounted(fetchData);
           placeholder="gmail.com&#10;outlook.com"
           style="margin-top: 4px"
         />
-        <span style=" font-size: 12px;color: #999">每行一个域名，如 gmail.com</span>
+        <span style="font-size: 12px; color: #999">每行一个域名，如 gmail.com</span>
       </div>
     </Modal>
   </Page>
