@@ -172,7 +172,6 @@ const auditProvider = ref('');
 const auditBaseUrl = ref('');
 const auditModel = ref('');
 const auditApiKey = ref('');
-const auditPrompt = ref('');
 const auditFailOpen = ref(true);
 const auditModelOptions = ref<{ label: string; value: string }[]>([]);
 const fetchingModels = ref(false);
@@ -219,7 +218,6 @@ function openAuditModal() {
   auditBaseUrl.value = auditSettings.value.base_url || '';
   auditModel.value = auditSettings.value.model || '';
   auditApiKey.value = auditSettings.value.api_key || '';
-  auditPrompt.value = auditSettings.value.prompt || '';
   auditFailOpen.value = auditSettings.value.fail_open !== 'false';
   auditModalVisible.value = true;
 }
@@ -231,7 +229,6 @@ async function _saveAuditSettings(closeModal: boolean) {
     setSystemSettingApi('username_audit_base_url', auditBaseUrl.value),
     setSystemSettingApi('username_audit_model', auditModel.value),
     setSystemSettingApi('username_audit_api_key', auditApiKey.value),
-    setSystemSettingApi('username_audit_prompt', auditPrompt.value),
     setSystemSettingApi(
       'username_audit_fail_open',
       String(auditFailOpen.value),
@@ -242,7 +239,6 @@ async function _saveAuditSettings(closeModal: boolean) {
   auditSettings.value.base_url = auditBaseUrl.value;
   auditSettings.value.model = auditModel.value;
   auditSettings.value.api_key = auditApiKey.value;
-  auditSettings.value.prompt = auditPrompt.value;
   auditSettings.value.fail_open = String(auditFailOpen.value);
   if (closeModal) {
     auditModalVisible.value = false;
@@ -607,7 +603,6 @@ async function fetchData() {
         'username_audit_base_url',
         'username_audit_model',
         'username_audit_api_key',
-        'username_audit_prompt',
         'username_audit_fail_open',
       ]),
       getAvailableRolesApi(),
@@ -628,7 +623,6 @@ async function fetchData() {
       enabled: settings.username_audit_enabled || 'false',
       fail_open: settings.username_audit_fail_open || 'true',
       model: settings.username_audit_model || '',
-      prompt: settings.username_audit_prompt || '',
       provider: settings.username_audit_provider || '',
     };
   } finally {
@@ -974,15 +968,6 @@ onMounted(fetchData);
             获取模型列表
           </Button>
         </div>
-      </div>
-      <div style="margin-bottom: 12px">
-        <label>审核 Prompt（{username} 会被替换为实际用户名）</label>
-        <Input.TextArea
-          v-model:value="auditPrompt"
-          :rows="4"
-          placeholder="请审核用户名是否合适，拒绝侮辱性、冒充官方、垃圾广告类用户名"
-          style="margin-top: 4px"
-        />
       </div>
       <div style="margin-bottom: 12px">
         <label>审核失败时放行</label>
