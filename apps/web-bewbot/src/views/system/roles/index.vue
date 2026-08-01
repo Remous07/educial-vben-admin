@@ -37,7 +37,15 @@ const editingRole = ref<null | RoleItem>(null);
 const formName = ref('');
 const formRemark = ref('');
 const formPermissionIds = ref<number[]>([]);
+const activePermGroups = ref<string[]>([]);
 const saving = ref(false);
+
+function expandAllGroups() {
+  activePermGroups.value = permissionGroups.value.map(([key]) => key);
+}
+function collapseAllGroups() {
+  activePermGroups.value = [];
+}
 
 const isEditing = computed(() => !!editingRole.value);
 
@@ -209,8 +217,22 @@ onMounted(fetchData);
         />
       </div>
       <div>
-        <label>权限</label>
-        <Collapse v-if="permissions.length" style="margin-top: 4px">
+        <div
+          style="
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 4px;
+          "
+        >
+          <label>权限</label>
+          <Button size="small" @click="expandAllGroups">全部展开</Button>
+          <Button size="small" @click="collapseAllGroups">全部折叠</Button>
+        </div>
+        <Collapse
+          v-if="permissions.length"
+          v-model:active-key="activePermGroups"
+        >
           <Collapse.Panel
             v-for="[prefix, perms] in permissionGroups"
             :key="prefix"
