@@ -911,7 +911,11 @@ onMounted(fetchData);
       </div>
       <div style="margin-bottom: 12px">
         <label>模型提供商</label>
-        <Input v-model:value="auditProvider" style="margin-top: 4px" />
+        <Input
+          v-model:value="auditProvider"
+          placeholder="OpenAI / Azure / Ollama"
+          style="margin-top: 4px"
+        />
       </div>
       <div style="margin-bottom: 12px">
         <label>API 地址</label>
