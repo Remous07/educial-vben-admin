@@ -301,7 +301,9 @@ export interface ConversationCodeItem {
 /** 获取注册状态（公开接口，无需登录） */
 export function getRegistrationStatusApi() {
   return baseRequestClient.get<{
-    open_registration: boolean;
-    require_invite_code: boolean;
+    data: {
+      open_registration: boolean;
+      require_invite_code: boolean;
+    };
   }>('/auth/registration-status');
 }
