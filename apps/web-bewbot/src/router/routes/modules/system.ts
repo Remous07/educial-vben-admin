@@ -28,7 +28,7 @@ const routes: RouteRecordRaw[] = [
     meta: {
       authority: ['superadmin'],
       icon: 'lucide:ticket',
-      title: '邀请码',
+      title: '注册设置',
       order: 93,
     },
     name: 'InviteCodes',
