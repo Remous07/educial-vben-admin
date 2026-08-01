@@ -167,6 +167,7 @@ async function handleFallbackRoleChange(val: any) {
 
 const auditModalVisible = ref(false);
 const auditEnabled = ref(false);
+const auditProvider = ref('');
 const auditBaseUrl = ref('');
 const auditModel = ref('');
 const auditApiKey = ref('');
@@ -197,6 +198,7 @@ async function handleFetchModels() {
 
 function openAuditModal() {
   auditEnabled.value = auditSettings.value.enabled === 'true';
+  auditProvider.value = auditSettings.value.provider || '';
   auditBaseUrl.value = auditSettings.value.base_url || '';
   auditModel.value = auditSettings.value.model || '';
   auditApiKey.value = auditSettings.value.api_key || '';
@@ -208,6 +210,7 @@ function openAuditModal() {
 async function saveAuditSettings() {
   await Promise.all([
     setSystemSettingApi('username_audit_enabled', String(auditEnabled.value)),
+    setSystemSettingApi('username_audit_provider', auditProvider.value),
     setSystemSettingApi('username_audit_base_url', auditBaseUrl.value),
     setSystemSettingApi('username_audit_model', auditModel.value),
     setSystemSettingApi('username_audit_api_key', auditApiKey.value),
@@ -218,6 +221,7 @@ async function saveAuditSettings() {
     ),
   ]);
   auditSettings.value.enabled = String(auditEnabled.value);
+  auditSettings.value.provider = auditProvider.value;
   auditSettings.value.base_url = auditBaseUrl.value;
   auditSettings.value.model = auditModel.value;
   auditSettings.value.api_key = auditApiKey.value;
@@ -576,6 +580,7 @@ async function fetchData() {
         'email_domain_whitelist',
         'email_domain_blacklist',
         'username_audit_enabled',
+        'username_audit_provider',
         'username_audit_base_url',
         'username_audit_model',
         'username_audit_api_key',
@@ -601,6 +606,7 @@ async function fetchData() {
       fail_open: settings.username_audit_fail_open || 'true',
       model: settings.username_audit_model || '',
       prompt: settings.username_audit_prompt || '',
+      provider: settings.username_audit_provider || '',
     };
   } finally {
     loading.value = false;
@@ -904,13 +910,29 @@ onMounted(fetchData);
         />
       </div>
       <div style="margin-bottom: 12px">
+        <label>模型提供商</label>
+        <Input
+          v-model:value="auditProvider"
+          placeholder="OpenAI / Azure / Ollama"
+          style="margin-top: 4px"
+        />
+      </div>
+      <div style="margin-bottom: 12px">
         <label>API 地址</label>
         <Input
           v-model:value="auditBaseUrl"
           placeholder="https://api.openai.com/v1"
           style="margin-top: 4px"
         />
-        <span style="font-size: 12px; color: #999">兼容 OpenAI 接口格式的 API 地址</span>
+        <span style="font-size: 12px; color: #999">兼容 OpenAI 接口格式</span>
+      </div>
+      <div style="margin-bottom: 12px">
+        <label>API Key</label>
+        <Input.Password
+          v-model:value="auditApiKey"
+          placeholder="sk-..."
+          style="margin-top: 4px"
+        />
       </div>
       <div style="margin-bottom: 12px">
         <label>模型</label>
@@ -926,14 +948,6 @@ onMounted(fetchData);
             获取模型列表
           </Button>
         </div>
-      </div>
-      <div style="margin-bottom: 12px">
-        <label>API Key</label>
-        <Input.Password
-          v-model:value="auditApiKey"
-          placeholder="sk-..."
-          style="margin-top: 4px"
-        />
       </div>
       <div style="margin-bottom: 12px">
         <label>审核 Prompt（{username} 会被替换为实际用户名）</label>
