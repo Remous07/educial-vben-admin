@@ -56,13 +56,16 @@ const emailDomainModalList = ref('');
 
 function openEmailDomainModal() {
   emailDomainModalMode.value = emailDomainMode.value;
-  // Convert comma-separated from API to newline-separated for editing
   emailDomainModalList.value = emailDomainList.value
     .split(',')
     .map((d) => d.trim())
     .filter(Boolean)
     .join('\n');
   emailDomainModalVisible.value = true;
+}
+
+function onEmailDomainModeChange() {
+  emailDomainModalList.value = '';
 }
 
 async function saveEmailDomainSettings() {
@@ -767,6 +770,7 @@ onMounted(fetchData);
             { label: '白名单', value: 'whitelist' },
             { label: '黑名单', value: 'blacklist' },
           ]"
+          @change="onEmailDomainModeChange"
         />
       </div>
       <div v-if="emailDomainModalMode !== 'off'">
