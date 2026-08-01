@@ -40,11 +40,15 @@ const formPermissionIds = ref<number[]>([]);
 const activePermGroups = ref<string[]>([]);
 const saving = ref(false);
 
-function expandAllGroups() {
-  activePermGroups.value = permissionGroups.value.map(([key]) => key);
-}
-function collapseAllGroups() {
-  activePermGroups.value = [];
+const allGroupsExpanded = computed(() => {
+  const total = permissionGroups.value.length;
+  return total > 0 && activePermGroups.value.length === total;
+});
+
+function toggleAllGroups() {
+  activePermGroups.value = allGroupsExpanded.value
+    ? []
+    : permissionGroups.value.map(([key]) => key);
 }
 
 const isEditing = computed(() => !!editingRole.value);
@@ -226,8 +230,9 @@ onMounted(fetchData);
           "
         >
           <label>权限</label>
-          <Button size="small" @click="expandAllGroups">全部展开</Button>
-          <Button size="small" @click="collapseAllGroups">全部折叠</Button>
+          <Button size="small" @click="toggleAllGroups">
+            {{ allGroupsExpanded ? '全部折叠' : '全部展开' }}
+          </Button>
         </div>
         <Collapse
           v-if="permissions.length"
