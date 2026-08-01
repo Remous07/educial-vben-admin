@@ -39,6 +39,7 @@ import {
   permanentlyDeleteInviteCodeApi,
   reactivateInviteCodeApi,
   setSystemSettingApi,
+  testUsernameAuditApi,
 } from '#/api/core';
 
 defineOptions({ name: 'InviteCodes' });
@@ -175,6 +176,22 @@ const auditPrompt = ref('');
 const auditFailOpen = ref(true);
 const auditModelOptions = ref<{ label: string; value: string }[]>([]);
 const fetchingModels = ref(false);
+const testAuditUsername = ref('test_user');
+const testingAudit = ref(false);
+const testAuditResult = ref<null | { approved: boolean; reason: string }>(null);
+
+async function handleTestAudit() {
+  await saveAuditSettings();
+  testingAudit.value = true;
+  testAuditResult.value = null;
+  try {
+    testAuditResult.value = await testUsernameAuditApi(testAuditUsername.value);
+  } catch {
+    testAuditResult.value = { approved: false, reason: '测试请求失败' };
+  } finally {
+    testingAudit.value = false;
+  }
+}
 
 async function handleFetchModels() {
   if (!auditBaseUrl.value || !auditApiKey.value) {
@@ -968,6 +985,40 @@ onMounted(fetchData);
           @change="auditFailOpen = $event as boolean"
           style="margin-left: 8px"
         />
+      </div>
+      <div
+        style="
+          padding-top: 12px;
+          margin-top: 8px;
+          border-top: 1px solid #f0f0f0;
+        "
+      >
+        <label>测试审核</label>
+        <div style="display: flex; gap: 8px; margin-top: 4px">
+          <Input
+            v-model:value="testAuditUsername"
+            placeholder="输入测试用户名"
+            style="flex: 1"
+          />
+          <Button
+            type="primary"
+            :loading="testingAudit"
+            @click="handleTestAudit"
+          >
+            测试
+          </Button>
+        </div>
+        <div v-if="testAuditResult" style="margin-top: 8px">
+          <Tag :color="testAuditResult.approved ? 'green' : 'red'">
+            {{ testAuditResult.approved ? '通过' : '拒绝' }}
+          </Tag>
+          <span
+            v-if="testAuditResult.reason"
+            style="margin-left: 8px; color: #666"
+          >
+            {{ testAuditResult.reason }}
+          </span>
+        </div>
       </div>
     </Modal>
   </Page>
