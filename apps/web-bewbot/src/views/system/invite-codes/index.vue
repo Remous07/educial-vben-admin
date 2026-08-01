@@ -175,7 +175,7 @@ const auditApiKey = ref('');
 const auditFailOpen = ref(true);
 const auditModelOptions = ref<{ label: string; value: string }[]>([]);
 const fetchingModels = ref(false);
-const testAuditUsername = ref('test_user');
+const testAuditUsername = ref('');
 const testingAudit = ref(false);
 const testAuditResult = ref<null | { approved: boolean; reason: string }>(null);
 
