@@ -988,37 +988,51 @@ onMounted(fetchData);
       >
         <template #renderItem="{ item: r }">
           <List.Item>
-            <List.Item.Meta>
-              <template #avatar>
+            <div
+              style="
+                display: flex;
+                gap: 12px;
+                align-items: center;
+                width: 100%;
+                min-width: 0;
+              "
+            >
+              <div
+                :style="{
+                  display: 'flex',
+                  width: '32px',
+                  height: '32px',
+                  flexShrink: 0,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '50%',
+                  background: avatarColor(r.id, r.username || ''),
+                  color: '#fff',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                }"
+              >
+                {{ avatarChar(r.username || '') }}
+              </div>
+              <div style=" flex: 1;min-width: 0">
+                <div style="font-weight: 500">{{ r.username }}</div>
                 <div
-                  :style="{
-                    display: 'flex',
-                    width: '32px',
-                    height: '32px',
-                    flexShrink: 0,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderRadius: '50%',
-                    background: avatarColor(r.id, r.username || ''),
-                    color: '#fff',
-                    fontSize: '14px',
-                    fontWeight: 'bold',
-                  }"
+                  style="
+                    margin-top: 2px;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    font-size: 12px;
+                    color: #999;
+                    white-space: nowrap;
+                  "
                 >
-                  {{ avatarChar(r.username || '') }}
+                  {{ r.email }}
+                  <span v-if="r.created_at" style="margin-left: 12px">
+                    {{ new Date(r.created_at).toLocaleString('zh-CN') }}
+                  </span>
                 </div>
-              </template>
-              <template #title>{{ r.username }}</template>
-              <template #description>
-                {{ r.email }}
-                <span
-                  v-if="r.created_at"
-                  style="margin-left: 12px; color: #999"
-                >
-                  {{ new Date(r.created_at).toLocaleString('zh-CN') }}
-                </span>
-              </template>
-            </List.Item.Meta>
+              </div>
+            </div>
           </List.Item>
         </template>
       </List>
@@ -1174,9 +1188,3 @@ onMounted(fetchData);
     </Modal>
   </Page>
 </template>
-
-<style scoped>
-:deep(.ant-list-item-meta) {
-  align-items: center;
-}
-</style>
