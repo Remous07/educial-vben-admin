@@ -509,61 +509,6 @@ onMounted(async () => {
                       : '-'
                   }}
                 </Descriptions.Item>
-                <Descriptions.Item label="对话识别码">
-                  <template v-if="convCodeEdit">
-                    <Input
-                      v-model:value="convCodeInput"
-                      placeholder="8-16位字母、数字、-、_"
-                      :maxlength="16"
-                      size="small"
-                      style="width: 180px; margin-right: 8px"
-                    />
-                    <Button
-                      size="small"
-                      type="primary"
-                      :loading="convCodeSaving"
-                      @click="handleSetConvCode"
-                    >
-                      保存
-                    </Button>
-                    <Button
-                      size="small"
-                      style="margin-left: 4px"
-                      @click="convCodeEdit = false"
-                    >
-                      取消
-                    </Button>
-                  </template>
-                  <template v-else>
-                    <code style="font-size: 14px; font-weight: bold">{{
-                      convCode || '-'
-                    }}</code>
-                    <Button
-                      size="small"
-                      type="link"
-                      style="margin-left: 8px"
-                      @click="copyConvCode"
-                    >
-                      复制
-                    </Button>
-                    <Button
-                      size="small"
-                      type="link"
-                      style="margin-left: 4px"
-                      @click="openConvCodeEdit"
-                    >
-                      修改
-                    </Button>
-                    <Button
-                      size="small"
-                      type="link"
-                      style="margin-left: 4px"
-                      @click="router.push({ name: 'ConversationCodes' })"
-                    >
-                      管理识别码
-                    </Button>
-                  </template>
-                </Descriptions.Item>
               </Descriptions>
               <Button style="margin-top: 12px" @click="openChangePassword">
                 修改密码
@@ -578,7 +523,79 @@ onMounted(async () => {
             </Card>
           </Col>
           <Col :xs="24" :lg="12">
-            <Card style="margin-bottom: 16px">
+            <Card style="height: 100%">
+              <template #title>
+                <Space :size="6">
+                  <IconifyIcon icon="lucide:key-round" style="color: #fa8c16" />
+                  <span style="font-weight: 600">对话识别码</span>
+                </Space>
+              </template>
+              <template v-if="convCodeEdit">
+                <div>
+                  <label style="font-size: 13px; color: #666">主识别码</label>
+                  <div style="display: flex; gap: 8px; margin-top: 6px">
+                    <Input
+                      v-model:value="convCodeInput"
+                      placeholder="8-16位字母、数字、-、_"
+                      :maxlength="16"
+                      size="small"
+                      style="flex: 1"
+                    />
+                    <Button
+                      size="small"
+                      type="primary"
+                      :loading="convCodeSaving"
+                      @click="handleSetConvCode"
+                    >
+                      保存
+                    </Button>
+                    <Button size="small" @click="convCodeEdit = false">
+                      取消
+                    </Button>
+                  </div>
+                </div>
+              </template>
+              <template v-else>
+                <label style="font-size: 13px; color: #666">主识别码</label>
+                <div
+                  style="
+                    display: flex;
+                    gap: 8px;
+                    align-items: center;
+                    margin-top: 6px;
+                  "
+                >
+                  <code
+                    style="
+                      padding: 4px 10px;
+                      font-size: 20px;
+                      font-weight: bold;
+                      background: #f5f5f5;
+                      border-radius: 6px;
+                    "
+                  >
+                    {{ convCode || '-' }}
+                  </code>
+                </div>
+                <div style="display: flex; gap: 8px; margin-top: 16px">
+                  <Button size="small" @click="copyConvCode">复制</Button>
+                  <Button size="small" @click="openConvCodeEdit">修改</Button>
+                  <Button
+                    size="small"
+                    type="primary"
+                    ghost
+                    @click="router.push({ name: 'ConversationCodes' })"
+                  >
+                    管理识别码
+                  </Button>
+                </div>
+              </template>
+            </Card>
+          </Col>
+        </Row>
+        <Row :gutter="[16, 16]" style="margin-top: 16px">
+          <Col :xs="24" :lg="12">
+            <Card style="height: 100%">
               <template #title>
                 <Space :size="6">
                   <IconifyIcon icon="lucide:send" style="color: #1677ff" />
@@ -687,8 +704,9 @@ onMounted(async () => {
                 </div>
               </template>
             </Card>
-
-            <Card>
+          </Col>
+          <Col :xs="24" :lg="12">
+            <Card style="height: 100%">
               <template #title>
                 <Space :size="6">
                   <IconifyIcon
