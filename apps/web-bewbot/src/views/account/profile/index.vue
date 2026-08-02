@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
 import { Page } from '@vben/common-ui';
+import { IconifyIcon } from '@vben/icons';
 import { useUserStore } from '@vben/stores';
 
 import {
@@ -45,6 +46,11 @@ const userStore = useUserStore();
 const authStore = useAuthStore();
 const userInfo = userStore.userInfo;
 const loading = ref(false);
+
+function avatarChar(name: string): string {
+  const match = name.match(/\p{L}/u);
+  return match ? match[0].toUpperCase() : '?';
+}
 
 // Change email
 const emailVisible = ref(false);
@@ -375,8 +381,76 @@ onMounted(async () => {
 <template>
   <Page>
     <Spin :spinning="loading">
-      <div style="max-width: 420px">
-        <Card title="账户信息" style="margin-bottom: 16px">
+      <div style="max-width: 520px">
+        <!-- Profile header -->
+        <div
+          style="
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            padding: 20px 24px;
+            margin-bottom: 16px;
+            background: linear-gradient(120deg, #e6f4ff 0%, #f9f0ff 100%);
+            border: 1px solid #f0f0f0;
+            border-radius: 12px;
+          "
+        >
+          <div
+            style="
+              display: flex;
+              flex-shrink: 0;
+              align-items: center;
+              justify-content: center;
+              width: 56px;
+              height: 56px;
+              font-size: 24px;
+              font-weight: 700;
+              color: #fff;
+              background: #1677ff;
+              border-radius: 50%;
+            "
+          >
+            {{ avatarChar(userInfo?.username || '') }}
+          </div>
+          <div style="flex: 1; min-width: 0">
+            <div style="font-size: 18px; font-weight: 600; color: #1d1d1d">
+              {{ userInfo?.username }}
+            </div>
+            <div
+              style="
+                margin-top: 2px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                font-size: 13px;
+                color: #666;
+                white-space: nowrap;
+              "
+            >
+              {{ userInfo?.email || '-' }}
+            </div>
+            <div
+              v-if="(userInfo as any)?.roles?.length"
+              style="margin-top: 6px"
+            >
+              <Tag
+                v-for="role in (userInfo as any).roles"
+                :key="role"
+                color="blue"
+                style="margin-right: 4px"
+              >
+                {{ role }}
+              </Tag>
+            </div>
+          </div>
+        </div>
+
+        <Card style="margin-bottom: 16px">
+          <template #title>
+            <Space :size="6">
+              <IconifyIcon icon="lucide:user" style="color: #1677ff" />
+              <span style="font-weight: 600">账户信息</span>
+            </Space>
+          </template>
           <Descriptions :column="1">
             <Descriptions.Item label="用户名">
               {{ userInfo?.username }}
@@ -499,7 +573,13 @@ onMounted(async () => {
           </Button>
         </Card>
 
-        <Card title="Telegram 绑定" style="margin-bottom: 16px">
+        <Card style="margin-bottom: 16px">
+          <template #title>
+            <Space :size="6">
+              <IconifyIcon icon="lucide:send" style="color: #1677ff" />
+              <span style="font-weight: 600">Telegram 绑定</span>
+            </Space>
+          </template>
           <div
             v-if="
               userInfo?.bot_username ||
@@ -599,7 +679,13 @@ onMounted(async () => {
           </template>
         </Card>
 
-        <Card title="两步验证">
+        <Card>
+          <template #title>
+            <Space :size="6">
+              <IconifyIcon icon="lucide:shield-check" style="color: #52c41a" />
+              <span style="font-weight: 600">两步验证</span>
+            </Space>
+          </template>
           <template v-if="totpEnabled">
             <Result
               status="success"
@@ -631,35 +717,45 @@ onMounted(async () => {
     <!-- Change Email Modal -->
     <Modal
       v-model:open="emailVisible"
-      title="修改邮箱"
       @ok="handleChangeEmail"
       :confirm-loading="savingEmail"
+      :width="440"
     >
-      <div style="margin-bottom: 12px">
-        <label>当前密码</label>
+      <template #title>
+        <Space align="center" :size="8">
+          <IconifyIcon
+            icon="lucide:mail"
+            style="font-size: 18px; color: #1677ff"
+          />
+          <span style="font-size: 16px; font-weight: 600">修改邮箱</span>
+        </Space>
+      </template>
+
+      <div style="margin-bottom: 16px">
+        <label style="font-size: 13px; color: #666">当前密码</label>
         <Input
           v-model:value="emailCurrentPwd"
           type="password"
           placeholder="请输入当前密码"
-          style="margin-top: 4px"
+          style="margin-top: 6px"
         />
       </div>
-      <div v-if="totpEnabled" style="margin-bottom: 12px">
-        <label>两步验证码</label>
+      <div v-if="totpEnabled" style="margin-bottom: 16px">
+        <label style="font-size: 13px; color: #666">两步验证码</label>
         <Input
           v-model:value="emailTotpCode"
           placeholder="请输入 6 位验证码"
           :maxlength="6"
-          style="margin-top: 4px"
+          style="margin-top: 6px"
         />
       </div>
       <div>
-        <label>新邮箱</label>
+        <label style="font-size: 13px; color: #666">新邮箱</label>
         <Input
           v-model:value="newEmail"
           type="email"
           placeholder="请输入新邮箱"
-          style="margin-top: 4px"
+          style="margin-top: 6px"
         />
       </div>
     </Modal>
@@ -667,34 +763,46 @@ onMounted(async () => {
     <!-- Change Username Modal -->
     <Modal
       v-model:open="usernameVisible"
-      title="修改用户名"
       :confirm-loading="savingUsername"
       @ok="handleChangeUsername"
+      :width="440"
     >
-      <div style="margin-bottom: 12px">
-        <label>当前密码</label>
+      <template #title>
+        <Space align="center" :size="8">
+          <IconifyIcon
+            icon="lucide:user-pen"
+            style="font-size: 18px; color: #1677ff"
+          />
+          <span style="font-size: 16px; font-weight: 600">修改用户名</span>
+        </Space>
+      </template>
+
+      <div style="margin-bottom: 16px">
+        <label style="font-size: 13px; color: #666">当前密码</label>
         <Input.Password
           v-model:value="usernameCurrentPwd"
           placeholder="请输入当前密码"
-          style="margin-top: 4px"
+          style="margin-top: 6px"
         />
       </div>
-      <div v-if="totpEnabled" style="margin-bottom: 12px">
-        <label>两步验证码</label>
+      <div v-if="totpEnabled" style="margin-bottom: 16px">
+        <label style="font-size: 13px; color: #666">两步验证码</label>
         <Input
           v-model:value="usernameTotpCode"
           placeholder="6位验证码"
           :maxlength="6"
-          style="margin-top: 4px"
+          style="margin-top: 6px"
         />
       </div>
-      <div style="margin-bottom: 12px">
-        <label>新用户名（3-10位字母、数字、-、_）</label>
+      <div style="margin-bottom: 16px">
+        <label style="font-size: 13px; color: #666">
+          新用户名（3-10位字母、数字、-、_）
+        </label>
         <Input
           v-model:value="newUsername"
           placeholder="新用户名"
           :maxlength="10"
-          style="margin-top: 4px"
+          style="margin-top: 6px"
         />
       </div>
     </Modal>
@@ -702,35 +810,45 @@ onMounted(async () => {
     <!-- Change Password Modal -->
     <Modal
       v-model:open="passwordVisible"
-      title="修改密码"
       @ok="handleChangePassword"
       :confirm-loading="savingPwd"
+      :width="440"
     >
-      <div style="margin-bottom: 12px">
-        <label>当前密码</label>
+      <template #title>
+        <Space align="center" :size="8">
+          <IconifyIcon
+            icon="lucide:lock"
+            style="font-size: 18px; color: #1677ff"
+          />
+          <span style="font-size: 16px; font-weight: 600">修改密码</span>
+        </Space>
+      </template>
+
+      <div style="margin-bottom: 16px">
+        <label style="font-size: 13px; color: #666">当前密码</label>
         <Input
           v-model:value="currentPwd"
           type="password"
           placeholder="请输入当前密码"
-          style="margin-top: 4px"
+          style="margin-top: 6px"
         />
       </div>
-      <div v-if="totpEnabled" style="margin-bottom: 12px">
-        <label>两步验证码</label>
+      <div v-if="totpEnabled" style="margin-bottom: 16px">
+        <label style="font-size: 13px; color: #666">两步验证码</label>
         <Input
           v-model:value="pwdTotpCode"
           placeholder="请输入 6 位验证码"
           :maxlength="6"
-          style="margin-top: 4px"
+          style="margin-top: 6px"
         />
       </div>
       <div>
-        <label>新密码</label>
+        <label style="font-size: 13px; color: #666">新密码</label>
         <Input
           v-model:value="newPwd"
           type="password"
           placeholder="请输入新密码（至少6位）"
-          style="margin-top: 4px"
+          style="margin-top: 6px"
         />
       </div>
     </Modal>
@@ -784,34 +902,60 @@ onMounted(async () => {
     <!-- Delete Account Modal -->
     <Modal
       v-model:open="deleteVisible"
-      title="注销账号"
       @ok="handleDeleteAccount"
       :confirm-loading="deleting"
       ok-text="确认注销"
       ok-type="danger"
       cancel-text="取消"
+      :width="440"
     >
-      <p style="margin-bottom: 12px">
-        注销后您的账号将进入 <b>7 天冷静期</b>，期间重新登录可取消注销。
-      </p>
-      <p style="margin-bottom: 12px; color: #888">
-        冷静期结束后账号将被永久删除，所有数据不可恢复。
-      </p>
-      <label>请输入密码确认</label>
-      <Input
-        v-model:value="deletePassword"
-        type="password"
-        placeholder="请输入当前密码"
-        style="margin-top: 4px"
-      />
-      <template v-if="totpEnabled">
-        <label style="display: block; margin-top: 12px">两步验证码</label>
+      <template #title>
+        <Space align="center" :size="8">
+          <IconifyIcon
+            icon="lucide:trash-2"
+            style="font-size: 18px; color: #ff4d4f"
+          />
+          <span style="font-size: 16px; font-weight: 600">注销账号</span>
+        </Space>
+      </template>
+
+      <div
+        style="
+          padding: 12px;
+          margin-bottom: 16px;
+          font-size: 13px;
+          color: #cf1322;
+          background: #fff2f0;
+          border: 1px solid #ffccc7;
+          border-radius: 6px;
+        "
+      >
+        <div>
+          注销后您的账号将进入 <b>7 天冷静期</b>，期间重新登录可取消注销。
+        </div>
+        <div style="margin-top: 4px">
+          冷静期结束后账号将被永久删除，所有数据不可恢复。
+        </div>
+      </div>
+      <div>
+        <label style="font-size: 13px; color: #666">请输入密码确认</label>
         <Input
-          v-model:value="deleteTotpCode"
-          placeholder="请输入 6 位验证码"
-          :maxlength="6"
-          style="margin-top: 4px"
+          v-model:value="deletePassword"
+          type="password"
+          placeholder="请输入当前密码"
+          style="margin-top: 6px"
         />
+      </div>
+      <template v-if="totpEnabled">
+        <div style="margin-top: 12px">
+          <label style="font-size: 13px; color: #666">两步验证码</label>
+          <Input
+            v-model:value="deleteTotpCode"
+            placeholder="请输入 6 位验证码"
+            :maxlength="6"
+            style="margin-top: 6px"
+          />
+        </div>
       </template>
     </Modal>
 
