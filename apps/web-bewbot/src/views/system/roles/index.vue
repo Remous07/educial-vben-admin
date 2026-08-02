@@ -5,10 +5,11 @@ import type { PermissionItem, RoleItem } from '#/api/core';
 
 import { computed, onMounted, ref } from 'vue';
 
-import { Page, VbenDescriptions } from '@vben/common-ui';
+import { Page } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
 
 import {
+  Alert,
   Button,
   Checkbox,
   Collapse,
@@ -348,51 +349,112 @@ onMounted(fetchData);
         </Space>
       </template>
 
-      <VbenDescriptions
-        :column="3"
-        bordered
-        size="small"
-        :colon="false"
-        :items="[
-          { label: '角色名', content: () => deleteTarget?.name ?? '-' },
-          {
-            label: '权限数',
-            content: () => deleteTarget?.permissions?.length ?? 0,
-          },
-          {
-            label: '用户数',
-            content: () => deleteTarget?.admin_user_count ?? 0,
-          },
-        ]"
-        style="margin-bottom: 16px"
-      />
-
-      <div
-        style="
-          margin-bottom: 8px;
-          font-size: 13px;
-          line-height: 1.8;
-          color: #ff4d4f;
-        "
-      >
-        <div v-if="(deleteTarget?.admin_user_count ?? 0) > 0">
-          该角色当前被
-          <strong>{{ deleteTarget?.admin_user_count }}</strong>
-          个用户使用，删除后这些用户将失去该角色的全部权限。
+      <!-- Metric cards -->
+      <div style="display: flex; gap: 12px; margin-bottom: 16px">
+        <div
+          style="
+            flex: 1;
+            padding: 12px 8px;
+            text-align: center;
+            background: #fafafa;
+            border: 1px solid #f0f0f0;
+            border-radius: 8px;
+          "
+        >
+          <div style=" margin-bottom: 4px;font-size: 12px; color: #999">
+            角色名
+          </div>
+          <div
+            style="
+              font-size: 14px;
+              font-weight: 600;
+              line-height: 1.4;
+              color: #1d1d1d;
+              word-break: break-all;
+            "
+          >
+            {{ deleteTarget?.name }}
+          </div>
         </div>
-        <div v-else>该角色当前无用户使用，可以安全删除。</div>
-        <div>此操作不可恢复。</div>
+        <div
+          style="
+            flex: 1;
+            padding: 12px 8px;
+            text-align: center;
+            background: #fafafa;
+            border: 1px solid #f0f0f0;
+            border-radius: 8px;
+          "
+        >
+          <div style=" margin-bottom: 4px;font-size: 12px; color: #999">
+            权限数
+          </div>
+          <div style="font-size: 20px; font-weight: 700; color: #1677ff">
+            {{ deleteTarget?.permissions?.length ?? 0 }}
+          </div>
+        </div>
+        <div
+          style="
+            flex: 1;
+            padding: 12px 8px;
+            text-align: center;
+            background: #fafafa;
+            border: 1px solid #f0f0f0;
+            border-radius: 8px;
+          "
+        >
+          <div style=" margin-bottom: 4px;font-size: 12px; color: #999">
+            用户数
+          </div>
+          <div style="font-size: 20px; font-weight: 700; color: #fa541c">
+            {{ deleteTarget?.admin_user_count ?? 0 }}
+          </div>
+        </div>
       </div>
 
-      <div style="margin-top: 12px">
-        <label style="font-size: 13px; color: #666">
-          请输入 <strong>{{ deleteTarget?.name }}</strong> 确认：
-        </label>
+      <!-- Consequence alert -->
+      <Alert
+        type="error"
+        show-icon
+        style="margin-bottom: 16px"
+        :message="
+          (deleteTarget?.admin_user_count ?? 0) > 0
+            ? `删除后 ${deleteTarget?.admin_user_count} 个用户将失去该角色的全部权限`
+            : '该角色当前无用户使用，可以安全删除'
+        "
+        :description="
+          (deleteTarget?.admin_user_count ?? 0) > 0
+            ? '这些用户不会从系统中移除，仅被赋予降级注册角色。'
+            : '此操作不可恢复。'
+        "
+      />
+
+      <!-- Confirm input -->
+      <div>
+        <label style="font-size: 13px; color: #666">请输入角色名确认：</label>
         <Input
           v-model:value="deleteConfirmName"
           :placeholder="deleteTarget?.name"
+          :status="
+            deleteConfirmName && deleteConfirmName !== deleteTarget?.name
+              ? 'error'
+              : ''
+          "
           style="margin-top: 6px"
-        />
+        >
+          <template v-if="deleteConfirmName === deleteTarget?.name" #suffix>
+            <IconifyIcon
+              icon="ant-design:check-circle-filled"
+              style=" font-size: 16px;color: #52c41a"
+            />
+          </template>
+        </Input>
+        <div
+          v-if="deleteConfirmName && deleteConfirmName !== deleteTarget?.name"
+          style=" margin-top: 4px; font-size: 12px;color: #ff4d4f"
+        >
+          角色名不匹配，无法删除
+        </div>
       </div>
     </Modal>
   </Page>
