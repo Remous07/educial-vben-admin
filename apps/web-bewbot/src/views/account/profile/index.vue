@@ -482,25 +482,44 @@ onMounted(async () => {
                   v-if="(userInfo as any)?.pending_email"
                   label="待验证邮箱"
                 >
-                  <span style="color: #888">{{
-                    (userInfo as any).pending_email
-                  }}</span>
-                  <Tag color="orange" style="margin-left: 8px">待验证</Tag>
-                  <span
-                    v-if="(userInfo as any).pending_email_expires_in"
-                    style="margin-left: 4px; font-size: 12px; color: #fa8c16"
+                  <div
+                    style="
+                      display: flex;
+                      flex-direction: column;
+                      gap: 6px;
+                      min-width: 0;
+                    "
                   >
-                    {{ (userInfo as any).pending_email_expires_in }} 分钟后过期
-                  </span>
-                  <Button
-                    size="small"
-                    type="link"
-                    style="margin-left: 4px"
-                    :loading="resendingEmail"
-                    @click="handleResendEmail"
-                  >
-                    重发邮件
-                  </Button>
+                    <span
+                      style="
+                        line-height: 1.4;
+                        color: #888;
+                        word-break: break-all;
+                      "
+                    >
+                      {{ (userInfo as any).pending_email }}
+                    </span>
+                    <Space :wrap="true" size="small">
+                      <Tag color="orange">待验证</Tag>
+                      <span
+                        v-if="(userInfo as any).pending_email_expires_in"
+                        style="font-size: 12px; color: #fa8c16"
+                      >
+                        {{
+                          (userInfo as any).pending_email_expires_in
+                        }}
+                        分钟后过期
+                      </span>
+                      <Button
+                        size="small"
+                        type="link"
+                        :loading="resendingEmail"
+                        @click="handleResendEmail"
+                      >
+                        重发邮件
+                      </Button>
+                    </Space>
+                  </div>
                 </Descriptions.Item>
                 <Descriptions.Item label="创建时间">
                   {{
