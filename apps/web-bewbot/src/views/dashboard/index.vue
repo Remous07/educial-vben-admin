@@ -77,18 +77,18 @@ const QUICK_LINKS: QuickLink[] = [
     color: '#52c41a',
   },
   {
-    path: '/system/admin-users',
-    icon: 'lucide:shield',
-    title: '系统用户',
-    desc: '管理后台账户与权限组',
-    color: '#722ed1',
-  },
-  {
     path: '/conversation-codes',
     icon: 'lucide:key-round',
     title: '对话识别码',
     desc: '管理主码与临时识别码',
     color: '#fa8c16',
+  },
+  {
+    path: '/system/admin-users',
+    icon: 'lucide:shield',
+    title: '系统用户',
+    desc: '管理后台账户与权限组',
+    color: '#722ed1',
   },
   {
     path: '/system/invite-codes',
