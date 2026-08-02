@@ -54,6 +54,17 @@ function avatarChar(name: string): string {
   return match ? match[0].toUpperCase() : '?';
 }
 
+function avatarColor(id: number, name: string): string {
+  // Base hue from admin id — stable, never changes
+  const base = Math.trunc((id * 2_654_435_761) % 4_294_967_296) % 360;
+  // Name adds ±10° fine-tuning
+  let offset = 0;
+  for (const ch of name)
+    offset = Math.trunc((offset << 5) - offset + (ch.codePointAt(0) ?? 0));
+  const hue = (base + (offset % 20) - 10 + 360) % 360;
+  return `hsl(${hue}, 50%, 40%)`;
+}
+
 // Change email
 const emailVisible = ref(false);
 const emailCurrentPwd = ref('');
@@ -415,9 +426,14 @@ onMounted(async () => {
               font-size: 24px;
               font-weight: 700;
               color: #fff;
-              background: #1677ff;
               border-radius: 50%;
             "
+            :style="{
+              background: avatarColor(
+                (userInfo as any)?.id ?? 0,
+                userInfo?.username || '',
+              ),
+            }"
           >
             {{ avatarChar(userInfo?.username || '') }}
           </div>
