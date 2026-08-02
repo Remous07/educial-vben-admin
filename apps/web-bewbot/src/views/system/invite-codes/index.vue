@@ -973,10 +973,11 @@ onMounted(fetchData);
     <!-- Users by code drawer -->
     <Drawer v-model:open="userDrawerVisible" :width="500">
       <template #title>
-        <Space align="center" :size="8">
+        <Space align="center" :size="6" :wrap="true">
           <IconifyIcon icon="lucide:users" style="color: #1677ff" />
-          <span style="font-weight: 600">使用邀请码的用户</span>
-          <Tag color="blue">{{ userDrawerCode }}</Tag>
+          <span style="font-weight: 600">使用邀请码</span>
+          <Tag color="blue" style="margin: 0 2px">{{ userDrawerCode }}</Tag>
+          <span style="font-weight: 600">注册的用户</span>
         </Space>
       </template>
 
@@ -1173,3 +1174,9 @@ onMounted(fetchData);
     </Modal>
   </Page>
 </template>
+
+<style scoped>
+:deep(.ant-list-item-meta) {
+  align-items: center;
+}
+</style>
