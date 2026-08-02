@@ -9,12 +9,14 @@ import { useUserStore } from '@vben/stores';
 import {
   Button,
   Card,
+  Col,
   Descriptions,
   Input,
   message,
   Modal,
   QRCode,
   Result,
+  Row,
   Space,
   Spin,
   Tag,
@@ -381,7 +383,7 @@ onMounted(async () => {
 <template>
   <Page>
     <Spin :spinning="loading">
-      <div style="max-width: 520px">
+      <div style="max-width: 920px">
         <!-- Profile header -->
         <div
           style="
@@ -444,273 +446,285 @@ onMounted(async () => {
           </div>
         </div>
 
-        <Card style="margin-bottom: 16px">
-          <template #title>
-            <Space :size="6">
-              <IconifyIcon icon="lucide:user" style="color: #1677ff" />
-              <span style="font-weight: 600">账户信息</span>
-            </Space>
-          </template>
-          <Descriptions :column="1">
-            <Descriptions.Item label="用户名">
-              {{ userInfo?.username }}
-              <Button
-                size="small"
-                type="link"
-                style="padding: 0; margin-left: 8px"
-                @click="openUsernameModal"
-              >
-                修改
-              </Button>
-            </Descriptions.Item>
-            <Descriptions.Item label="邮箱">
-              {{ userInfo?.email || '-' }}
-              <Button
-                size="small"
-                type="link"
-                style="margin-left: 8px"
-                @click="emailVisible = true"
-              >
-                修改
-              </Button>
-            </Descriptions.Item>
-            <Descriptions.Item
-              v-if="(userInfo as any)?.pending_email"
-              label="待验证邮箱"
-            >
-              <span style="color: #888">{{
-                (userInfo as any).pending_email
-              }}</span>
-              <Tag color="orange" style="margin-left: 8px">待验证</Tag>
-              <span
-                v-if="(userInfo as any).pending_email_expires_in"
-                style="margin-left: 4px; font-size: 12px; color: #fa8c16"
-              >
-                {{ (userInfo as any).pending_email_expires_in }} 分钟后过期
-              </span>
-              <Button
-                size="small"
-                type="link"
-                style="margin-left: 4px"
-                :loading="resendingEmail"
-                @click="handleResendEmail"
-              >
-                重发邮件
-              </Button>
-            </Descriptions.Item>
-            <Descriptions.Item label="创建时间">
-              {{
-                userInfo?.created_at
-                  ? new Date(userInfo.created_at).toLocaleString('zh-CN')
-                  : '-'
-              }}
-            </Descriptions.Item>
-            <Descriptions.Item label="对话识别码">
-              <template v-if="convCodeEdit">
-                <Input
-                  v-model:value="convCodeInput"
-                  placeholder="8-16位字母、数字、-、_"
-                  :maxlength="16"
-                  size="small"
-                  style="width: 180px; margin-right: 8px"
-                />
-                <Button
-                  size="small"
-                  type="primary"
-                  :loading="convCodeSaving"
-                  @click="handleSetConvCode"
-                >
-                  保存
-                </Button>
-                <Button
-                  size="small"
-                  style="margin-left: 4px"
-                  @click="convCodeEdit = false"
-                >
-                  取消
-                </Button>
+        <Row :gutter="[16, 16]">
+          <Col :xs="24" :lg="12">
+            <Card style="height: 100%">
+              <template #title>
+                <Space :size="6">
+                  <IconifyIcon icon="lucide:user" style="color: #1677ff" />
+                  <span style="font-weight: 600">账户信息</span>
+                </Space>
               </template>
-              <template v-else>
-                <code style="font-size: 14px; font-weight: bold">{{
-                  convCode || '-'
-                }}</code>
-                <Button
-                  size="small"
-                  type="link"
-                  style="margin-left: 8px"
-                  @click="copyConvCode"
-                >
-                  复制
-                </Button>
-                <Button
-                  size="small"
-                  type="link"
-                  style="margin-left: 4px"
-                  @click="openConvCodeEdit"
-                >
-                  修改
-                </Button>
-                <Button
-                  size="small"
-                  type="link"
-                  style="margin-left: 4px"
-                  @click="router.push({ name: 'ConversationCodes' })"
-                >
-                  管理识别码
-                </Button>
-              </template>
-            </Descriptions.Item>
-          </Descriptions>
-          <Button style="margin-top: 12px" @click="openChangePassword">
-            修改密码
-          </Button>
-          <Button
-            danger
-            style="margin-top: 12px; margin-left: 8px"
-            @click="deleteVisible = true"
-          >
-            注销账号
-          </Button>
-        </Card>
-
-        <Card style="margin-bottom: 16px">
-          <template #title>
-            <Space :size="6">
-              <IconifyIcon icon="lucide:send" style="color: #1677ff" />
-              <span style="font-weight: 600">Telegram 绑定</span>
-            </Space>
-          </template>
-          <div
-            v-if="
-              userInfo?.bot_username ||
-              userInfo?.permissions?.includes('bot:settings')
-            "
-            style="margin-bottom: 12px"
-          >
-            <span style="font-size: 13px; color: #888">机器人</span>
-            <template v-if="botUsernameEdit">
-              <Input
-                v-model:value="botUsernameInput"
-                placeholder="用户名（不含 @）"
-                :maxlength="32"
-                size="small"
-                style="width: 160px; margin-left: 8px"
-              />
-              <Button
-                size="small"
-                type="primary"
-                :loading="botUsernameSaving"
-                style="margin-left: 4px"
-                @click="handleSetBotUsername"
-              >
-                保存
-              </Button>
-              <Button
-                size="small"
-                style="margin-left: 4px"
-                @click="botUsernameEdit = false"
-              >
-                取消
-              </Button>
-            </template>
-            <template v-else>
-              <Space style="margin-left: 8px">
-                <template v-if="userInfo?.bot_username">
-                  <a
-                    :href="`https://t.me/${userInfo.bot_username}`"
-                    target="_blank"
-                    style="font-weight: 500"
-                  >
-                    @{{ userInfo.bot_username }}
-                  </a>
+              <Descriptions :column="1">
+                <Descriptions.Item label="用户名">
+                  {{ userInfo?.username }}
                   <Button
                     size="small"
-                    @click="copyBotUsername(userInfo.bot_username)"
+                    type="link"
+                    style="padding: 0; margin-left: 8px"
+                    @click="openUsernameModal"
                   >
-                    复制
+                    修改
+                  </Button>
+                </Descriptions.Item>
+                <Descriptions.Item label="邮箱">
+                  {{ userInfo?.email || '-' }}
+                  <Button
+                    size="small"
+                    type="link"
+                    style="margin-left: 8px"
+                    @click="emailVisible = true"
+                  >
+                    修改
+                  </Button>
+                </Descriptions.Item>
+                <Descriptions.Item
+                  v-if="(userInfo as any)?.pending_email"
+                  label="待验证邮箱"
+                >
+                  <span style="color: #888">{{
+                    (userInfo as any).pending_email
+                  }}</span>
+                  <Tag color="orange" style="margin-left: 8px">待验证</Tag>
+                  <span
+                    v-if="(userInfo as any).pending_email_expires_in"
+                    style="margin-left: 4px; font-size: 12px; color: #fa8c16"
+                  >
+                    {{ (userInfo as any).pending_email_expires_in }} 分钟后过期
+                  </span>
+                  <Button
+                    size="small"
+                    type="link"
+                    style="margin-left: 4px"
+                    :loading="resendingEmail"
+                    @click="handleResendEmail"
+                  >
+                    重发邮件
+                  </Button>
+                </Descriptions.Item>
+                <Descriptions.Item label="创建时间">
+                  {{
+                    userInfo?.created_at
+                      ? new Date(userInfo.created_at).toLocaleString('zh-CN')
+                      : '-'
+                  }}
+                </Descriptions.Item>
+                <Descriptions.Item label="对话识别码">
+                  <template v-if="convCodeEdit">
+                    <Input
+                      v-model:value="convCodeInput"
+                      placeholder="8-16位字母、数字、-、_"
+                      :maxlength="16"
+                      size="small"
+                      style="width: 180px; margin-right: 8px"
+                    />
+                    <Button
+                      size="small"
+                      type="primary"
+                      :loading="convCodeSaving"
+                      @click="handleSetConvCode"
+                    >
+                      保存
+                    </Button>
+                    <Button
+                      size="small"
+                      style="margin-left: 4px"
+                      @click="convCodeEdit = false"
+                    >
+                      取消
+                    </Button>
+                  </template>
+                  <template v-else>
+                    <code style="font-size: 14px; font-weight: bold">{{
+                      convCode || '-'
+                    }}</code>
+                    <Button
+                      size="small"
+                      type="link"
+                      style="margin-left: 8px"
+                      @click="copyConvCode"
+                    >
+                      复制
+                    </Button>
+                    <Button
+                      size="small"
+                      type="link"
+                      style="margin-left: 4px"
+                      @click="openConvCodeEdit"
+                    >
+                      修改
+                    </Button>
+                    <Button
+                      size="small"
+                      type="link"
+                      style="margin-left: 4px"
+                      @click="router.push({ name: 'ConversationCodes' })"
+                    >
+                      管理识别码
+                    </Button>
+                  </template>
+                </Descriptions.Item>
+              </Descriptions>
+              <Button style="margin-top: 12px" @click="openChangePassword">
+                修改密码
+              </Button>
+              <Button
+                danger
+                style="margin-top: 12px; margin-left: 8px"
+                @click="deleteVisible = true"
+              >
+                注销账号
+              </Button>
+            </Card>
+          </Col>
+          <Col :xs="24" :lg="12">
+            <Card style="margin-bottom: 16px">
+              <template #title>
+                <Space :size="6">
+                  <IconifyIcon icon="lucide:send" style="color: #1677ff" />
+                  <span style="font-weight: 600">Telegram 绑定</span>
+                </Space>
+              </template>
+              <div
+                v-if="
+                  userInfo?.bot_username ||
+                  userInfo?.permissions?.includes('bot:settings')
+                "
+                style="margin-bottom: 12px"
+              >
+                <span style="font-size: 13px; color: #888">机器人</span>
+                <template v-if="botUsernameEdit">
+                  <Input
+                    v-model:value="botUsernameInput"
+                    placeholder="用户名（不含 @）"
+                    :maxlength="32"
+                    size="small"
+                    style="width: 160px; margin-left: 8px"
+                  />
+                  <Button
+                    size="small"
+                    type="primary"
+                    :loading="botUsernameSaving"
+                    style="margin-left: 4px"
+                    @click="handleSetBotUsername"
+                  >
+                    保存
+                  </Button>
+                  <Button
+                    size="small"
+                    style="margin-left: 4px"
+                    @click="botUsernameEdit = false"
+                  >
+                    取消
                   </Button>
                 </template>
-                <span v-else style="color: #999">@未设置</span>
+                <template v-else>
+                  <Space style="margin-left: 8px">
+                    <template v-if="userInfo?.bot_username">
+                      <a
+                        :href="`https://t.me/${userInfo.bot_username}`"
+                        target="_blank"
+                        style="font-weight: 500"
+                      >
+                        @{{ userInfo.bot_username }}
+                      </a>
+                      <Button
+                        size="small"
+                        @click="copyBotUsername(userInfo.bot_username)"
+                      >
+                        复制
+                      </Button>
+                    </template>
+                    <span v-else style="color: #999">@未设置</span>
+                    <Button
+                      v-if="userInfo?.permissions?.includes('bot:settings')"
+                      size="small"
+                      type="link"
+                      @click="openBotUsernameEdit"
+                    >
+                      修改
+                    </Button>
+                  </Space>
+                </template>
+              </div>
+              <template v-if="tgBound">
+                <Descriptions :column="1" style="margin-bottom: 8px">
+                  <Descriptions.Item label="TG 用户 ID">
+                    {{ tgId }}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="名称">
+                    {{ tgFirstName }}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="用户名">
+                    {{ tgUsername || '-' }}
+                  </Descriptions.Item>
+                </Descriptions>
+                <Button danger @click="handleUnbind">解绑</Button>
+              </template>
+              <template v-else>
+                <p style="margin-bottom: 12px; color: #888">
+                  未绑定 Telegram 账号
+                </p>
                 <Button
-                  v-if="userInfo?.permissions?.includes('bot:settings')"
-                  size="small"
-                  type="link"
-                  @click="openBotUsernameEdit"
+                  type="primary"
+                  :loading="tgLinking"
+                  @click="handleSetupBind"
                 >
-                  修改
+                  生成绑定密钥
                 </Button>
-              </Space>
-            </template>
-          </div>
-          <template v-if="tgBound">
-            <Descriptions :column="1" style="margin-bottom: 8px">
-              <Descriptions.Item label="TG 用户 ID">
-                {{ tgId }}
-              </Descriptions.Item>
-              <Descriptions.Item label="名称">
-                {{ tgFirstName }}
-              </Descriptions.Item>
-              <Descriptions.Item label="用户名">
-                {{ tgUsername || '-' }}
-              </Descriptions.Item>
-            </Descriptions>
-            <Button danger @click="handleUnbind">解绑</Button>
-          </template>
-          <template v-else>
-            <p style="margin-bottom: 12px; color: #888">未绑定 Telegram 账号</p>
-            <Button
-              type="primary"
-              :loading="tgLinking"
-              @click="handleSetupBind"
-            >
-              生成绑定密钥
-            </Button>
-            <div v-if="tgKey" style="margin-top: 8px">
-              <p style="font-size: 13px; color: #888">
-                请在 Telegram 中使用 /bind 命令绑定：
-              </p>
-              <p style="margin-bottom: 4px">
-                <code style="font-size: 16px; font-weight: bold">
-                  /bind {{ tgKey }}
-                </code>
-              </p>
-              <Button size="small" @click="copyBindCommand"> 复制指令 </Button>
-            </div>
-          </template>
-        </Card>
+                <div v-if="tgKey" style="margin-top: 8px">
+                  <p style="font-size: 13px; color: #888">
+                    请在 Telegram 中使用 /bind 命令绑定：
+                  </p>
+                  <p style="margin-bottom: 4px">
+                    <code style="font-size: 16px; font-weight: bold">
+                      /bind {{ tgKey }}
+                    </code>
+                  </p>
+                  <Button size="small" @click="copyBindCommand">
+                    复制指令
+                  </Button>
+                </div>
+              </template>
+            </Card>
 
-        <Card>
-          <template #title>
-            <Space :size="6">
-              <IconifyIcon icon="lucide:shield-check" style="color: #52c41a" />
-              <span style="font-weight: 600">两步验证</span>
-            </Space>
-          </template>
-          <template v-if="totpEnabled">
-            <Result
-              status="success"
-              title="已开启"
-              sub-title="您的账户已受到两步验证保护"
-            >
-              <template #extra>
-                <Button danger @click="openDisable">关闭两步验证</Button>
+            <Card>
+              <template #title>
+                <Space :size="6">
+                  <IconifyIcon
+                    icon="lucide:shield-check"
+                    style="color: #52c41a"
+                  />
+                  <span style="font-weight: 600">两步验证</span>
+                </Space>
               </template>
-            </Result>
-          </template>
-          <template v-else>
-            <Result
-              status="info"
-              title="未开启"
-              sub-title="开启后将使用身份验证器保护您的账户"
-            >
-              <template #extra>
-                <Button type="primary" @click="handleTotpSetup">
-                  开启两步验证
-                </Button>
+              <template v-if="totpEnabled">
+                <Result
+                  status="success"
+                  title="已开启"
+                  sub-title="您的账户已受到两步验证保护"
+                >
+                  <template #extra>
+                    <Button danger @click="openDisable">关闭两步验证</Button>
+                  </template>
+                </Result>
               </template>
-            </Result>
-          </template>
-        </Card>
+              <template v-else>
+                <Result
+                  status="info"
+                  title="未开启"
+                  sub-title="开启后将使用身份验证器保护您的账户"
+                >
+                  <template #extra>
+                    <Button type="primary" @click="handleTotpSetup">
+                      开启两步验证
+                    </Button>
+                  </template>
+                </Result>
+              </template>
+            </Card>
+          </Col>
+        </Row>
       </div>
     </Spin>
 
