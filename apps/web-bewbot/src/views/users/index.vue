@@ -4,6 +4,7 @@ import type { TableColumnsType } from 'ant-design-vue';
 import { computed, h, onMounted, ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
+import { IconifyIcon } from '@vben/icons';
 import { useAccessStore } from '@vben/stores';
 
 import {
@@ -381,55 +382,112 @@ onMounted(fetchUsers);
 
     <Modal
       v-model:open="adminModalVisible"
-      title="系统用户信息"
       :footer="null"
-      :width="400"
+      :width="420"
       :loading="adminModalLoading"
     >
-      <Descriptions v-if="adminModalUser" :column="1" size="small" bordered>
-        <Descriptions.Item label="用户名">
-          {{ adminModalUser.username }}
-        </Descriptions.Item>
-        <Descriptions.Item label="邮箱">
-          {{ adminModalUser.email }}
-        </Descriptions.Item>
-        <Descriptions.Item label="权限组">
-          <template v-if="adminModalUser.roles?.length">
-            <Tag
-              v-for="role in adminModalUser.roles"
-              :key="role"
-              color="blue"
-              style="margin: 1px"
+      <template #title>
+        <Space align="center" :size="8">
+          <IconifyIcon
+            icon="lucide:shield"
+            style="font-size: 18px; color: #1677ff"
+          />
+          <span style="font-size: 16px; font-weight: 600">系统用户信息</span>
+        </Space>
+      </template>
+
+      <template v-if="adminModalUser">
+        <div
+          style="
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            padding: 12px;
+            margin-bottom: 16px;
+            background: #fafafa;
+            border: 1px solid #f0f0f0;
+            border-radius: 8px;
+          "
+        >
+          <div
+            :style="{
+              display: 'flex',
+              flexShrink: 0,
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '40px',
+              height: '40px',
+              fontSize: '17px',
+              fontWeight: 700,
+              color: '#fff',
+              borderRadius: '50%',
+              background: avatarColor(
+                adminModalUser.id ?? 0,
+                adminModalUser.username || '',
+              ),
+            }"
+          >
+            {{ avatarChar(adminModalUser.username || '') }}
+          </div>
+          <div style="min-width: 0">
+            <div style="font-size: 15px; font-weight: 600">
+              {{ adminModalUser.username }}
+            </div>
+            <div
+              style="
+                margin-top: 2px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                font-size: 13px;
+                color: #888;
+                white-space: nowrap;
+              "
             >
-              {{ role }}
+              {{ adminModalUser.email || '-' }}
+            </div>
+          </div>
+        </div>
+
+        <Descriptions :column="1" size="small" bordered>
+          <Descriptions.Item label="权限组">
+            <template v-if="adminModalUser.roles?.length">
+              <Tag
+                v-for="role in adminModalUser.roles"
+                :key="role"
+                color="blue"
+                style="margin: 1px"
+              >
+                {{ role }}
+              </Tag>
+            </template>
+            <template v-else>-</template>
+          </Descriptions.Item>
+          <Descriptions.Item label="状态">
+            <Tag v-if="adminModalUser.is_banned" color="red"> 已封禁 </Tag>
+            <Tag v-else-if="!adminModalUser.email_verified" color="orange">
+              未验证
             </Tag>
-          </template>
-          <template v-else>-</template>
-        </Descriptions.Item>
-        <Descriptions.Item label="状态">
-          <Tag v-if="adminModalUser.is_banned" color="red"> 已封禁 </Tag>
-          <Tag v-else-if="!adminModalUser.email_verified" color="orange">
-            未验证
-          </Tag>
-          <Tag v-else color="green"> 正常 </Tag>
-        </Descriptions.Item>
-        <Descriptions.Item label="TOTP">
-          {{ adminModalUser.totp_enabled ? '✓' : '—' }}
-        </Descriptions.Item>
-        <Descriptions.Item label="对话识别码">
-          <code v-if="adminModalUser.conversation_code">{{
-            adminModalUser.conversation_code
-          }}</code>
-          <template v-else>-</template>
-        </Descriptions.Item>
-        <Descriptions.Item label="创建时间">
-          {{
-            adminModalUser.created_at
-              ? new Date(adminModalUser.created_at).toLocaleString('zh-CN')
-              : '-'
-          }}
-        </Descriptions.Item>
-      </Descriptions>
+            <Tag v-else color="green"> 正常 </Tag>
+          </Descriptions.Item>
+          <Descriptions.Item label="TOTP">
+            <Tag v-if="adminModalUser.totp_enabled" color="green"> 已开启 </Tag>
+            <Tag v-else> 关闭 </Tag>
+          </Descriptions.Item>
+          <Descriptions.Item label="对话识别码">
+            <code v-if="adminModalUser.conversation_code">{{
+              adminModalUser.conversation_code
+            }}</code>
+            <template v-else>-</template>
+          </Descriptions.Item>
+          <Descriptions.Item label="创建时间">
+            {{
+              adminModalUser.created_at
+                ? new Date(adminModalUser.created_at).toLocaleString('zh-CN')
+                : '-'
+            }}
+          </Descriptions.Item>
+        </Descriptions>
+      </template>
     </Modal>
   </Page>
 </template>
