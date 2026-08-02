@@ -118,7 +118,13 @@ const columns: TableColumnsType = [
         h('span', {}, record.username),
       ]),
   },
-  { title: '邮箱', dataIndex: 'email', key: 'email', width: 180 },
+  {
+    title: '邮箱',
+    dataIndex: 'email',
+    key: 'email',
+    width: 150,
+    ellipsis: true,
+  },
   {
     title: 'TOTP',
     dataIndex: 'totp_enabled',
