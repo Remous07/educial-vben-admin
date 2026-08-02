@@ -151,6 +151,20 @@ const userDrawerItems = ref<
 >([]);
 const userDrawerLoading = ref(false);
 
+function avatarChar(name: string): string {
+  const match = name.match(/\p{L}/u);
+  return match ? match[0].toUpperCase() : '?';
+}
+
+function avatarColor(id: number, name: string): string {
+  const base = Math.trunc((id * 2_654_435_761) % 4_294_967_296) % 360;
+  let offset = 0;
+  for (const ch of name)
+    offset = Math.trunc((offset << 5) - offset + (ch.codePointAt(0) ?? 0));
+  const hue = (base + (offset % 20) - 10 + 360) % 360;
+  return `hsl(${hue}, 50%, 40%)`;
+}
+
 async function showCodeUsers(code: InviteCodeItem) {
   userDrawerCode.value = code.code;
   userDrawerVisible.value = true;
@@ -957,11 +971,15 @@ onMounted(fetchData);
     </Modal>
 
     <!-- Users by code drawer -->
-    <Drawer
-      v-model:open="userDrawerVisible"
-      :title="`使用邀请码 ${userDrawerCode} 的用户`"
-      :width="500"
-    >
+    <Drawer v-model:open="userDrawerVisible" :width="500">
+      <template #title>
+        <Space align="center" :size="8">
+          <IconifyIcon icon="lucide:users" style="color: #1677ff" />
+          <span style="font-weight: 600">使用邀请码的用户</span>
+          <Tag color="blue">{{ userDrawerCode }}</Tag>
+        </Space>
+      </template>
+
       <List
         :data-source="userDrawerItems"
         :loading="userDrawerLoading"
@@ -970,6 +988,25 @@ onMounted(fetchData);
         <template #renderItem="{ item: r }">
           <List.Item>
             <List.Item.Meta>
+              <template #avatar>
+                <div
+                  :style="{
+                    display: 'flex',
+                    width: '32px',
+                    height: '32px',
+                    flexShrink: 0,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: '50%',
+                    background: avatarColor(r.id, r.username || ''),
+                    color: '#fff',
+                    fontSize: '14px',
+                    fontWeight: 'bold',
+                  }"
+                >
+                  {{ avatarChar(r.username || '') }}
+                </div>
+              </template>
               <template #title>{{ r.username }}</template>
               <template #description>
                 {{ r.email }}
