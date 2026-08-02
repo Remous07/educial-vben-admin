@@ -1,9 +1,12 @@
 <script lang="ts" setup>
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
 
 import { Page } from '@vben/common-ui';
+import { IconifyIcon } from '@vben/icons';
+import { useAccessStore, useUserStore } from '@vben/stores';
 
-import { Card, Col, Row, Statistic } from 'ant-design-vue';
+import { Card, Col, Row } from 'ant-design-vue';
 
 import { requestClient } from '#/api/request';
 
@@ -15,6 +18,19 @@ interface Stats {
   active_session_count: number;
   message_count: number;
 }
+
+const router = useRouter();
+const userStore = useUserStore();
+const accessStore = useAccessStore();
+
+const username = computed(() => userStore.userInfo?.username || '管理员');
+
+const today = new Date().toLocaleDateString('zh-CN', {
+  weekday: 'long',
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
 
 const stats = ref<Stats>({
   user_count: 0,
@@ -33,119 +49,250 @@ async function fetchStats() {
   }
 }
 
+// ── quick links (filtered by permission) ──
+
+interface QuickLink {
+  path: string;
+  icon: string;
+  title: string;
+  desc: string;
+  perm: string;
+  color: string;
+}
+
+const QUICK_LINKS: QuickLink[] = [
+  {
+    path: '/messages',
+    icon: 'lucide:message-square',
+    title: '我的访客',
+    desc: '查看与管理访客会话',
+    perm: 'messages:view',
+    color: '#1677ff',
+  },
+  {
+    path: '/users',
+    icon: 'lucide:users',
+    title: 'TG 用户',
+    desc: '浏览 Telegram 用户',
+    perm: 'users:view',
+    color: '#52c41a',
+  },
+  {
+    path: '/system/admin-users',
+    icon: 'lucide:shield',
+    title: '系统用户',
+    desc: '管理后台账户与权限组',
+    perm: 'admin:view',
+    color: '#722ed1',
+  },
+  {
+    path: '/conversation-codes',
+    icon: 'lucide:key-round',
+    title: '对话识别码',
+    desc: '管理主码与临时识别码',
+    perm: 'conversation:code',
+    color: '#fa8c16',
+  },
+  {
+    path: '/system/invite-codes',
+    icon: 'lucide:gift',
+    title: '注册设置',
+    desc: '邀请码与注册规则',
+    perm: 'invite:view',
+    color: '#eb2f96',
+  },
+  {
+    path: '/system/roles',
+    icon: 'lucide:user-cog',
+    title: '系统角色',
+    desc: '配置角色与权限',
+    perm: 'admin:manage',
+    color: '#13c2c2',
+  },
+];
+
+const accessCodes = computed(() => accessStore.accessCodes ?? []);
+const visibleLinks = computed(() =>
+  QUICK_LINKS.filter((link) => accessCodes.value.includes(link.perm)),
+);
+
+const statCards = computed(() => [
+  {
+    title: 'TG 用户',
+    value: stats.value.user_count,
+    icon: 'lucide:users',
+    color: '#1677ff',
+    bg: '#e6f4ff',
+  },
+  {
+    title: '系统用户',
+    value: stats.value.admin_count,
+    icon: 'lucide:shield',
+    color: '#52c41a',
+    bg: '#f6ffed',
+  },
+  {
+    title: '活跃会话',
+    value: stats.value.active_session_count,
+    icon: 'lucide:message-circle',
+    color: '#fa8c16',
+    bg: '#fff7e6',
+  },
+  {
+    title: '会话总数',
+    value: stats.value.message_count,
+    icon: 'lucide:file-text',
+    color: '#722ed1',
+    bg: '#f9f0ff',
+  },
+]);
+
 onMounted(fetchStats);
 </script>
 
 <template>
   <Page>
-    <Row :gutter="[16, 16]">
-      <Col :span="6">
-        <Card>
-          <Statistic
-            title="TG 用户"
-            :loading="loading"
-            :value="stats.user_count"
+    <!-- Welcome banner -->
+    <div
+      style="
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 20px 24px;
+        background: linear-gradient(120deg, #e6f4ff 0%, #f9f0ff 100%);
+        border: 1px solid #f0f0f0;
+        border-radius: 12px;
+      "
+    >
+      <div>
+        <div style="font-size: 20px; font-weight: 600; color: #1d1d1d">
+          👋 你好，{{ username }}
+        </div>
+        <div style="margin-top: 6px; font-size: 13px; color: #666">
+          {{ today }} · 欢迎回来，以下是系统概览
+        </div>
+      </div>
+      <IconifyIcon
+        icon="lucide:layout-dashboard"
+        style="font-size: 40px; color: #1677ff33"
+      />
+    </div>
+
+    <!-- Stat cards -->
+    <Row :gutter="[16, 16]" style="margin-top: 16px">
+      <Col v-for="card in statCards" :key="card.title" :xs="12" :sm="6">
+        <Card class="stat-card" :loading="loading">
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+            "
           >
-            <template #prefix>
-              <svg
-                viewBox="0 0 24 24"
-                width="24"
-                height="24"
-                fill="none"
-                stroke="#1677ff"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+            <div>
+              <div style="font-size: 13px; color: #888">{{ card.title }}</div>
+              <div
+                style="
+                  margin-top: 4px;
+                  font-size: 26px;
+                  font-weight: 700;
+                  color: #1d1d1d;
+                "
               >
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-              </svg>
-            </template>
-          </Statistic>
-        </Card>
-      </Col>
-      <Col :span="6">
-        <Card>
-          <Statistic
-            title="系统用户"
-            :loading="loading"
-            :value="stats.admin_count"
-          >
-            <template #prefix>
-              <svg
-                viewBox="0 0 24 24"
-                width="24"
-                height="24"
-                fill="none"
-                stroke="#52c41a"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-              </svg>
-            </template>
-          </Statistic>
-        </Card>
-      </Col>
-      <Col :span="6">
-        <Card>
-          <Statistic
-            title="活跃会话"
-            :loading="loading"
-            :value="stats.active_session_count"
-          >
-            <template #prefix>
-              <svg
-                viewBox="0 0 24 24"
-                width="24"
-                height="24"
-                fill="none"
-                stroke="#fa8c16"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path
-                  d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
-                />
-              </svg>
-            </template>
-          </Statistic>
-        </Card>
-      </Col>
-      <Col :span="6">
-        <Card>
-          <Statistic
-            title="会话总数"
-            :loading="loading"
-            :value="stats.message_count"
-          >
-            <template #prefix>
-              <svg
-                viewBox="0 0 24 24"
-                width="24"
-                height="24"
-                fill="none"
-                stroke="#722ed1"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path
-                  d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
-                />
-                <polyline points="14,2 14,8 20,8" />
-                <line x1="16" y1="13" x2="8" y2="13" />
-                <line x1="16" y1="17" x2="8" y2="17" />
-                <polyline points="10,9 9,9 8,9" />
-              </svg>
-            </template>
-          </Statistic>
+                {{ card.value }}
+              </div>
+            </div>
+            <div
+              class="stat-icon"
+              :style="{ background: card.bg, color: card.color }"
+            >
+              <IconifyIcon :icon="card.icon" style="font-size: 22px" />
+            </div>
+          </div>
         </Card>
       </Col>
     </Row>
+
+    <!-- Quick links -->
+    <div v-if="visibleLinks.length" style="margin-top: 24px">
+      <div style="margin-bottom: 12px; font-size: 15px; font-weight: 600">
+        快捷入口
+      </div>
+      <Row :gutter="[16, 16]">
+        <Col
+          v-for="link in visibleLinks"
+          :key="link.path"
+          :xs="12"
+          :sm="12"
+          :md="8"
+        >
+          <Card
+            class="quick-card"
+            :hoverable="true"
+            @click="router.push(link.path)"
+          >
+            <div style="display: flex; gap: 12px; align-items: center">
+              <div
+                class="quick-icon"
+                :style="{ background: `${link.color }1a`, color: link.color }"
+              >
+                <IconifyIcon :icon="link.icon" style="font-size: 20px" />
+              </div>
+              <div>
+                <div style="font-weight: 600">{{ link.title }}</div>
+                <div style="margin-top: 2px; font-size: 12px; color: #888">
+                  {{ link.desc }}
+                </div>
+              </div>
+            </div>
+          </Card>
+        </Col>
+      </Row>
+    </div>
   </Page>
 </template>
+
+<style scoped>
+.stat-card {
+  transition:
+    box-shadow 0.2s,
+    transform 0.2s;
+}
+
+.stat-card:hover {
+  box-shadow: 0 4px 12px rgb(0 0 0 / 8%);
+  transform: translateY(-2px);
+}
+
+.stat-icon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+}
+
+.quick-card {
+  cursor: pointer;
+  transition:
+    box-shadow 0.2s,
+    transform 0.2s;
+}
+
+.quick-card:hover {
+  box-shadow: 0 4px 12px rgb(0 0 0 / 8%);
+  transform: translateY(-2px);
+}
+
+.quick-icon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+}
+</style>
