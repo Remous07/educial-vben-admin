@@ -884,12 +884,19 @@ onMounted(fetchData);
               >
                 {{ avatarChar(r.first_name, r.username) }}
               </div>
-              <div style=" flex: 1;min-width: 0">
-                <Space size="small" :wrap="false">
+              <div style="flex: 1; min-width: 0">
+                <div
+                  style="
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 6px;
+                    align-items: center;
+                  "
+                >
                   <a
                     v-if="r.first_name"
                     :href="`tg://user?id=${r.tg_user_id}`"
-                    style="color: #1677ff"
+                    style=" font-weight: 500;color: #1677ff"
                   >
                     {{ r.first_name }}
                   </a>
@@ -910,19 +917,26 @@ onMounted(fetchData);
                   <Tag v-if="r.is_blocked" color="red" style="font-size: 11px">
                     已拉黑
                   </Tag>
-                </Space>
-                <Space
-                  size="middle"
-                  style="margin-top: 2px; font-size: 12px; color: #888"
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 6px;
+                    align-items: center;
+                    margin-top: 2px;
+                    font-size: 12px;
+                    color: #888;
+                  "
                 >
-                  <span>
-                    <code style="font-size: 11px">{{ r.tg_user_id }}</code>
-                  </span>
+                  <code style="font-size: 11px">{{ r.tg_user_id }}</code>
+                  <span v-if="r.last_active_at" style="color: #d9d9d9">·</span>
                   <span v-if="r.last_active_at">
                     {{ dayjs(r.last_active_at).format('MM-DD HH:mm') }}
                   </span>
+                  <span style="color: #d9d9d9">·</span>
                   <span>{{ r.message_count }} 条消息</span>
-                </Space>
+                </div>
               </div>
               <div style="flex-shrink: 0">
                 <Button
