@@ -927,11 +927,13 @@ onMounted(async () => {
       </template>
 
       <div v-if="setupData">
-        <div style=" margin-bottom: 16px;text-align: center">
+        <div style="margin-bottom: 16px; text-align: center">
           <p style="margin-bottom: 12px; font-size: 13px; color: #666">
             使用身份验证器扫描二维码，或手动输入密钥
           </p>
-          <QRCode :value="setupData.uri" :size="170" />
+          <div style="display: flex; justify-content: center">
+            <QRCode :value="setupData.uri" :size="170" />
+          </div>
         </div>
 
         <!-- Secret with copy -->
