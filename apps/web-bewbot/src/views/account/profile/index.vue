@@ -448,7 +448,7 @@ onMounted(async () => {
 
         <Row :gutter="[16, 16]">
           <Col :xs="24" :lg="12">
-            <Card style="height: 100%">
+            <Card>
               <template #title>
                 <Space :size="6">
                   <IconifyIcon icon="lucide:user" style="color: #1677ff" />
