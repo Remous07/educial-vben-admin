@@ -1,11 +1,23 @@
 <script lang="ts" setup>
 import type { TableColumnsType } from 'ant-design-vue';
 
-import { h, onMounted, ref } from 'vue';
+import { computed, h, onMounted, ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
 
-import { Button, message, Modal, Table, Tag } from 'ant-design-vue';
+import {
+  Button,
+  Card,
+  Col,
+  Input,
+  message,
+  Popconfirm,
+  Row,
+  Space,
+  Statistic,
+  Table,
+  Tag,
+} from 'ant-design-vue';
 
 import { blockVisitorApi, unblockVisitorApi } from '#/api/core';
 import { requestClient } from '#/api/request';
@@ -38,20 +50,33 @@ function timeoutTip(r: Conversation): string {
 
 const conversations = ref<Conversation[]>([]);
 const loading = ref(false);
+const searchText = ref('');
+
+const filteredConversations = computed(() => {
+  const q = searchText.value.trim().toLowerCase();
+  if (!q) return conversations.value;
+  return conversations.value.filter(
+    (c) =>
+      (c.first_name ?? '').toLowerCase().includes(q) ||
+      (c.username ?? '').toLowerCase().includes(q) ||
+      String(c.telegram_id).includes(q),
+  );
+});
+
+const activeCount = computed(
+  () => conversations.value.filter((c) => c.is_active).length,
+);
+const blockedCount = computed(
+  () => conversations.value.filter((c) => c.is_blocked).length,
+);
+const premiumCount = computed(
+  () => conversations.value.filter((c) => c.is_premium).length,
+);
 
 async function handleBlock(record: Conversation) {
-  Modal.confirm({
-    title: `确定拉黑该用户？`,
-    content: '拉黑后该用户将无法向你发送消息',
-    okText: '拉黑',
-    okType: 'danger',
-    cancelText: '取消',
-    onOk: async () => {
-      await blockVisitorApi(record.telegram_id);
-      record.is_blocked = true;
-      message.success('已拉黑');
-    },
-  });
+  await blockVisitorApi(record.telegram_id);
+  record.is_blocked = true;
+  message.success('已拉黑');
 }
 
 async function handleUnblock(record: Conversation) {
@@ -174,9 +199,53 @@ onMounted(fetchConversations);
 
 <template>
   <Page>
+    <Row :gutter="[16, 16]" style="margin-bottom: 16px">
+      <Col :xs="12" :sm="6">
+        <Card>
+          <Statistic title="总访客" :value="conversations.length" />
+        </Card>
+      </Col>
+      <Col :xs="12" :sm="6">
+        <Card>
+          <Statistic
+            title="活跃中"
+            :value="activeCount"
+            :value-style="{ color: '#52c41a' }"
+          />
+        </Card>
+      </Col>
+      <Col :xs="12" :sm="6">
+        <Card>
+          <Statistic
+            title="已拉黑"
+            :value="blockedCount"
+            :value-style="{ color: '#ff4d4f' }"
+          />
+        </Card>
+      </Col>
+      <Col :xs="12" :sm="6">
+        <Card>
+          <Statistic
+            title="会员"
+            :value="premiumCount"
+            :value-style="{ color: '#faad14' }"
+          />
+        </Card>
+      </Col>
+    </Row>
+
+    <Space style="margin-bottom: 16px">
+      <Input.Search
+        v-model:value="searchText"
+        placeholder="搜索昵称、用户名或 TG ID"
+        allow-clear
+        style="width: 280px"
+      />
+    </Space>
+
     <Table
       :columns="columns"
-      :data-source="conversations"
+      :data-source="filteredConversations"
       :loading="loading"
       :pagination="{ pageSize: 20 }"
       row-key="telegram_id"
@@ -193,13 +262,15 @@ onMounted(fetchConversations);
             </Button>
           </template>
           <template v-else>
-            <Button
-              size="small"
-              danger
-              @click="handleBlock(record as Conversation)"
+            <Popconfirm
+              title="确定拉黑该用户？"
+              :description="`TG ID: ${(record as Conversation).telegram_id}`"
+              ok-text="确认拉黑"
+              cancel-text="取消"
+              @confirm="handleBlock(record as Conversation)"
             >
-              拉黑
-            </Button>
+              <Button size="small" danger> 拉黑 </Button>
+            </Popconfirm>
           </template>
         </template>
       </template>
