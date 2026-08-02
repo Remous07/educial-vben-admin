@@ -200,6 +200,7 @@ async function handleSetupBind() {
   try {
     const r = await setupTelegramBindApi();
     tgKey.value = r.key;
+    message.success('绑定密钥已生成，5 分钟内有效');
   } finally {
     tgLinking.value = false;
   }
@@ -505,9 +506,7 @@ onMounted(async () => {
                         v-if="(userInfo as any).pending_email_expires_in"
                         style="font-size: 12px; color: #fa8c16"
                       >
-                        {{
-                          (userInfo as any).pending_email_expires_in
-                        }}
+                        {{ (userInfo as any).pending_email_expires_in }}
                         分钟后过期
                       </span>
                       <Button
@@ -717,9 +716,14 @@ onMounted(async () => {
                       /bind {{ tgKey }}
                     </code>
                   </p>
-                  <Button size="small" @click="copyBindCommand">
-                    复制指令
-                  </Button>
+                  <Space :wrap="true" size="small">
+                    <Button size="small" @click="copyBindCommand">
+                      复制指令
+                    </Button>
+                    <span style="font-size: 12px; color: #fa8c16">
+                      ⏳ 密钥 5 分钟内有效
+                    </span>
+                  </Space>
                 </div>
               </template>
             </Card>
