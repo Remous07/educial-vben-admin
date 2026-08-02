@@ -839,11 +839,16 @@ onMounted(fetchData);
     </Modal>
 
     <!-- User List Drawer -->
-    <Drawer
-      v-model:open="userListVisible"
-      :title="`使用识别码 ${userListCode} 的访客`"
-      :width="640"
-    >
+    <Drawer v-model:open="userListVisible" :width="640">
+      <template #title>
+        <Space align="center" :size="6" :wrap="true">
+          <IconifyIcon icon="lucide:key-round" style="color: #1677ff" />
+          <span style="font-weight: 600">使用识别码</span>
+          <Tag color="blue" style="margin: 0 2px">{{ userListCode }}</Tag>
+          <span style="font-weight: 600">的访客</span>
+        </Space>
+      </template>
+
       <List
         :data-source="userListItems"
         :loading="userListLoading"
@@ -851,28 +856,35 @@ onMounted(fetchData);
       >
         <template #renderItem="{ item: r }">
           <List.Item>
-            <List.Item.Meta>
-              <template #avatar>
-                <div
-                  :style="{
-                    width: '32px',
-                    height: '32px',
-                    borderRadius: '50%',
-                    background: r.is_blocked
-                      ? '#f0f0f0'
-                      : avatarColor(r.tg_user_id, r.first_name),
-                    color: r.is_blocked ? '#bbb' : '#fff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '14px',
-                    fontWeight: 'bold',
-                  }"
-                >
-                  {{ avatarChar(r.first_name, r.username) }}
-                </div>
-              </template>
-              <template #title>
+            <div
+              style="
+                display: flex;
+                gap: 12px;
+                align-items: center;
+                width: 100%;
+                min-width: 0;
+              "
+            >
+              <div
+                :style="{
+                  display: 'flex',
+                  width: '32px',
+                  height: '32px',
+                  flexShrink: 0,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '50%',
+                  background: r.is_blocked
+                    ? '#f0f0f0'
+                    : avatarColor(r.tg_user_id, r.first_name),
+                  color: r.is_blocked ? '#bbb' : '#fff',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                }"
+              >
+                {{ avatarChar(r.first_name, r.username) }}
+              </div>
+              <div style=" flex: 1;min-width: 0">
                 <Space size="small" :wrap="false">
                   <a
                     v-if="r.first_name"
@@ -899,9 +911,10 @@ onMounted(fetchData);
                     已拉黑
                   </Tag>
                 </Space>
-              </template>
-              <template #description>
-                <Space size="middle" style="font-size: 12px; color: #888">
+                <Space
+                  size="middle"
+                  style="margin-top: 2px; font-size: 12px; color: #888"
+                >
                   <span>
                     <code style="font-size: 11px">{{ r.tg_user_id }}</code>
                   </span>
@@ -910,27 +923,27 @@ onMounted(fetchData);
                   </span>
                   <span>{{ r.message_count }} 条消息</span>
                 </Space>
-              </template>
-            </List.Item.Meta>
-            <template #extra>
-              <Button
-                v-if="r.is_blocked"
-                size="small"
-                @click="handleUnblockUser(r.tg_user_id)"
-              >
-                解除
-              </Button>
-              <Popconfirm
-                v-else
-                title="确认拉黑该用户？"
-                :description="`TG ID: ${r.tg_user_id}`"
-                ok-text="确认拉黑"
-                cancel-text="取消"
-                @confirm="handleBlockUser(r.tg_user_id)"
-              >
-                <Button size="small" danger> 拉黑 </Button>
-              </Popconfirm>
-            </template>
+              </div>
+              <div style="flex-shrink: 0">
+                <Button
+                  v-if="r.is_blocked"
+                  size="small"
+                  @click="handleUnblockUser(r.tg_user_id)"
+                >
+                  解除
+                </Button>
+                <Popconfirm
+                  v-else
+                  title="确认拉黑该用户？"
+                  :description="`TG ID: ${r.tg_user_id}`"
+                  ok-text="确认拉黑"
+                  cancel-text="取消"
+                  @confirm="handleBlockUser(r.tg_user_id)"
+                >
+                  <Button size="small" danger> 拉黑 </Button>
+                </Popconfirm>
+              </div>
+            </div>
           </List.Item>
         </template>
       </List>
