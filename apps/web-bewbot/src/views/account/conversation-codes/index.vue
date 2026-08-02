@@ -4,12 +4,15 @@ import type { TableColumnsType } from 'ant-design-vue';
 import type { ConversationCodeItem } from '#/api/core';
 import type { CodeUserItem } from '#/api/core/auth';
 
-import { h, onMounted, ref } from 'vue';
+import { computed, h, onMounted, ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
+import { IconifyIcon } from '@vben/icons';
 
 import {
   Button,
+  Card,
+  Col,
   DatePicker,
   Drawer,
   Input,
@@ -19,7 +22,9 @@ import {
   Modal,
   Popconfirm,
   Progress,
+  Row,
   Space,
+  Statistic,
   Table,
   Tag,
   Tooltip,
@@ -44,6 +49,34 @@ defineOptions({ name: 'ConversationCodes' });
 
 const codes = ref<ConversationCodeItem[]>([]);
 const loading = ref(false);
+const searchText = ref('');
+
+const filteredCodes = computed(() => {
+  const q = searchText.value.trim().toLowerCase();
+  if (!q) return codes.value;
+  return codes.value.filter(
+    (c) =>
+      c.code.toLowerCase().includes(q) ||
+      (c.remark ?? '').toLowerCase().includes(q),
+  );
+});
+
+const defaultCount = computed(
+  () => codes.value.filter((c) => c.is_default).length,
+);
+const activeCount = computed(
+  () =>
+    codes.value.filter((c) => {
+      if (c.is_default) return true;
+      if (!c.is_active) return false;
+      if (c.expires_at && new Date(c.expires_at) < new Date()) return false;
+      if (c.max_uses > 0 && c.used_count >= c.max_uses) return false;
+      return true;
+    }).length,
+);
+const revokedCount = computed(
+  () => codes.value.filter((c) => !c.is_active).length,
+);
 
 // ── avatar helpers ──
 
@@ -513,13 +546,54 @@ onMounted(fetchData);
 
 <template>
   <Page>
-    <div style="margin-bottom: 16px">
+    <Row :gutter="[16, 16]" style="margin-bottom: 16px">
+      <Col :xs="12" :sm="6">
+        <Card>
+          <Statistic title="总识别码" :value="codes.length" />
+        </Card>
+      </Col>
+      <Col :xs="12" :sm="6">
+        <Card>
+          <Statistic
+            title="默认"
+            :value="defaultCount"
+            :value-style="{ color: '#1677ff' }"
+          />
+        </Card>
+      </Col>
+      <Col :xs="12" :sm="6">
+        <Card>
+          <Statistic
+            title="有效"
+            :value="activeCount"
+            :value-style="{ color: '#52c41a' }"
+          />
+        </Card>
+      </Col>
+      <Col :xs="12" :sm="6">
+        <Card>
+          <Statistic
+            title="已撤销"
+            :value="revokedCount"
+            :value-style="{ color: '#ff4d4f' }"
+          />
+        </Card>
+      </Col>
+    </Row>
+
+    <Space style="margin-bottom: 16px" :wrap="true">
       <Button type="primary" @click="modalVisible = true"> 生成识别码 </Button>
-    </div>
+      <Input.Search
+        v-model:value="searchText"
+        placeholder="搜索识别码或备注"
+        allow-clear
+        style="width: 280px"
+      />
+    </Space>
 
     <Table
       :columns="columns"
-      :data-source="codes"
+      :data-source="filteredCodes"
       :loading="loading"
       :pagination="{ pageSize: 20 }"
       row-key="id"
@@ -579,37 +653,47 @@ onMounted(fetchData);
     <!-- Create Modal -->
     <Modal
       v-model:open="modalVisible"
-      title="生成对话识别码"
       @ok="handleCreate"
       :confirm-loading="saving"
+      :width="480"
       @after-open-change="(open: boolean) => open && onCreateModalOpen()"
     >
-      <div style="margin-bottom: 12px">
-        <label>识别码</label>
+      <template #title>
+        <Space align="center" :size="8">
+          <IconifyIcon
+            icon="lucide:key-round"
+            style="font-size: 18px; color: #1677ff"
+          />
+          <span style="font-size: 16px; font-weight: 600">生成对话识别码</span>
+        </Space>
+      </template>
+
+      <div style="margin-bottom: 16px">
+        <label style="font-size: 13px; color: #666">识别码</label>
         <Input
           v-model:value="codeInput"
           :maxlength="16"
           placeholder="8-16位字母、数字、-、_"
           :status="codeError ? 'error' : ''"
-          style="margin-top: 4px"
+          style="margin-top: 6px"
           @change="onCodeInputChange"
         />
         <span v-if="codeError" style="font-size: 12px; color: #ff4d4f">
           {{ codeError }}
         </span>
       </div>
-      <div style="margin-bottom: 12px">
-        <label>使用次数上限</label>
+      <div style="margin-bottom: 16px">
+        <label style="font-size: 13px; color: #666">使用次数上限</label>
         <InputNumber
           v-model:value="maxUses"
           :min="1"
           :max="999"
-          style="width: 100%; margin-top: 4px"
+          style="width: 100%; margin-top: 6px"
         />
       </div>
       <div>
-        <label>过期时间</label>
-        <div style="display: flex; gap: 8px; margin-top: 4px">
+        <label style="font-size: 13px; color: #666">过期时间</label>
+        <div style="display: flex; gap: 8px; margin-top: 6px">
           <DatePicker
             v-model:value="expiresAt"
             show-time
@@ -630,13 +714,13 @@ onMounted(fetchData);
           />
         </div>
       </div>
-      <div style="margin-top: 12px">
-        <label>备注</label>
+      <div style="margin-top: 16px">
+        <label style="font-size: 13px; color: #666">备注</label>
         <Input
           v-model:value="remark"
           placeholder="如：给张三的临时码"
           :maxlength="256"
-          style="margin-top: 4px"
+          style="margin-top: 6px"
         />
       </div>
     </Modal>
@@ -644,18 +728,28 @@ onMounted(fetchData);
     <!-- Edit Modal -->
     <Modal
       v-model:open="editModalVisible"
-      title="编辑识别码"
       @ok="handleEditSave"
       :confirm-loading="saving"
+      :width="480"
     >
-      <div style="margin-bottom: 12px">
-        <label>识别码</label>
+      <template #title>
+        <Space align="center" :size="8">
+          <IconifyIcon
+            icon="lucide:edit"
+            style="font-size: 18px; color: #1677ff"
+          />
+          <span style="font-size: 16px; font-weight: 600">编辑识别码</span>
+        </Space>
+      </template>
+
+      <div style="margin-bottom: 16px">
+        <label style="font-size: 13px; color: #666">识别码</label>
         <Input
           v-model:value="editCode"
           :maxlength="16"
           :disabled="(editingCode?.active_session_count ?? 0) > 0"
           :status="editCodeError ? 'error' : ''"
-          style="margin-top: 4px"
+          style="margin-top: 6px"
           @change="onEditCodeChange"
         />
         <span
@@ -668,18 +762,18 @@ onMounted(fetchData);
           {{ editCodeError }}
         </span>
       </div>
-      <div style="margin-bottom: 12px">
-        <label>使用次数上限</label>
+      <div style="margin-bottom: 16px">
+        <label style="font-size: 13px; color: #666">使用次数上限</label>
         <InputNumber
           v-model:value="editMaxUses"
           :min="0"
           :max="999"
-          style="width: 100%; margin-top: 4px"
+          style="width: 100%; margin-top: 6px"
         />
       </div>
       <div>
-        <label>过期时间</label>
-        <div style="display: flex; gap: 8px; margin-top: 4px">
+        <label style="font-size: 13px; color: #666">过期时间</label>
+        <div style="display: flex; gap: 8px; margin-top: 6px">
           <DatePicker
             v-model:value="editExpiresAt"
             show-time
@@ -700,13 +794,13 @@ onMounted(fetchData);
           />
         </div>
       </div>
-      <div style="margin-top: 12px">
-        <label>备注</label>
+      <div style="margin-top: 16px">
+        <label style="font-size: 13px; color: #666">备注</label>
         <Input
           v-model:value="editRemark"
           placeholder="如：给张三的临时码"
           :maxlength="256"
-          style="margin-top: 4px"
+          style="margin-top: 6px"
         />
       </div>
     </Modal>
@@ -714,16 +808,28 @@ onMounted(fetchData);
     <!-- Edit Default Code Modal -->
     <Modal
       v-model:open="defaultEditVisible"
-      title="编辑默认识别码"
       :confirm-loading="savingDefault"
       @ok="handleDefaultEditSave"
+      :width="440"
     >
-      <label>新识别码（8-16位字母、数字、-、_）</label>
+      <template #title>
+        <Space align="center" :size="8">
+          <IconifyIcon
+            icon="lucide:star"
+            style="font-size: 18px; color: #1677ff"
+          />
+          <span style="font-size: 16px; font-weight: 600">编辑默认识别码</span>
+        </Space>
+      </template>
+
+      <label style="font-size: 13px; color: #666">
+        新识别码（8-16位字母、数字、-、_）
+      </label>
       <Input
         v-model:value="newDefaultCode"
         placeholder="输入新的识别码"
         :maxlength="16"
-        style="margin-top: 4px"
+        style="margin-top: 6px"
       />
     </Modal>
 
