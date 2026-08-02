@@ -3,18 +3,23 @@ import type { TableColumnsType } from 'ant-design-vue';
 
 import type { AdminUserItem, RoleItem } from '#/api/core';
 
-import { h, onMounted, ref } from 'vue';
+import { computed, h, onMounted, ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
+import { IconifyIcon } from '@vben/icons';
 
 import {
   Button,
+  Card,
   Checkbox,
+  Col,
   Descriptions,
   Input,
   message,
   Modal,
+  Row,
   Space,
+  Statistic,
   Table,
   Tag,
 } from 'ant-design-vue';
@@ -33,6 +38,26 @@ defineOptions({ name: 'AdminUsers' });
 const users = ref<AdminUserItem[]>([]);
 const roles = ref<RoleItem[]>([]);
 const loading = ref(false);
+const searchText = ref('');
+
+const filteredUsers = computed(() => {
+  const q = searchText.value.trim().toLowerCase();
+  if (!q) return users.value;
+  return users.value.filter(
+    (u) =>
+      u.username.toLowerCase().includes(q) || u.email.toLowerCase().includes(q),
+  );
+});
+
+const normalCount = computed(
+  () => users.value.filter((u) => !u.is_banned && u.email_verified).length,
+);
+const bannedCount = computed(
+  () => users.value.filter((u) => u.is_banned).length,
+);
+const unverifiedCount = computed(
+  () => users.value.filter((u) => !u.email_verified).length,
+);
 
 // Edit modal
 const modalVisible = ref(false);
@@ -57,9 +82,10 @@ const columns: TableColumnsType = [
     title: 'TOTP',
     dataIndex: 'totp_enabled',
     key: 'totp_enabled',
-    width: 55,
+    width: 70,
     align: 'center',
-    customRender: ({ text }: { text: boolean }) => (text ? '✓' : '—'),
+    customRender: ({ text }: { text: boolean }) =>
+      text ? h(Tag, { color: 'green' }, () => '已开启') : h(Tag, () => '关闭'),
   },
   {
     title: '邀请码',
@@ -216,9 +242,53 @@ onMounted(fetchData);
 
 <template>
   <Page>
+    <Row :gutter="[16, 16]" style="margin-bottom: 16px">
+      <Col :xs="12" :sm="6">
+        <Card>
+          <Statistic title="总用户" :value="users.length" />
+        </Card>
+      </Col>
+      <Col :xs="12" :sm="6">
+        <Card>
+          <Statistic
+            title="正常"
+            :value="normalCount"
+            :value-style="{ color: '#52c41a' }"
+          />
+        </Card>
+      </Col>
+      <Col :xs="12" :sm="6">
+        <Card>
+          <Statistic
+            title="已封禁"
+            :value="bannedCount"
+            :value-style="{ color: '#ff4d4f' }"
+          />
+        </Card>
+      </Col>
+      <Col :xs="12" :sm="6">
+        <Card>
+          <Statistic
+            title="未验证"
+            :value="unverifiedCount"
+            :value-style="{ color: '#fa8c16' }"
+          />
+        </Card>
+      </Col>
+    </Row>
+
+    <Space style="margin-bottom: 16px">
+      <Input.Search
+        v-model:value="searchText"
+        placeholder="搜索用户名或邮箱"
+        allow-clear
+        style="width: 280px"
+      />
+    </Space>
+
     <Table
       :columns="columns"
-      :data-source="users"
+      :data-source="filteredUsers"
       :loading="loading"
       :pagination="false"
       row-key="id"
@@ -265,30 +335,40 @@ onMounted(fetchData);
 
     <Modal
       v-model:open="modalVisible"
-      title="编辑用户"
       @ok="handleSave"
       :confirm-loading="saving"
+      :width="440"
     >
-      <div style="margin-bottom: 12px">
-        <label>用户名</label>
+      <template #title>
+        <Space align="center" :size="8">
+          <IconifyIcon
+            icon="lucide:shield-check"
+            style="font-size: 18px; color: #1677ff"
+          />
+          <span style="font-size: 16px; font-weight: 600">编辑用户</span>
+        </Space>
+      </template>
+
+      <div style="margin-bottom: 16px">
+        <label style="font-size: 13px; color: #666">用户名</label>
         <Input
           :value="selectedUser?.username"
           disabled
-          style="margin-top: 4px"
+          style="margin-top: 6px"
         />
       </div>
-      <div style="margin-bottom: 12px">
-        <label>邮箱</label>
-        <Input :value="selectedUser?.email" disabled style="margin-top: 4px" />
+      <div style="margin-bottom: 16px">
+        <label style="font-size: 13px; color: #666">邮箱</label>
+        <Input :value="selectedUser?.email" disabled style="margin-top: 6px" />
       </div>
       <div>
-        <label>权限组</label>
+        <label style="font-size: 13px; color: #666">权限组</label>
         <div
           style="
             display: flex;
             flex-direction: column;
             gap: 4px;
-            margin-top: 4px;
+            margin-top: 6px;
           "
         >
           <Checkbox
