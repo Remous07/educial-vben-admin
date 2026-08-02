@@ -794,7 +794,14 @@ onMounted(fetchData);
             >
               激活
             </Button>
+            <Tooltip
+              v-if="(record as InviteCodeItem).used_count > 0"
+              title="该邀请码已被用户使用，无法删除"
+            >
+              <Button size="small" danger type="text" disabled> 删除 </Button>
+            </Tooltip>
             <Button
+              v-else
               size="small"
               danger
               type="text"
