@@ -74,9 +74,50 @@ function openBotModal(user: AdminUserItem) {
   botModalVisible.value = true;
 }
 
+function avatarChar(name: string): string {
+  const match = name.match(/\p{L}/u);
+  return match ? match[0].toUpperCase() : '?';
+}
+
+function avatarColor(id: number, name: string): string {
+  const base = Math.trunc((id * 2_654_435_761) % 4_294_967_296) % 360;
+  let offset = 0;
+  for (const ch of name)
+    offset = Math.trunc((offset << 5) - offset + (ch.codePointAt(0) ?? 0));
+  const hue = (base + (offset % 20) - 10 + 360) % 360;
+  return `hsl(${hue}, 50%, 40%)`;
+}
+
 const columns: TableColumnsType = [
   { title: 'ID', dataIndex: 'id', key: 'id', width: 50 },
-  { title: '用户名', dataIndex: 'username', key: 'username', width: 110 },
+  {
+    title: '用户名',
+    key: 'username',
+    width: 150,
+    customRender: ({ record }: { record: AdminUserItem }) =>
+      h('div', { style: 'display:flex; align-items:center; gap:8px' }, [
+        h(
+          'span',
+          {
+            style: {
+              display: 'inline-flex',
+              width: '28px',
+              height: '28px',
+              flexShrink: 0,
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '50%',
+              background: avatarColor(record.id, record.username),
+              color: '#fff',
+              fontSize: '13px',
+              fontWeight: '600',
+            },
+          },
+          avatarChar(record.username),
+        ),
+        h('span', {}, record.username),
+      ]),
+  },
   { title: '邮箱', dataIndex: 'email', key: 'email', width: 180 },
   {
     title: 'TOTP',
