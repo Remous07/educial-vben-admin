@@ -542,10 +542,6 @@ function openEditModal(code: InviteCodeItem) {
     });
     return;
   }
-  if (code.expires_at && new Date(code.expires_at) < new Date()) {
-    message.warning('已过期的邀请码无法编辑');
-    return;
-  }
   editingCode.value = code;
   editDefaultRoleId.value = code.default_role_id ?? undefined;
   editMaxUses.value = code.max_uses;
