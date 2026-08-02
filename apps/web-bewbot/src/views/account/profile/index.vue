@@ -216,6 +216,12 @@ function copyBotUsername(username: string) {
   message.success('已复制');
 }
 
+function copySecret() {
+  if (!setupData.value) return;
+  navigator.clipboard.writeText(setupData.value.secret);
+  message.success('密钥已复制');
+}
+
 // Bot username edit
 const botUsernameEdit = ref(false);
 const botUsernameInput = ref('');
@@ -909,40 +915,67 @@ onMounted(async () => {
     </Modal>
 
     <!-- TOTP Setup Modal -->
-    <Modal
-      v-model:open="totpVisible"
-      title="设置两步验证"
-      :footer="null"
-      width="360"
-    >
-      <div
-        v-if="setupData"
-        style="max-width: 320px; margin: 0 auto; text-align: center"
-      >
-        <p style="margin-bottom: 12px; font-size: 13px">
-          请使用身份验证器扫描二维码
-        </p>
-        <div
-          style="display: flex; justify-content: center; margin-bottom: 12px"
-        >
-          <QRCode :value="setupData.uri" :size="180" />
+    <Modal v-model:open="totpVisible" :footer="null" :width="420">
+      <template #title>
+        <Space align="center" :size="8">
+          <IconifyIcon
+            icon="lucide:shield-check"
+            style="font-size: 18px; color: #52c41a"
+          />
+          <span style="font-size: 16px; font-weight: 600">设置两步验证</span>
+        </Space>
+      </template>
+
+      <div v-if="setupData">
+        <div style=" margin-bottom: 16px;text-align: center">
+          <p style="margin-bottom: 12px; font-size: 13px; color: #666">
+            使用身份验证器扫描二维码，或手动输入密钥
+          </p>
+          <QRCode :value="setupData.uri" :size="170" />
         </div>
-        <p
-          style="
-            margin-bottom: 12px;
-            font-size: 11px;
-            color: #888;
-            word-break: break-all;
-          "
-        >
-          密钥：<code>{{ setupData.secret }}</code>
-        </p>
-        <Input
-          v-model:value="totpCode"
-          placeholder="输入 6 位验证码"
-          :maxlength="6"
-          style="margin-bottom: 12px"
-        />
+
+        <!-- Secret with copy -->
+        <div style="margin-bottom: 16px">
+          <label style="font-size: 13px; color: #666">验证器密钥</label>
+          <div
+            style="
+              display: flex;
+              gap: 8px;
+              align-items: center;
+              margin-top: 6px;
+            "
+          >
+            <code
+              style="
+                flex: 1;
+                padding: 6px 10px;
+                font-size: 14px;
+                word-break: break-all;
+                background: #f5f5f5;
+                border-radius: 6px;
+              "
+            >
+              {{ setupData.secret }}
+            </code>
+            <Button size="small" @click="copySecret">
+              <IconifyIcon
+                icon="lucide:copy"
+                style="margin-right: 4px; vertical-align: -1px"
+              />
+              复制
+            </Button>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 16px">
+          <label style="font-size: 13px; color: #666">验证码</label>
+          <Input
+            v-model:value="totpCode"
+            placeholder="输入 6 位验证码"
+            :maxlength="6"
+            style="margin-top: 6px"
+          />
+        </div>
         <Button
           type="primary"
           block
