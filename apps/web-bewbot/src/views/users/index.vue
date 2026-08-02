@@ -285,6 +285,7 @@ onMounted(fetchUsers);
         total,
         showTotal: (t: number) => `共 ${t} 条`,
         showSizeChanger: true,
+        pageSizeOptions: ['10', '20', '50', '100'],
       }"
       row-key="id"
       @change="handleTableChange"

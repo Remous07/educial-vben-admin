@@ -247,7 +247,12 @@ onMounted(fetchConversations);
       :columns="columns"
       :data-source="filteredConversations"
       :loading="loading"
-      :pagination="{ pageSize: 20 }"
+      :pagination="{
+        defaultPageSize: 20,
+        showSizeChanger: true,
+        pageSizeOptions: ['10', '20', '50', '100'],
+        showTotal: (t: number) => `共 ${t} 条`,
+      }"
       row-key="telegram_id"
     >
       <template #bodyCell="{ column, record }">
