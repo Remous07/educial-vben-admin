@@ -6,6 +6,7 @@ import { useRouter } from 'vue-router';
 
 import { Page } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
+import { usePreferences } from '@vben/preferences';
 import { useUserStore } from '@vben/stores';
 
 import { Card, Col, Row } from 'ant-design-vue';
@@ -24,6 +25,7 @@ interface Stats {
 
 const router = useRouter();
 const userStore = useUserStore();
+const { isDark } = usePreferences();
 
 const username = computed(() => userStore.userInfo?.username || '管理员');
 
@@ -175,21 +177,38 @@ onMounted(() => {
   <Page>
     <!-- Welcome banner -->
     <div
+      :style="{
+        background: isDark
+          ? 'linear-gradient(120deg, #1e293b 0%, #312e81 100%)'
+          : 'linear-gradient(120deg, #e6f4ff 0%, #f9f0ff 100%)',
+        borderColor: isDark ? '#334155' : '#f0f0f0',
+      }"
       style="
         display: flex;
         align-items: center;
         justify-content: space-between;
         padding: 20px 24px;
-        background: linear-gradient(120deg, #e6f4ff 0%, #f9f0ff 100%);
-        border: 1px solid #f0f0f0;
+        border: 1px solid;
         border-radius: 12px;
       "
     >
       <div>
-        <div style="font-size: 20px; font-weight: 600; color: #1d1d1d">
+        <div
+          :style="{
+            fontSize: '20px',
+            fontWeight: 600,
+            color: isDark ? '#e5e7eb' : '#1d1d1d',
+          }"
+        >
           👋 你好，{{ username }}
         </div>
-        <div style="margin-top: 6px; font-size: 13px; color: #666">
+        <div
+          :style="{
+            marginTop: '6px',
+            fontSize: '13px',
+            color: isDark ? '#94a3b8' : '#666',
+          }"
+        >
           {{ today }} · 欢迎回来，以下是系统概览
         </div>
       </div>
@@ -211,14 +230,21 @@ onMounted(() => {
             "
           >
             <div>
-              <div style="font-size: 13px; color: #888">{{ card.title }}</div>
               <div
-                style="
-                  margin-top: 4px;
-                  font-size: 26px;
-                  font-weight: 700;
-                  color: #1d1d1d;
-                "
+                :style="{
+                  fontSize: '13px',
+                  color: isDark ? '#94a3b8' : '#888',
+                }"
+              >
+                {{ card.title }}
+              </div>
+              <div
+                :style="{
+                  marginTop: '4px',
+                  fontSize: '26px',
+                  fontWeight: 700,
+                  color: isDark ? '#e5e7eb' : '#1d1d1d',
+                }"
               >
                 {{ card.value }}
               </div>
@@ -261,7 +287,13 @@ onMounted(() => {
               </div>
               <div>
                 <div style="font-weight: 600">{{ link.title }}</div>
-                <div style="margin-top: 2px; font-size: 12px; color: #888">
+                <div
+                  :style="{
+                    marginTop: '2px',
+                    fontSize: '12px',
+                    color: isDark ? '#94a3b8' : '#888',
+                  }"
+                >
                   {{ link.desc }}
                 </div>
               </div>
