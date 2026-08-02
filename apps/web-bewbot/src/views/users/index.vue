@@ -1,21 +1,26 @@
 <script lang="ts" setup>
 import type { TableColumnsType } from 'ant-design-vue';
 
-import { h, onMounted, ref } from 'vue';
+import { computed, h, onMounted, ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
 import { useAccessStore } from '@vben/stores';
 
 import {
   Button,
+  Card,
+  Col,
   Descriptions,
   Input,
   message,
   Modal,
   Popconfirm,
+  Row,
   Space,
+  Statistic,
   Table,
   Tag,
+  Tooltip,
 } from 'ant-design-vue';
 
 import { getAdminUserApi } from '#/api/core';
@@ -44,6 +49,14 @@ const loading = ref(false);
 const searchText = ref('');
 const total = ref(0);
 const pagination = ref({ current: 1, pageSize: 20 });
+
+const boundCount = computed(() => users.value.filter((u) => u.is_bound).length);
+const bannedCount = computed(
+  () => users.value.filter((u) => u.is_banned).length,
+);
+const premiumCount = computed(
+  () => users.value.filter((u) => u.is_premium).length,
+);
 
 // Admin detail modal
 const adminModalVisible = ref(false);
@@ -84,7 +97,10 @@ const columns: TableColumnsType = [
     key: 'is_bound',
     width: 80,
     align: 'center',
-    customRender: ({ text }: { text: boolean }) => (text ? '是' : '否'),
+    customRender: ({ text }: { text: boolean }) =>
+      text
+        ? h(Tag, { color: 'green' }, () => '已绑定')
+        : h(Tag, () => '未绑定'),
   },
   {
     title: '系统用户',
@@ -112,7 +128,9 @@ const columns: TableColumnsType = [
     width: 80,
     align: 'center',
     customRender: ({ record }: { record: User }) =>
-      record.is_banned ? h(Tag, { color: 'red' }, () => '已拉黑') : '-',
+      record.is_banned
+        ? h(Tag, { color: 'red' }, () => '已拉黑')
+        : h(Tag, { color: 'green' }, () => '正常'),
   },
   {
     title: '注册时间',
@@ -206,10 +224,52 @@ onMounted(fetchUsers);
 
 <template>
   <Page>
+    <Row :gutter="[16, 16]" style="margin-bottom: 16px">
+      <Col :xs="12" :sm="6">
+        <Card>
+          <Statistic title="总用户" :value="total" />
+        </Card>
+      </Col>
+      <Col :xs="12" :sm="6">
+        <Tooltip title="基于当前页数据">
+          <Card>
+            <Statistic
+              title="已绑定"
+              :value="boundCount"
+              :value-style="{ color: '#1677ff' }"
+            />
+          </Card>
+        </Tooltip>
+      </Col>
+      <Col :xs="12" :sm="6">
+        <Tooltip title="基于当前页数据">
+          <Card>
+            <Statistic
+              title="已拉黑"
+              :value="bannedCount"
+              :value-style="{ color: '#ff4d4f' }"
+            />
+          </Card>
+        </Tooltip>
+      </Col>
+      <Col :xs="12" :sm="6">
+        <Tooltip title="基于当前页数据">
+          <Card>
+            <Statistic
+              title="Pre"
+              :value="premiumCount"
+              :value-style="{ color: '#faad14' }"
+            />
+          </Card>
+        </Tooltip>
+      </Col>
+    </Row>
+
     <Space style="margin-bottom: 16px">
       <Input.Search
         v-model:value="searchText"
         placeholder="搜索用户名、名称或 TG ID"
+        allow-clear
         style="width: 280px"
         @search="handleSearch"
       />
