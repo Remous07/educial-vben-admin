@@ -72,6 +72,19 @@ const CATEGORY_LABELS: Record<string, string> = {
   profile: '个人设置',
 };
 
+const CATEGORY_ICONS: Record<string, string> = {
+  dashboard: 'lucide:layout-dashboard',
+  users: 'lucide:users',
+  messages: 'lucide:message-square',
+  visitors: 'lucide:ban',
+  conversation: 'lucide:message-circle',
+  invite: 'lucide:gift',
+  registration: 'lucide:user-plus',
+  admin: 'lucide:shield',
+  bot: 'lucide:bot',
+  profile: 'lucide:settings',
+};
+
 const permissionGroups = computed(() => {
   const groups: Record<string, PermissionItem[]> = {};
   for (const perm of permissions.value) {
@@ -242,37 +255,56 @@ onMounted(fetchData);
 
     <Modal
       v-model:open="modalVisible"
-      :title="isEditing ? '编辑角色' : '创建角色'"
       @ok="handleSave"
       @cancel="activePermGroups = []"
       :confirm-loading="saving"
+      :width="560"
     >
-      <div style="margin-bottom: 12px">
-        <label>角色名称</label>
+      <template #title>
+        <Space align="center" :size="8">
+          <IconifyIcon
+            :icon="isEditing ? 'lucide:edit' : 'lucide:user-plus'"
+            style="font-size: 18px; color: #1677ff"
+          />
+          <span style="font-size: 16px; font-weight: 600">
+            {{ isEditing ? '编辑角色' : '创建角色' }}
+          </span>
+        </Space>
+      </template>
+
+      <div style="margin-bottom: 16px">
+        <label style="font-size: 13px; color: #666">角色名称</label>
         <Input
           v-model:value="formName"
           placeholder="如：编辑"
-          style="margin-top: 4px"
+          style="margin-top: 6px"
         />
       </div>
-      <div style="margin-bottom: 12px">
-        <label>备注</label>
-        <Input
+      <div style="margin-bottom: 16px">
+        <label style="font-size: 13px; color: #666">备注</label>
+        <Input.TextArea
           v-model:value="formRemark"
           placeholder="角色说明"
-          style="margin-top: 4px"
+          :rows="2"
+          style="margin-top: 6px"
         />
       </div>
       <div>
         <div
           style="
             display: flex;
-            gap: 8px;
             align-items: center;
-            margin-bottom: 4px;
+            justify-content: space-between;
+            margin-bottom: 8px;
           "
         >
-          <label>权限</label>
+          <label style="font-size: 13px; color: #666">
+            <IconifyIcon
+              icon="lucide:shield"
+              style="margin-right: 4px; vertical-align: -2px"
+            />
+            权限
+          </label>
           <Button size="small" @click="toggleAllGroups">
             {{ allGroupsExpanded ? '全部折叠' : '全部展开' }}
           </Button>
@@ -287,6 +319,10 @@ onMounted(fetchData);
           >
             <template #header>
               <span style="font-weight: 500">
+                <IconifyIcon
+                  :icon="CATEGORY_ICONS[prefix] || 'lucide:folder'"
+                  style="margin-right: 6px; vertical-align: -2px"
+                />
                 {{ CATEGORY_LABELS[prefix] || prefix }}
               </span>
               <Tag style="margin-left: 8px">
@@ -294,15 +330,10 @@ onMounted(fetchData);
               </Tag>
             </template>
             <div
-              v-for="(perm, idx) in perms"
+              v-for="perm in perms"
               :key="perm.id"
-              :style="{
-                display: 'flex',
-                alignItems: 'center',
-                padding: '6px 0',
-                borderBottom:
-                  idx < perms.length - 1 ? '1px solid #f0f0f0' : 'none',
-              }"
+              class="perm-item"
+              :class="{ 'is-selected': formPermissionIds.includes(perm.id) }"
             >
               <Checkbox
                 :checked="formPermissionIds.includes(perm.id)"
@@ -459,3 +490,27 @@ onMounted(fetchData);
     </Modal>
   </Page>
 </template>
+
+<style scoped>
+.perm-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 6px;
+  border-radius: 6px;
+  transition:
+    background-color 0.2s,
+    transform 0.1s;
+}
+
+.perm-item:hover {
+  background-color: #fafafa;
+}
+
+.perm-item.is-selected {
+  background-color: #f0f5ff;
+}
+
+.perm-item + .perm-item {
+  margin-top: 2px;
+}
+</style>
