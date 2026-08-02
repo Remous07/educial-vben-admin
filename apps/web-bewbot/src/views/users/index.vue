@@ -71,7 +71,37 @@ const columns: TableColumnsType = [
     key: 'telegram_id',
     width: 120,
   },
-  { title: '昵称', dataIndex: 'first_name', key: 'first_name', width: 100 },
+  {
+    title: '昵称',
+    key: 'first_name',
+    width: 120,
+    customRender: ({ record }: { record: User }) =>
+      h('div', { style: 'display:flex; align-items:center; gap:8px' }, [
+        h(
+          'span',
+          {
+            style: {
+              display: 'inline-flex',
+              width: '28px',
+              height: '28px',
+              flexShrink: 0,
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '50%',
+              background: avatarColor(
+                record.telegram_id,
+                record.first_name || '',
+              ),
+              color: '#fff',
+              fontSize: '13px',
+              fontWeight: '600',
+            },
+          },
+          avatarChar(record.first_name || record.username || ''),
+        ),
+        h('span', {}, record.first_name || '-'),
+      ]),
+  },
   {
     title: '用户名',
     dataIndex: 'username',
@@ -142,6 +172,20 @@ const columns: TableColumnsType = [
   },
   { title: '操作', key: 'action', width: 220 },
 ];
+
+function avatarChar(name: string): string {
+  const match = name.match(/\p{L}/u);
+  return match ? match[0].toUpperCase() : '?';
+}
+
+function avatarColor(tgUserId: number, name: string): string {
+  const base = Math.trunc((tgUserId * 2_654_435_761) % 4_294_967_296) % 360;
+  let offset = 0;
+  for (const ch of name)
+    offset = Math.trunc((offset << 5) - offset + (ch.codePointAt(0) ?? 0));
+  const hue = (base + (offset % 20) - 10 + 360) % 360;
+  return `hsl(${hue}, 50%, 40%)`;
+}
 
 async function openAdminModal(adminId: number) {
   adminModalVisible.value = true;
