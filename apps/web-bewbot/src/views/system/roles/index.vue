@@ -342,7 +342,7 @@ onMounted(fetchData);
       <template #title>
         <Space align="center" :size="8">
           <IconifyIcon
-            icon="ant-design:warning-filled"
+            icon="lucide:triangle-alert"
             style="font-size: 18px; color: #faad14"
           />
           <span style="font-size: 16px; font-weight: 600">删除角色</span>
@@ -361,7 +361,7 @@ onMounted(fetchData);
             border-radius: 8px;
           "
         >
-          <div style=" margin-bottom: 4px;font-size: 12px; color: #999">
+          <div style="margin-bottom: 4px; font-size: 12px; color: #999">
             角色名
           </div>
           <div
@@ -386,7 +386,7 @@ onMounted(fetchData);
             border-radius: 8px;
           "
         >
-          <div style=" margin-bottom: 4px;font-size: 12px; color: #999">
+          <div style="margin-bottom: 4px; font-size: 12px; color: #999">
             权限数
           </div>
           <div style="font-size: 20px; font-weight: 700; color: #1677ff">
@@ -403,7 +403,7 @@ onMounted(fetchData);
             border-radius: 8px;
           "
         >
-          <div style=" margin-bottom: 4px;font-size: 12px; color: #999">
+          <div style="margin-bottom: 4px; font-size: 12px; color: #999">
             用户数
           </div>
           <div style="font-size: 20px; font-weight: 700; color: #fa541c">
@@ -445,13 +445,13 @@ onMounted(fetchData);
           <template v-if="deleteConfirmName === deleteTarget?.name" #suffix>
             <IconifyIcon
               icon="ant-design:check-circle-filled"
-              style=" font-size: 16px;color: #52c41a"
+              style="font-size: 16px; color: #52c41a"
             />
           </template>
         </Input>
         <div
           v-if="deleteConfirmName && deleteConfirmName !== deleteTarget?.name"
-          style=" margin-top: 4px; font-size: 12px;color: #ff4d4f"
+          style="margin-top: 4px; font-size: 12px; color: #ff4d4f"
         >
           角色名不匹配，无法删除
         </div>
