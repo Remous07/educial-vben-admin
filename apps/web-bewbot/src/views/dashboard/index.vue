@@ -1,13 +1,16 @@
 <script lang="ts" setup>
+import type { RouteRecordStringComponent } from '@vben/types';
+
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
 import { Page } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
-import { useAccessStore, useUserStore } from '@vben/stores';
+import { useUserStore } from '@vben/stores';
 
 import { Card, Col, Row } from 'ant-design-vue';
 
+import { getAllMenusApi } from '#/api/core/menu';
 import { requestClient } from '#/api/request';
 
 defineOptions({ name: 'Dashboard' });
@@ -21,7 +24,6 @@ interface Stats {
 
 const router = useRouter();
 const userStore = useUserStore();
-const accessStore = useAccessStore();
 
 const username = computed(() => userStore.userInfo?.username || '管理员');
 
@@ -56,7 +58,6 @@ interface QuickLink {
   icon: string;
   title: string;
   desc: string;
-  perm: string;
   color: string;
 }
 
@@ -66,7 +67,6 @@ const QUICK_LINKS: QuickLink[] = [
     icon: 'lucide:message-square',
     title: '我的访客',
     desc: '查看与管理访客会话',
-    perm: 'messages:view',
     color: '#1677ff',
   },
   {
@@ -74,7 +74,6 @@ const QUICK_LINKS: QuickLink[] = [
     icon: 'lucide:users',
     title: 'TG 用户',
     desc: '浏览 Telegram 用户',
-    perm: 'users:view',
     color: '#52c41a',
   },
   {
@@ -82,7 +81,6 @@ const QUICK_LINKS: QuickLink[] = [
     icon: 'lucide:shield',
     title: '系统用户',
     desc: '管理后台账户与权限组',
-    perm: 'admin:view',
     color: '#722ed1',
   },
   {
@@ -90,7 +88,6 @@ const QUICK_LINKS: QuickLink[] = [
     icon: 'lucide:key-round',
     title: '对话识别码',
     desc: '管理主码与临时识别码',
-    perm: 'conversation:code',
     color: '#fa8c16',
   },
   {
@@ -98,7 +95,6 @@ const QUICK_LINKS: QuickLink[] = [
     icon: 'lucide:gift',
     title: '注册设置',
     desc: '邀请码与注册规则',
-    perm: 'invite:view',
     color: '#eb2f96',
   },
   {
@@ -106,15 +102,37 @@ const QUICK_LINKS: QuickLink[] = [
     icon: 'lucide:user-cog',
     title: '系统角色',
     desc: '配置角色与权限',
-    perm: 'admin:manage',
     color: '#13c2c2',
   },
 ];
 
-const accessCodes = computed(() => accessStore.accessCodes ?? []);
+// Visible paths come from the backend menu endpoint — the same source the
+// sidebar uses — so quick links always match what the user can actually reach.
+const visiblePaths = ref<Set<string>>(new Set());
 const visibleLinks = computed(() =>
-  QUICK_LINKS.filter((link) => accessCodes.value.includes(link.perm)),
+  QUICK_LINKS.filter((link) => visiblePaths.value.has(link.path)),
 );
+
+function collectPaths(
+  items: RouteRecordStringComponent[],
+  out: Set<string>,
+): void {
+  for (const item of items) {
+    if (item.path) out.add(item.path);
+    if (item.children?.length) collectPaths(item.children, out);
+  }
+}
+
+async function fetchVisiblePaths() {
+  try {
+    const menus = await getAllMenusApi();
+    const paths = new Set<string>();
+    collectPaths(menus ?? [], paths);
+    visiblePaths.value = paths;
+  } catch {
+    visiblePaths.value = new Set();
+  }
+}
 
 const statCards = computed(() => [
   {
@@ -147,7 +165,10 @@ const statCards = computed(() => [
   },
 ]);
 
-onMounted(fetchStats);
+onMounted(() => {
+  fetchStats();
+  fetchVisiblePaths();
+});
 </script>
 
 <template>
@@ -234,7 +255,7 @@ onMounted(fetchStats);
             <div style="display: flex; gap: 12px; align-items: center">
               <div
                 class="quick-icon"
-                :style="{ background: `${link.color }1a`, color: link.color }"
+                :style="{ background: `${link.color}1a`, color: link.color }"
               >
                 <IconifyIcon :icon="link.icon" style="font-size: 20px" />
               </div>
