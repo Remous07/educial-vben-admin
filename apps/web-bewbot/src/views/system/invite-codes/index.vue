@@ -3,13 +3,16 @@ import type { TableColumnsType } from 'ant-design-vue';
 
 import type { AvailableRoleItem, InviteCodeItem } from '#/api/core';
 
-import { h, onMounted, ref } from 'vue';
+import { computed, h, onMounted, ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
+import { IconifyIcon } from '@vben/icons';
 
 import {
   AutoComplete,
   Button,
+  Card,
+  Col,
   DatePicker,
   Drawer,
   Input,
@@ -18,8 +21,10 @@ import {
   message,
   Modal,
   Progress,
+  Row,
   Select,
   Space,
+  Statistic,
   Switch,
   Table,
   Tag,
@@ -46,11 +51,41 @@ defineOptions({ name: 'InviteCodes' });
 
 const codes = ref<InviteCodeItem[]>([]);
 const loading = ref(false);
+const searchText = ref('');
 const inviteRequired = ref(false);
 const openRegistration = ref(true);
 const emailDomainMode = ref<string>('off');
 const emailDomainWhitelist = ref('');
 const emailDomainBlacklist = ref('');
+
+const filteredCodes = computed(() => {
+  const q = searchText.value.trim().toLowerCase();
+  if (!q) return codes.value;
+  return codes.value.filter(
+    (c) =>
+      c.code.toLowerCase().includes(q) ||
+      (c.remark ?? '').toLowerCase().includes(q),
+  );
+});
+
+const activeCount = computed(
+  () =>
+    codes.value.filter((c) => {
+      if (!c.is_active) return false;
+      if (c.expires_at && new Date(c.expires_at) < new Date()) return false;
+      if (c.max_uses > 0 && c.used_count >= c.max_uses) return false;
+      return true;
+    }).length,
+);
+const revokedCount = computed(
+  () => codes.value.filter((c) => !c.is_active).length,
+);
+const usedUpCount = computed(
+  () =>
+    codes.value.filter(
+      (c) => c.is_active && c.max_uses > 0 && c.used_count >= c.max_uses,
+    ).length,
+);
 
 // ── email domain modal ──
 
@@ -635,24 +670,65 @@ onMounted(fetchData);
 
 <template>
   <Page>
-    <Space style="margin-bottom: 16px">
+    <Row :gutter="[16, 16]" style="margin-bottom: 16px">
+      <Col :xs="12" :sm="6">
+        <Card>
+          <Statistic title="总邀请码" :value="codes.length" />
+        </Card>
+      </Col>
+      <Col :xs="12" :sm="6">
+        <Card>
+          <Statistic
+            title="有效"
+            :value="activeCount"
+            :value-style="{ color: '#52c41a' }"
+          />
+        </Card>
+      </Col>
+      <Col :xs="12" :sm="6">
+        <Card>
+          <Statistic
+            title="已用完"
+            :value="usedUpCount"
+            :value-style="{ color: '#fa8c16' }"
+          />
+        </Card>
+      </Col>
+      <Col :xs="12" :sm="6">
+        <Card>
+          <Statistic
+            title="已撤销"
+            :value="revokedCount"
+            :value-style="{ color: '#ff4d4f' }"
+          />
+        </Card>
+      </Col>
+    </Row>
+
+    <Space style="margin-bottom: 16px" :wrap="true" size="middle">
       <Button type="primary" @click="modalVisible = true">生成邀请码</Button>
+      <Input.Search
+        v-model:value="searchText"
+        placeholder="搜索邀请码或备注"
+        allow-clear
+        style="width: 280px"
+      />
       <Space>
-        <span>开放注册</span>
+        <span style="font-size: 13px; color: #666">开放注册</span>
         <Switch
           :checked="openRegistration"
           @change="toggleOpenRegistration as any"
         />
       </Space>
       <Space>
-        <span>要求邀请码注册</span>
+        <span style="font-size: 13px; color: #666">要求邀请码注册</span>
         <Switch
           :checked="inviteRequired"
           @change="toggleInviteRequired as any"
         />
       </Space>
       <Space>
-        <span>降级注册角色</span>
+        <span style="font-size: 13px; color: #666">降级注册角色</span>
         <Select
           :value="fallbackRoleId"
           placeholder="选择角色"
@@ -661,26 +737,23 @@ onMounted(fetchData);
           @change="handleFallbackRoleChange"
         />
       </Space>
+      <Button @click="openEmailDomainModal">
+        邮箱过滤{{
+          emailDomainMode === 'whitelist'
+            ? '：白名单'
+            : emailDomainMode === 'blacklist'
+              ? '：黑名单'
+              : ''
+        }}
+      </Button>
+      <Button @click="openAuditModal">
+        用户名审核{{ auditSettings.enabled === 'true' ? '：已启用' : '' }}
+      </Button>
     </Space>
-    <Button
-      style="margin-top: 12px; margin-left: 8px"
-      @click="openEmailDomainModal"
-    >
-      邮箱过滤{{
-        emailDomainMode === 'whitelist'
-          ? '：白名单'
-          : emailDomainMode === 'blacklist'
-            ? '：黑名单'
-            : ''
-      }}
-    </Button>
-    <Button style="margin-top: 12px; margin-left: 8px" @click="openAuditModal">
-      用户名审核{{ auditSettings.enabled === 'true' ? '：已启用' : '' }}
-    </Button>
 
     <Table
       :columns="columns"
-      :data-source="codes"
+      :data-source="filteredCodes"
       :loading="loading"
       :pagination="false"
       row-key="id"
@@ -731,30 +804,42 @@ onMounted(fetchData);
 
     <Modal
       v-model:open="modalVisible"
-      title="生成邀请码"
       @ok="handleCreate"
       :confirm-loading="saving"
+      :width="480"
     >
-      <div style="margin-bottom: 12px">
-        <label>默认角色</label>
+      <template #title>
+        <Space align="center" :size="8">
+          <IconifyIcon
+            icon="lucide:gift"
+            style="font-size: 18px; color: #1677ff"
+          />
+          <span style="font-size: 16px; font-weight: 600">生成邀请码</span>
+        </Space>
+      </template>
+
+      <div style="margin-bottom: 16px">
+        <label style="font-size: 13px; color: #666">默认角色</label>
         <Select
           v-model:value="defaultRoleId"
           placeholder="请选择角色"
-          style="width: 100%; margin-top: 4px"
+          style="width: 100%; margin-top: 6px"
           :options="availableRoles.map((r) => ({ label: r.name, value: r.id }))"
         />
       </div>
-      <div style="margin-bottom: 12px">
-        <label>最大使用次数（0 = 不限）</label>
+      <div style="margin-bottom: 16px">
+        <label style="font-size: 13px; color: #666">
+          最大使用次数（0 = 不限）
+        </label>
         <InputNumber
           v-model:value="maxUses"
           :min="0"
-          style="width: 100%; margin-top: 4px"
+          style="width: 100%; margin-top: 6px"
         />
       </div>
       <div>
-        <label>过期时间</label>
-        <div style="display: flex; gap: 8px; margin-top: 4px">
+        <label style="font-size: 13px; color: #666">过期时间</label>
+        <div style="display: flex; gap: 8px; margin-top: 6px">
           <DatePicker
             v-model:value="expiresAt"
             :disabled-date="(d: any) => d.isBefore(dayjs().startOf('day'))"
@@ -775,33 +860,43 @@ onMounted(fetchData);
           />
         </div>
       </div>
-      <div style="margin-top: 12px">
-        <label>备注</label>
+      <div style="margin-top: 16px">
+        <label style="font-size: 13px; color: #666">备注</label>
         <Input
           v-model:value="remark"
           placeholder="可选"
-          style="margin-top: 4px"
+          style="margin-top: 6px"
         />
       </div>
     </Modal>
 
     <Modal
       v-model:open="editModalVisible"
-      title="编辑邀请码"
       @ok="handleEditSave"
       :confirm-loading="saving"
+      :width="480"
     >
-      <div style="margin-bottom: 12px">
-        <label>邀请码</label>
-        <Input :value="editingCode?.code" disabled style="margin-top: 4px" />
+      <template #title>
+        <Space align="center" :size="8">
+          <IconifyIcon
+            icon="lucide:edit"
+            style="font-size: 18px; color: #1677ff"
+          />
+          <span style="font-size: 16px; font-weight: 600">编辑邀请码</span>
+        </Space>
+      </template>
+
+      <div style="margin-bottom: 16px">
+        <label style="font-size: 13px; color: #666">邀请码</label>
+        <Input :value="editingCode?.code" disabled style="margin-top: 6px" />
       </div>
-      <div style="margin-bottom: 12px">
-        <label>默认角色</label>
+      <div style="margin-bottom: 16px">
+        <label style="font-size: 13px; color: #666">默认角色</label>
         <Select
           v-model:value="editDefaultRoleId"
           placeholder="请选择角色"
           :disabled="(editingCode?.used_count ?? 0) > 0"
-          style="width: 100%; margin-top: 4px"
+          style="width: 100%; margin-top: 6px"
           :options="availableRoles.map((r) => ({ label: r.name, value: r.id }))"
         />
         <span
@@ -811,17 +906,19 @@ onMounted(fetchData);
           已有用户使用，不可修改默认角色
         </span>
       </div>
-      <div style="margin-bottom: 12px">
-        <label>最大使用次数（0 = 不限）</label>
+      <div style="margin-bottom: 16px">
+        <label style="font-size: 13px; color: #666">
+          最大使用次数（0 = 不限）
+        </label>
         <InputNumber
           v-model:value="editMaxUses"
           :min="0"
-          style="width: 100%; margin-top: 4px"
+          style="width: 100%; margin-top: 6px"
         />
       </div>
-      <div style="margin-bottom: 12px">
-        <label>过期时间</label>
-        <div style="display: flex; gap: 8px; margin-top: 4px">
+      <div>
+        <label style="font-size: 13px; color: #666">过期时间</label>
+        <div style="display: flex; gap: 8px; margin-top: 6px">
           <DatePicker
             v-model:value="editExpiresAt"
             show-time
@@ -840,14 +937,14 @@ onMounted(fetchData);
             @change="onEditExpiresDaysChange"
           />
         </div>
-        <div>
-          <label>备注</label>
-          <Input
-            v-model:value="editRemark"
-            placeholder="可选"
-            style="margin-top: 4px"
-          />
-        </div>
+      </div>
+      <div style="margin-top: 16px">
+        <label style="font-size: 13px; color: #666">备注</label>
+        <Input
+          v-model:value="editRemark"
+          placeholder="可选"
+          style="margin-top: 6px"
+        />
       </div>
     </Modal>
 
@@ -884,14 +981,24 @@ onMounted(fetchData);
     <!-- Email domain filter modal -->
     <Modal
       v-model:open="emailDomainModalVisible"
-      title="邮箱域名过滤"
       @ok="saveEmailDomainSettings"
+      :width="480"
     >
-      <div style="margin-bottom: 12px">
-        <label>过滤模式</label>
+      <template #title>
+        <Space align="center" :size="8">
+          <IconifyIcon
+            icon="lucide:mail-check"
+            style="font-size: 18px; color: #1677ff"
+          />
+          <span style="font-size: 16px; font-weight: 600">邮箱域名过滤</span>
+        </Space>
+      </template>
+
+      <div style="margin-bottom: 16px">
+        <label style="font-size: 13px; color: #666">过滤模式</label>
         <Select
           v-model:value="emailDomainModalMode"
-          style="width: 100%; margin-top: 4px"
+          style="width: 100%; margin-top: 6px"
           :options="[
             { label: '不开启', value: 'off' },
             { label: '白名单', value: 'whitelist' },
@@ -901,12 +1008,12 @@ onMounted(fetchData);
         />
       </div>
       <div v-if="emailDomainModalMode !== 'off'">
-        <label>域名列表</label>
+        <label style="font-size: 13px; color: #666">域名列表</label>
         <Input.TextArea
           v-model:value="emailDomainModalList"
           :rows="6"
           placeholder="gmail.com&#10;outlook.com"
-          style="margin-top: 4px"
+          style="margin-top: 6px"
         />
         <span style="font-size: 12px; color: #999">每行一个域名，如 gmail.com</span>
       </div>
@@ -915,11 +1022,21 @@ onMounted(fetchData);
     <!-- Username audit modal -->
     <Modal
       v-model:open="auditModalVisible"
-      title="用户名 AI 审核"
       @ok="saveAuditSettings"
+      :width="520"
     >
-      <div style="margin-bottom: 12px">
-        <label>启用审核</label>
+      <template #title>
+        <Space align="center" :size="8">
+          <IconifyIcon
+            icon="lucide:sparkles"
+            style="font-size: 18px; color: #1677ff"
+          />
+          <span style="font-size: 16px; font-weight: 600">用户名 AI 审核</span>
+        </Space>
+      </template>
+
+      <div style="margin-bottom: 16px">
+        <label style="font-size: 13px; color: #666">启用审核</label>
         <Switch
           :checked="auditEnabled"
           @change="auditEnabled = $event as boolean"
