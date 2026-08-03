@@ -715,7 +715,63 @@ onMounted(fetchData);
       </Col>
     </Row>
 
-    <Space style="margin-bottom: 16px" :wrap="true" size="middle">
+    <!-- Registration settings card -->
+    <Card style="margin-bottom: 16px">
+      <div style="margin-bottom: 12px; font-size: 14px; font-weight: 600">
+        <IconifyIcon
+          icon="lucide:settings-2"
+          style="margin-right: 6px; vertical-align: -2px; color: #1677ff"
+        />
+        注册设置
+      </div>
+      <div
+        style="display: flex; flex-wrap: wrap; gap: 24px; align-items: center"
+      >
+        <Space>
+          <span style="font-size: 13px; color: #666">开放注册</span>
+          <Switch
+            :checked="openRegistration"
+            @change="toggleOpenRegistration as any"
+          />
+        </Space>
+        <Space>
+          <span style="font-size: 13px; color: #666">要求邀请码注册</span>
+          <Switch
+            :checked="inviteRequired"
+            @change="toggleInviteRequired as any"
+          />
+        </Space>
+        <Space>
+          <span style="font-size: 13px; color: #666">降级注册角色</span>
+          <Select
+            :value="fallbackRoleId"
+            placeholder="选择角色"
+            style="width: 140px"
+            :options="
+              availableRoles.map((r) => ({ label: r.name, value: r.id }))
+            "
+            @change="handleFallbackRoleChange"
+          />
+        </Space>
+        <div style="display: flex; gap: 8px; margin-left: auto">
+          <Button @click="openEmailDomainModal">
+            邮箱过滤{{
+              emailDomainMode === 'whitelist'
+                ? '：白名单'
+                : emailDomainMode === 'blacklist'
+                  ? '：黑名单'
+                  : ''
+            }}
+          </Button>
+          <Button @click="openAuditModal">
+            用户名审核{{ auditSettings.enabled === 'true' ? '：已启用' : '' }}
+          </Button>
+        </div>
+      </div>
+    </Card>
+
+    <!-- Invite actions -->
+    <Space style="margin-bottom: 16px">
       <Button type="primary" @click="modalVisible = true">生成邀请码</Button>
       <Input.Search
         v-model:value="searchText"
@@ -723,42 +779,6 @@ onMounted(fetchData);
         allow-clear
         style="width: 280px"
       />
-      <Space>
-        <span style="font-size: 13px; color: #666">开放注册</span>
-        <Switch
-          :checked="openRegistration"
-          @change="toggleOpenRegistration as any"
-        />
-      </Space>
-      <Space>
-        <span style="font-size: 13px; color: #666">要求邀请码注册</span>
-        <Switch
-          :checked="inviteRequired"
-          @change="toggleInviteRequired as any"
-        />
-      </Space>
-      <Space>
-        <span style="font-size: 13px; color: #666">降级注册角色</span>
-        <Select
-          :value="fallbackRoleId"
-          placeholder="选择角色"
-          style="width: 140px"
-          :options="availableRoles.map((r) => ({ label: r.name, value: r.id }))"
-          @change="handleFallbackRoleChange"
-        />
-      </Space>
-      <Button @click="openEmailDomainModal">
-        邮箱过滤{{
-          emailDomainMode === 'whitelist'
-            ? '：白名单'
-            : emailDomainMode === 'blacklist'
-              ? '：黑名单'
-              : ''
-        }}
-      </Button>
-      <Button @click="openAuditModal">
-        用户名审核{{ auditSettings.enabled === 'true' ? '：已启用' : '' }}
-      </Button>
     </Space>
 
     <Table
@@ -1014,7 +1034,7 @@ onMounted(fetchData);
               >
                 {{ avatarChar(r.username || '') }}
               </div>
-              <div style=" flex: 1;min-width: 0">
+              <div style="flex: 1; min-width: 0">
                 <div style="font-weight: 500">{{ r.username }}</div>
                 <div
                   style="
