@@ -724,50 +724,56 @@ onMounted(fetchData);
         />
         注册设置
       </div>
-      <div
-        style="display: flex; flex-wrap: wrap; gap: 24px; align-items: center"
-      >
-        <Space>
-          <span style="font-size: 13px; color: #666">开放注册</span>
-          <Switch
-            :checked="openRegistration"
-            @change="toggleOpenRegistration as any"
-          />
-        </Space>
-        <Space>
-          <span style="font-size: 13px; color: #666">要求邀请码注册</span>
-          <Switch
-            :checked="inviteRequired"
-            @change="toggleInviteRequired as any"
-          />
-        </Space>
-        <Space>
-          <span style="font-size: 13px; color: #666">降级注册角色</span>
-          <Select
-            :value="fallbackRoleId"
-            placeholder="选择角色"
-            style="width: 140px"
-            :options="
-              availableRoles.map((r) => ({ label: r.name, value: r.id }))
-            "
-            @change="handleFallbackRoleChange"
-          />
-        </Space>
-        <div style="display: flex; gap: 8px; margin-left: auto">
-          <Button @click="openEmailDomainModal">
-            邮箱过滤{{
-              emailDomainMode === 'whitelist'
-                ? '：白名单'
-                : emailDomainMode === 'blacklist'
-                  ? '：黑名单'
-                  : ''
-            }}
-          </Button>
-          <Button @click="openAuditModal">
-            用户名审核{{ auditSettings.enabled === 'true' ? '：已启用' : '' }}
-          </Button>
-        </div>
-      </div>
+      <Row :gutter="[16, 16]">
+        <Col :xs="24" :md="12" :lg="6">
+          <Space>
+            <span style="font-size: 13px; color: #666">开放注册</span>
+            <Switch
+              :checked="openRegistration"
+              @change="toggleOpenRegistration as any"
+            />
+          </Space>
+        </Col>
+        <Col :xs="24" :md="12" :lg="6">
+          <Space>
+            <span style="font-size: 13px; color: #666">要求邀请码注册</span>
+            <Switch
+              :checked="inviteRequired"
+              @change="toggleInviteRequired as any"
+            />
+          </Space>
+        </Col>
+        <Col :xs="24" :md="12" :lg="6">
+          <Space>
+            <span style="font-size: 13px; color: #666">降级注册角色</span>
+            <Select
+              :value="fallbackRoleId"
+              placeholder="选择角色"
+              style="width: 150px"
+              :options="
+                availableRoles.map((r) => ({ label: r.name, value: r.id }))
+              "
+              @change="handleFallbackRoleChange"
+            />
+          </Space>
+        </Col>
+        <Col :xs="24" :md="12" :lg="6">
+          <div style="display: flex; gap: 8px; justify-content: flex-end">
+            <Button @click="openEmailDomainModal">
+              邮箱过滤{{
+                emailDomainMode === 'whitelist'
+                  ? '：白名单'
+                  : emailDomainMode === 'blacklist'
+                    ? '：黑名单'
+                    : ''
+              }}
+            </Button>
+            <Button @click="openAuditModal">
+              用户名审核{{ auditSettings.enabled === 'true' ? '：已启用' : '' }}
+            </Button>
+          </div>
+        </Col>
+      </Row>
     </Card>
 
     <!-- Invite actions -->
