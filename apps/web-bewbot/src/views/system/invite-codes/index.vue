@@ -1039,7 +1039,7 @@ onMounted(fetchData);
     </Drawer>
 
     <!-- Registration settings modal -->
-    <Modal v-model:open="settingsModalVisible" :width="480" :footer="null">
+    <Modal v-model:open="settingsModalVisible" :width="480">
       <template #title>
         <Space align="center" :size="8">
           <IconifyIcon
