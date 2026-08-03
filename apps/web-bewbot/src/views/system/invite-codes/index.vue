@@ -7,6 +7,7 @@ import { computed, h, onMounted, ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
+import { usePreferences } from '@vben/preferences';
 
 import {
   AutoComplete,
@@ -14,6 +15,7 @@ import {
   Card,
   Col,
   DatePicker,
+  Divider,
   Drawer,
   Input,
   InputNumber,
@@ -48,6 +50,8 @@ import {
 } from '#/api/core';
 
 defineOptions({ name: 'InviteCodes' });
+
+const { isDark } = usePreferences();
 
 const codes = ref<InviteCodeItem[]>([]);
 const loading = ref(false);
@@ -716,7 +720,7 @@ onMounted(fetchData);
     </Row>
 
     <!-- Registration settings card -->
-    <Card style="margin-bottom: 16px">
+    <Card style="width: fit-content; margin-bottom: 16px">
       <div style="margin-bottom: 12px; font-size: 14px; font-weight: 600">
         <IconifyIcon
           icon="lucide:settings-2"
@@ -724,56 +728,76 @@ onMounted(fetchData);
         />
         注册设置
       </div>
-      <Row :gutter="[16, 16]">
-        <Col :xs="24" :md="12" :lg="6">
-          <Space>
-            <span style="font-size: 13px; color: #666">开放注册</span>
-            <Switch
-              :checked="openRegistration"
-              @change="toggleOpenRegistration as any"
-            />
-          </Space>
-        </Col>
-        <Col :xs="24" :md="12" :lg="6">
-          <Space>
-            <span style="font-size: 13px; color: #666">要求邀请码注册</span>
-            <Switch
-              :checked="inviteRequired"
-              @change="toggleInviteRequired as any"
-            />
-          </Space>
-        </Col>
-        <Col :xs="24" :md="12" :lg="6">
-          <Space>
-            <span style="font-size: 13px; color: #666">降级注册角色</span>
-            <Select
-              :value="fallbackRoleId"
-              placeholder="选择角色"
-              style="width: 150px"
-              :options="
-                availableRoles.map((r) => ({ label: r.name, value: r.id }))
-              "
-              @change="handleFallbackRoleChange"
-            />
-          </Space>
-        </Col>
-        <Col :xs="24" :md="12" :lg="6">
-          <div style="display: flex; gap: 8px; justify-content: flex-end">
-            <Button @click="openEmailDomainModal">
-              邮箱过滤{{
-                emailDomainMode === 'whitelist'
-                  ? '：白名单'
-                  : emailDomainMode === 'blacklist'
-                    ? '：黑名单'
-                    : ''
-              }}
-            </Button>
-            <Button @click="openAuditModal">
-              用户名审核{{ auditSettings.enabled === 'true' ? '：已启用' : '' }}
-            </Button>
-          </div>
-        </Col>
-      </Row>
+      <div
+        style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center"
+      >
+        <div style="display: flex; gap: 8px; align-items: center">
+          <span
+            :style="{
+              fontSize: '13px',
+              color: isDark ? '#94a3b8' : '#666',
+            }"
+          >
+            开放注册
+          </span>
+          <Switch
+            :checked="openRegistration"
+            @change="toggleOpenRegistration as any"
+          />
+        </div>
+
+        <div style="display: flex; gap: 8px; align-items: center">
+          <span
+            :style="{
+              fontSize: '13px',
+              color: isDark ? '#94a3b8' : '#666',
+            }"
+          >
+            要求邀请码注册
+          </span>
+          <Switch
+            :checked="inviteRequired"
+            @change="toggleInviteRequired as any"
+          />
+        </div>
+
+        <div style="display: flex; gap: 8px; align-items: center">
+          <span
+            :style="{
+              fontSize: '13px',
+              color: isDark ? '#94a3b8' : '#666',
+            }"
+          >
+            降级注册角色
+          </span>
+          <Select
+            :value="fallbackRoleId"
+            placeholder="选择角色"
+            style="width: 150px"
+            :options="
+              availableRoles.map((r) => ({ label: r.name, value: r.id }))
+            "
+            @change="handleFallbackRoleChange"
+          />
+        </div>
+
+        <Divider type="vertical" style="height: 24px" />
+
+        <div style="display: flex; gap: 8px">
+          <Button @click="openEmailDomainModal">
+            邮箱过滤{{
+              emailDomainMode === 'whitelist'
+                ? '：白名单'
+                : emailDomainMode === 'blacklist'
+                  ? '：黑名单'
+                  : ''
+            }}
+          </Button>
+          <Button @click="openAuditModal">
+            用户名审核{{ auditSettings.enabled === 'true' ? '：已启用' : '' }}
+          </Button>
+        </div>
+      </div>
     </Card>
 
     <!-- Invite actions -->
