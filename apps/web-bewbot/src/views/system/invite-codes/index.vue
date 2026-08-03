@@ -180,40 +180,58 @@ async function showCodeUsers(code: InviteCodeItem) {
   }
 }
 
-async function toggleInviteRequired(val: boolean) {
-  try {
-    await setSystemSettingApi('require_invite_code', String(val));
-    inviteRequired.value = val;
-    message.success(val ? '已开启邀请码验证' : '已关闭邀请码验证');
-  } catch {
-    inviteRequired.value = !val;
-  }
-}
-
-async function toggleOpenRegistration(val: boolean) {
-  try {
-    await setSystemSettingApi('open_registration', String(val));
-    openRegistration.value = val;
-    message.success(val ? '已开放注册' : '已关闭注册');
-  } catch {
-    openRegistration.value = !val;
-  }
-}
-
 // ── roles ──
 
 const availableRoles = ref<AvailableRoleItem[]>([]);
 const fallbackRoleId = ref<number | undefined>(undefined);
 
-async function handleFallbackRoleChange(val: any) {
-  if (val === undefined || val === null) return;
+// ── registration settings modal ──
+
+const settingsModalVisible = ref(false);
+const savingSettings = ref(false);
+const draftOpenRegistration = ref(true);
+const draftInviteRequired = ref(false);
+const draftFallbackRoleId = ref<number | undefined>(undefined);
+
+function openSettingsModal() {
+  draftOpenRegistration.value = openRegistration.value;
+  draftInviteRequired.value = inviteRequired.value;
+  draftFallbackRoleId.value = fallbackRoleId.value;
+  settingsModalVisible.value = true;
+}
+
+async function saveSettings() {
+  savingSettings.value = true;
   try {
-    await setSystemSettingApi('default_registration_role', String(val));
-    fallbackRoleId.value = val;
-    message.success('已更新降级注册角色');
+    await Promise.all([
+      setSystemSettingApi(
+        'open_registration',
+        String(draftOpenRegistration.value),
+      ),
+      setSystemSettingApi(
+        'require_invite_code',
+        String(draftInviteRequired.value),
+      ),
+      ...(draftFallbackRoleId.value === undefined
+        ? []
+        : [
+            setSystemSettingApi(
+              'default_registration_role',
+              String(draftFallbackRoleId.value),
+            ),
+          ]),
+    ]);
+    openRegistration.value = draftOpenRegistration.value;
+    inviteRequired.value = draftInviteRequired.value;
+    if (draftFallbackRoleId.value !== undefined) {
+      fallbackRoleId.value = draftFallbackRoleId.value;
+    }
+    message.success('注册设置已保存');
+    settingsModalVisible.value = false;
   } catch {
-    // revert on failure
-    fallbackRoleId.value = undefined;
+    // error handled by interceptor
+  } finally {
+    savingSettings.value = false;
   }
 }
 
@@ -719,90 +737,22 @@ onMounted(fetchData);
       </Col>
     </Row>
 
-    <!-- Registration settings card -->
-    <Card style="width: fit-content; margin-bottom: 16px">
-      <div style="margin-bottom: 12px; font-size: 14px; font-weight: 600">
-        <IconifyIcon
-          icon="lucide:settings-2"
-          style="margin-right: 6px; vertical-align: -2px; color: #1677ff"
-        />
-        注册设置
-      </div>
-      <div
-        style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center"
-      >
-        <div style="display: flex; gap: 8px; align-items: center">
-          <span
-            :style="{
-              fontSize: '13px',
-              color: isDark ? '#94a3b8' : '#666',
-            }"
-          >
-            开放注册
-          </span>
-          <Switch
-            :checked="openRegistration"
-            @change="toggleOpenRegistration as any"
-          />
-        </div>
-
-        <div style="display: flex; gap: 8px; align-items: center">
-          <span
-            :style="{
-              fontSize: '13px',
-              color: isDark ? '#94a3b8' : '#666',
-            }"
-          >
-            要求邀请码注册
-          </span>
-          <Switch
-            :checked="inviteRequired"
-            @change="toggleInviteRequired as any"
-          />
-        </div>
-
-        <div style="display: flex; gap: 8px; align-items: center">
-          <span
-            :style="{
-              fontSize: '13px',
-              color: isDark ? '#94a3b8' : '#666',
-            }"
-          >
-            降级注册角色
-          </span>
-          <Select
-            :value="fallbackRoleId"
-            placeholder="选择角色"
-            style="width: 150px"
-            :options="
-              availableRoles.map((r) => ({ label: r.name, value: r.id }))
-            "
-            @change="handleFallbackRoleChange"
-          />
-        </div>
-
-        <Divider type="vertical" style="height: 24px" />
-
-        <div style="display: flex; gap: 8px">
-          <Button @click="openEmailDomainModal">
-            邮箱过滤{{
-              emailDomainMode === 'whitelist'
-                ? '：白名单'
-                : emailDomainMode === 'blacklist'
-                  ? '：黑名单'
-                  : ''
-            }}
-          </Button>
-          <Button @click="openAuditModal">
-            用户名审核{{ auditSettings.enabled === 'true' ? '：已启用' : '' }}
-          </Button>
-        </div>
-      </div>
-    </Card>
-
     <!-- Invite actions -->
     <Space style="margin-bottom: 16px">
       <Button type="primary" @click="modalVisible = true">生成邀请码</Button>
+      <Button @click="openSettingsModal">
+        <span
+          :style="{
+            display: 'inline-block',
+            width: '8px',
+            height: '8px',
+            marginRight: '6px',
+            borderRadius: '50%',
+            background: openRegistration ? '#52c41a' : '#d9d9d9',
+          }"
+        ></span>
+        注册设置
+      </Button>
       <Input.Search
         v-model:value="searchText"
         placeholder="搜索邀请码或备注"
@@ -1087,6 +1037,136 @@ onMounted(fetchData);
         </template>
       </List>
     </Drawer>
+
+    <!-- Registration settings modal -->
+    <Modal v-model:open="settingsModalVisible" :width="480" :footer="null">
+      <template #title>
+        <Space align="center" :size="8">
+          <IconifyIcon
+            icon="lucide:settings-2"
+            style="font-size: 18px; color: #1677ff"
+          />
+          <span style="font-size: 16px; font-weight: 600">注册设置</span>
+        </Space>
+      </template>
+
+      <div style="display: flex; flex-direction: column; gap: 16px">
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+          "
+        >
+          <span
+            :style="{
+              fontSize: '13px',
+              color: isDark ? '#94a3b8' : '#666',
+            }"
+          >
+            开放注册
+          </span>
+          <Switch v-model:checked="draftOpenRegistration" />
+        </div>
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+          "
+        >
+          <span
+            :style="{
+              fontSize: '13px',
+              color: isDark ? '#94a3b8' : '#666',
+            }"
+          >
+            要求邀请码注册
+          </span>
+          <Switch v-model:checked="draftInviteRequired" />
+        </div>
+      </div>
+
+      <Divider style="margin: 16px 0" />
+
+      <div style="display: flex; flex-direction: column; gap: 16px">
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+          "
+        >
+          <span
+            :style="{
+              fontSize: '13px',
+              color: isDark ? '#94a3b8' : '#666',
+            }"
+          >
+            降级注册角色
+          </span>
+          <Select
+            v-model:value="draftFallbackRoleId"
+            placeholder="选择角色"
+            style="width: 200px"
+            :options="
+              availableRoles.map((r) => ({ label: r.name, value: r.id }))
+            "
+          />
+        </div>
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+          "
+        >
+          <span
+            :style="{
+              fontSize: '13px',
+              color: isDark ? '#94a3b8' : '#666',
+            }"
+          >
+            邮箱过滤
+          </span>
+          <Button size="small" @click="openEmailDomainModal">
+            {{
+              emailDomainMode === 'whitelist'
+                ? '白名单'
+                : emailDomainMode === 'blacklist'
+                  ? '黑名单'
+                  : '未开启'
+            }}
+          </Button>
+        </div>
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+          "
+        >
+          <span
+            :style="{
+              fontSize: '13px',
+              color: isDark ? '#94a3b8' : '#666',
+            }"
+          >
+            用户名审核
+          </span>
+          <Button size="small" @click="openAuditModal">
+            {{ auditSettings.enabled === 'true' ? '已启用' : '未开启' }}
+          </Button>
+        </div>
+      </div>
+
+      <template #footer>
+        <Button @click="settingsModalVisible = false">关闭</Button>
+        <Button type="primary" :loading="savingSettings" @click="saveSettings">
+          保存
+        </Button>
+      </template>
+    </Modal>
 
     <!-- Email domain filter modal -->
     <Modal
