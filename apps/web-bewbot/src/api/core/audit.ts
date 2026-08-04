@@ -29,6 +29,18 @@ export interface RetentionConfig {
   log_days: number;
 }
 
+export interface AuditStats {
+  operation_total: number;
+  operation_today: number;
+  log_total: number;
+  log_error: number;
+}
+
+/** 日志审计统计（顶部卡片） */
+export function getAuditStatsApi() {
+  return requestClient.get<AuditStats>('/audit/stats');
+}
+
 /** 操作记录列表 */
 export function getAuditOperationsApi(params: {
   action?: string;

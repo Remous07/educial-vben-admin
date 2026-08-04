@@ -1,20 +1,29 @@
 <script lang="ts" setup>
-import type { AuditOperationItem, RuntimeLogItem } from '#/api/core';
+import type {
+  AuditOperationItem,
+  AuditStats,
+  RuntimeLogItem,
+} from '#/api/core';
 
-import { h, onMounted, ref } from 'vue';
+import { computed, h, onMounted, ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
+import { IconifyIcon } from '@vben/icons';
+import { usePreferences } from '@vben/preferences';
 
 import {
   Button,
   Card,
+  Col,
   DatePicker,
   Input,
   InputNumber,
   message,
   Popconfirm,
+  Row,
   Select,
   Space,
+  Statistic,
   Table,
   Tabs,
   Tag,
@@ -26,11 +35,14 @@ import {
   clearRuntimeLogsApi,
   getAuditOperationsApi,
   getAuditRetentionApi,
+  getAuditStatsApi,
   getRuntimeLogsApi,
   setAuditRetentionApi,
 } from '#/api/core';
 
 defineOptions({ name: 'AuditLogs' });
+
+const { isDark } = usePreferences();
 
 const ACTION_OPTIONS = [
   { label: '登录', value: 'auth.login' },
@@ -70,6 +82,22 @@ function levelColor(level: string): string {
   return map[level] || 'default';
 }
 
+function actionColor(action: string): string {
+  if (action.includes('delete') || action.includes('ban')) return 'red';
+  if (action.includes('login') || action.includes('logout')) return 'green';
+  if (action.includes('role')) return 'purple';
+  if (action.includes('invite') || action.includes('code')) return 'geekblue';
+  if (action.includes('settings') || action.includes('rotate')) return 'orange';
+  if (
+    action.includes('profile') ||
+    action.includes('account') ||
+    action.includes('register')
+  ) {
+    return 'cyan';
+  }
+  return 'default';
+}
+
 function toLocalIso(d?: dayjs.Dayjs): string | undefined {
   return d ? d.format('YYYY-MM-DDTHH:mm:ss') : undefined;
 }
@@ -82,6 +110,54 @@ function flagEmoji(code: null | string): string {
   return String.fromCodePoint(
     ...[...code].map((c) => 127_397 + (c.codePointAt(0) ?? 0)),
   );
+}
+
+// ── stats ──────────────────────────────────────────────
+
+const stats = ref<AuditStats>({
+  log_error: 0,
+  log_total: 0,
+  operation_today: 0,
+  operation_total: 0,
+});
+
+const statCards = computed(() => [
+  {
+    title: '操作记录',
+    value: stats.value.operation_total,
+    icon: 'lucide:history',
+    color: '#1677ff',
+    bg: isDark.value ? '#1e3a5f' : '#e6f4ff',
+  },
+  {
+    title: '今日操作',
+    value: stats.value.operation_today,
+    icon: 'lucide:activity',
+    color: '#52c41a',
+    bg: isDark.value ? '#1f3d2a' : '#f6ffed',
+  },
+  {
+    title: '运行日志',
+    value: stats.value.log_total,
+    icon: 'lucide:file-text',
+    color: '#fa8c16',
+    bg: isDark.value ? '#3d2f1a' : '#fff7e6',
+  },
+  {
+    title: '错误/严重日志',
+    value: stats.value.log_error,
+    icon: 'lucide:triangle-alert',
+    color: '#ff4d4f',
+    bg: isDark.value ? '#3d1f1f' : '#fff1f0',
+  },
+]);
+
+async function fetchStats() {
+  try {
+    stats.value = await getAuditStatsApi();
+  } catch {
+    // error handled by interceptor
+  }
 }
 
 // ── retention config ───────────────────────────────────
@@ -135,8 +211,8 @@ const opColumns = [
     dataIndex: 'action_label',
     key: 'action',
     width: 150,
-    customRender: ({ text }: { text: string }) =>
-      h(Tag, { color: 'blue' }, () => text),
+    customRender: ({ record }: { record: AuditOperationItem }) =>
+      h(Tag, { color: actionColor(record.action) }, () => record.action_label),
   },
   { title: '详情', dataIndex: 'detail', key: 'detail', ellipsis: true },
   { title: 'IP', dataIndex: 'ip', key: 'ip', width: 140 },
@@ -255,6 +331,7 @@ function formatTime(v: null | string): string {
 }
 
 onMounted(() => {
+  fetchStats();
   fetchRetention();
   fetchOperations();
   fetchLogs();
@@ -263,20 +340,82 @@ onMounted(() => {
 
 <template>
   <Page>
+    <!-- Stat cards -->
+    <Row :gutter="[16, 16]" style="margin-bottom: 16px">
+      <Col v-for="card in statCards" :key="card.title" :xs="12" :sm="6">
+        <Card class="stat-card">
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+            "
+          >
+            <Statistic
+              :title="card.title"
+              :value="card.value"
+              :value-style="{ color: card.color }"
+            />
+            <div
+              class="stat-icon"
+              :style="{ background: card.bg, color: card.color }"
+            >
+              <IconifyIcon :icon="card.icon" style="font-size: 20px" />
+            </div>
+          </div>
+        </Card>
+      </Col>
+    </Row>
+
     <!-- Retention config -->
     <Card style="margin-bottom: 16px">
+      <div style="margin-bottom: 12px; font-size: 14px; font-weight: 600">
+        <IconifyIcon
+          icon="lucide:trash-2"
+          style="margin-right: 6px; vertical-align: -2px; color: #1677ff"
+        />
+        日志保留策略
+      </div>
       <div
         style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center"
       >
         <Space>
-          <span style="font-size: 13px; color: #666">操作记录保留</span>
+          <span
+            :style="{
+              fontSize: '13px',
+              color: isDark ? '#94a3b8' : '#666',
+            }"
+          >
+            操作记录保留
+          </span>
           <InputNumber v-model:value="auditDays" :min="1" :max="3650" />
-          <span style="font-size: 13px; color: #666">天</span>
+          <span
+            :style="{
+              fontSize: '13px',
+              color: isDark ? '#94a3b8' : '#666',
+            }"
+          >
+            天
+          </span>
         </Space>
         <Space>
-          <span style="font-size: 13px; color: #666">运行日志保留</span>
+          <span
+            :style="{
+              fontSize: '13px',
+              color: isDark ? '#94a3b8' : '#666',
+            }"
+          >
+            运行日志保留
+          </span>
           <InputNumber v-model:value="logDays" :min="1" :max="3650" />
-          <span style="font-size: 13px; color: #666">天</span>
+          <span
+            :style="{
+              fontSize: '13px',
+              color: isDark ? '#94a3b8' : '#666',
+            }"
+          >
+            天
+          </span>
         </Space>
         <Button
           type="primary"
@@ -403,3 +542,26 @@ onMounted(() => {
     </Tabs>
   </Page>
 </template>
+
+<style scoped>
+.stat-card {
+  transition:
+    box-shadow 0.2s,
+    transform 0.2s;
+}
+
+.stat-card:hover {
+  box-shadow: 0 4px 12px rgb(0 0 0 / 8%);
+  transform: translateY(-2px);
+}
+
+.stat-icon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+}
+</style>
