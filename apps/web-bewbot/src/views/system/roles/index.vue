@@ -47,6 +47,7 @@ const formName = ref('');
 const formRemark = ref('');
 const formPermissionIds = ref<number[]>([]);
 const activePermGroups = ref<string[]>([]);
+const activeSubKeys = ref<string[]>([]);
 const saving = ref(false);
 
 const isEditing = computed(() => !!editingRole.value);
@@ -135,6 +136,14 @@ function systemSubGroups(perms: PermissionItem[]): PermSubGroup[] {
   return ordered;
 }
 
+// 子分组权限数 >1 时才可折叠；打开模态框时默认全部展开
+function defaultExpandedSubKeys(): string[] {
+  return permissionGroups.value
+    .flatMap((g) => g.subgroups)
+    .filter((s) => s.perms.length > 1)
+    .map((s) => s.key);
+}
+
 const permissionGroups = computed(() => {
   const groups: Record<string, PermissionItem[]> = {};
   for (const perm of permissions.value) {
@@ -212,6 +221,7 @@ function openCreateModal() {
   formRemark.value = '';
   formPermissionIds.value = [];
   activePermGroups.value = [];
+  activeSubKeys.value = defaultExpandedSubKeys();
   modalVisible.value = true;
 }
 
@@ -221,6 +231,7 @@ function openEditModal(role: RoleItem) {
   formRemark.value = role.description || '';
   formPermissionIds.value = role.permissions.map((p) => p.id);
   activePermGroups.value = [];
+  activeSubKeys.value = defaultExpandedSubKeys();
   modalVisible.value = true;
 }
 
@@ -240,6 +251,7 @@ async function handleSave() {
       message.success('角色已创建');
     }
     activePermGroups.value = [];
+    activeSubKeys.value = [];
     modalVisible.value = false;
     fetchData();
   } catch {
@@ -344,7 +356,10 @@ onMounted(fetchData);
     <Modal
       v-model:open="modalVisible"
       @ok="handleSave"
-      @cancel="activePermGroups = []"
+      @cancel="
+        activePermGroups = [];
+        activeSubKeys = [];
+      "
       :confirm-loading="saving"
       :width="560"
     >
@@ -423,46 +438,104 @@ onMounted(fetchData);
               :key="sub.key"
               class="perm-subgroup"
             >
-              <div
-                v-if="group.subgroups.length > 1"
-                class="perm-subgroup-header"
-              >
-                <IconifyIcon
-                  :icon="sub.icon"
-                  style="
-                    margin-right: 4px;
-                    font-size: 14px;
-                    vertical-align: -2px;
-                    color: #1677ff;
-                  "
-                />
-                <span class="perm-subgroup-name" :style="dimTextStyle">
-                  {{ sub.label }}
-                </span>
-                <Tag
-                  :color="groupTagColor(sub.perms)"
-                  class="perm-subgroup-tag"
+              <!-- 子分组权限数 >1 时嵌入一层可折叠面板（如后台用户） -->
+              <template v-if="sub.perms.length > 1">
+                <Collapse
+                  v-model:active-key="activeSubKeys"
+                  :bordered="false"
+                  class="perm-subgroup-collapse"
                 >
-                  {{ selectedCount(sub.perms) }} / {{ sub.perms.length }}
-                </Tag>
-              </div>
-              <div
-                v-for="perm in sub.perms"
-                :key="perm.id"
-                class="perm-item"
-                :class="{
-                  'is-selected': formPermissionIds.includes(perm.id),
-                  'is-dark': isDark,
-                }"
-                @click="togglePermission(perm)"
-              >
-                <Checkbox
-                  :checked="formPermissionIds.includes(perm.id)"
-                  style="flex-shrink: 0; pointer-events: none"
-                />
-                <Tag class="perm-code" color="processing">{{ perm.code }}</Tag>
-                <span class="perm-name">{{ perm.name }}</span>
-              </div>
+                  <Collapse.Panel :key="sub.key">
+                    <template #header>
+                      <span class="perm-subgroup-title">
+                        <IconifyIcon
+                          :icon="sub.icon"
+                          style="
+                            margin-right: 4px;
+                            font-size: 14px;
+                            vertical-align: -2px;
+                            color: #1677ff;
+                          "
+                        />
+                        <span class="perm-subgroup-name" :style="dimTextStyle">
+                          {{ sub.label }}
+                        </span>
+                        <Tag
+                          :color="groupTagColor(sub.perms)"
+                          class="perm-subgroup-tag"
+                        >
+                          {{ selectedCount(sub.perms) }} /
+                          {{ sub.perms.length }}
+                        </Tag>
+                      </span>
+                    </template>
+                    <div
+                      v-for="perm in sub.perms"
+                      :key="perm.id"
+                      class="perm-item"
+                      :class="{
+                        'is-selected': formPermissionIds.includes(perm.id),
+                        'is-dark': isDark,
+                      }"
+                      @click="togglePermission(perm)"
+                    >
+                      <Checkbox
+                        :checked="formPermissionIds.includes(perm.id)"
+                        style="flex-shrink: 0; pointer-events: none"
+                      />
+                      <Tag class="perm-code" color="processing">
+                        {{ perm.code }}
+                      </Tag>
+                      <span class="perm-name">{{ perm.name }}</span>
+                    </div>
+                  </Collapse.Panel>
+                </Collapse>
+              </template>
+              <!-- 单权限子分组保持平铺 -->
+              <template v-else>
+                <div
+                  v-if="group.subgroups.length > 1"
+                  class="perm-subgroup-header"
+                >
+                  <IconifyIcon
+                    :icon="sub.icon"
+                    style="
+                      margin-right: 4px;
+                      font-size: 14px;
+                      vertical-align: -2px;
+                      color: #1677ff;
+                    "
+                  />
+                  <span class="perm-subgroup-name" :style="dimTextStyle">
+                    {{ sub.label }}
+                  </span>
+                  <Tag
+                    :color="groupTagColor(sub.perms)"
+                    class="perm-subgroup-tag"
+                  >
+                    {{ selectedCount(sub.perms) }} / {{ sub.perms.length }}
+                  </Tag>
+                </div>
+                <div
+                  v-for="perm in sub.perms"
+                  :key="perm.id"
+                  class="perm-item"
+                  :class="{
+                    'is-selected': formPermissionIds.includes(perm.id),
+                    'is-dark': isDark,
+                  }"
+                  @click="togglePermission(perm)"
+                >
+                  <Checkbox
+                    :checked="formPermissionIds.includes(perm.id)"
+                    style="flex-shrink: 0; pointer-events: none"
+                  />
+                  <Tag class="perm-code" color="processing">
+                    {{ perm.code }}
+                  </Tag>
+                  <span class="perm-name">{{ perm.name }}</span>
+                </div>
+              </template>
             </div>
           </Collapse.Panel>
         </Collapse>
@@ -572,6 +645,18 @@ onMounted(fetchData);
   gap: 6px;
   align-items: center;
   padding: 2px 6px 6px;
+}
+
+.perm-subgroup-collapse {
+  margin-bottom: 8px;
+  background: transparent;
+  border: none;
+}
+
+.perm-subgroup-title {
+  display: flex;
+  gap: 6px;
+  align-items: center;
 }
 
 .perm-subgroup-name {
