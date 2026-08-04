@@ -813,6 +813,7 @@ onMounted(async () => {
         <Input
           v-model:value="emailCurrentPwd"
           type="password"
+          autocomplete="current-password"
           placeholder="请输入当前密码"
           style="margin-top: 6px"
         />
@@ -821,6 +822,8 @@ onMounted(async () => {
         <label style="font-size: 13px; color: #666">两步验证码</label>
         <Input
           v-model:value="emailTotpCode"
+          autocomplete="one-time-code"
+          inputmode="numeric"
           placeholder="请输入 6 位验证码"
           :maxlength="6"
           style="margin-top: 6px"
@@ -831,6 +834,7 @@ onMounted(async () => {
         <Input
           v-model:value="newEmail"
           type="email"
+          autocomplete="email"
           placeholder="请输入新邮箱"
           style="margin-top: 6px"
         />
@@ -858,6 +862,7 @@ onMounted(async () => {
         <label style="font-size: 13px; color: #666">当前密码</label>
         <Input.Password
           v-model:value="usernameCurrentPwd"
+          autocomplete="current-password"
           placeholder="请输入当前密码"
           style="margin-top: 6px"
         />
@@ -866,6 +871,8 @@ onMounted(async () => {
         <label style="font-size: 13px; color: #666">两步验证码</label>
         <Input
           v-model:value="usernameTotpCode"
+          autocomplete="one-time-code"
+          inputmode="numeric"
           placeholder="6位验证码"
           :maxlength="6"
           style="margin-top: 6px"
@@ -906,6 +913,7 @@ onMounted(async () => {
         <Input
           v-model:value="currentPwd"
           type="password"
+          autocomplete="current-password"
           placeholder="请输入当前密码"
           style="margin-top: 6px"
         />
@@ -914,6 +922,8 @@ onMounted(async () => {
         <label style="font-size: 13px; color: #666">两步验证码</label>
         <Input
           v-model:value="pwdTotpCode"
+          autocomplete="one-time-code"
+          inputmode="numeric"
           placeholder="请输入 6 位验证码"
           :maxlength="6"
           style="margin-top: 6px"
@@ -924,6 +934,7 @@ onMounted(async () => {
         <Input
           v-model:value="newPwd"
           type="password"
+          autocomplete="new-password"
           placeholder="请输入新密码（至少6位）"
           style="margin-top: 6px"
         />
@@ -989,6 +1000,8 @@ onMounted(async () => {
           <label style="font-size: 13px; color: #666">验证码</label>
           <Input
             v-model:value="totpCode"
+            autocomplete="one-time-code"
+            inputmode="numeric"
             placeholder="输入 6 位验证码"
             :maxlength="6"
             style="margin-top: 6px"
@@ -1048,6 +1061,7 @@ onMounted(async () => {
         <Input
           v-model:value="deletePassword"
           type="password"
+          autocomplete="current-password"
           placeholder="请输入当前密码"
           style="margin-top: 6px"
         />
@@ -1057,6 +1071,8 @@ onMounted(async () => {
           <label style="font-size: 13px; color: #666">两步验证码</label>
           <Input
             v-model:value="deleteTotpCode"
+            autocomplete="one-time-code"
+            inputmode="numeric"
             placeholder="请输入 6 位验证码"
             :maxlength="6"
             style="margin-top: 6px"
@@ -1074,6 +1090,8 @@ onMounted(async () => {
     >
       <Input
         v-model:value="totpCode"
+        autocomplete="one-time-code"
+        inputmode="numeric"
         placeholder="输入当前验证码以确认关闭"
         :maxlength="6"
       />
