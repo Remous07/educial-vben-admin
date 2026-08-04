@@ -654,35 +654,17 @@ onMounted(fetchData);
   display: flex;
   gap: 10px;
   align-items: center;
-  padding: 9px 12px;
+  padding: 10px 12px;
   cursor: pointer;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  transition:
-    background-color 0.2s,
-    border-color 0.2s;
+  border-bottom: 1px solid #f0f0f0;
 }
 
-.perm-item + .perm-item {
-  margin-top: 4px;
+.perm-item.is-dark {
+  border-bottom-color: rgb(255 255 255 / 12%);
 }
 
-.perm-item:hover {
-  background-color: #fafafa;
-}
-
-.perm-item.is-dark:hover {
-  background-color: rgb(255 255 255 / 4%);
-}
-
-.perm-item.is-selected {
-  background-color: #f0f5ff;
-  border-color: #d6e4ff;
-}
-
-.perm-item.is-dark.is-selected {
-  background-color: rgb(64 128 255 / 14%);
-  border-color: rgb(64 128 255 / 30%);
+.perm-item:last-child {
+  border-bottom: none;
 }
 
 .perm-code {
