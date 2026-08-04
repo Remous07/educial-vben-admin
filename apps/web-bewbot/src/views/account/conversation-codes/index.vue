@@ -446,11 +446,17 @@ async function handleReactivate(code: ConversationCodeItem) {
 }
 
 async function handlePermanentDelete(code: ConversationCodeItem) {
+  if (code.is_active) {
+    Modal.warning({
+      title: '需先撤销',
+      content: '该识别码仍有效，请先撤销后再永久删除。',
+      okText: '知道了',
+    });
+    return;
+  }
   Modal.confirm({
     title: `永久删除识别码「${code.code}」？`,
-    content: code.is_active
-      ? '该识别码目前处于有效状态，删除后无法恢复'
-      : '删除后无法恢复',
+    content: '删除后无法恢复',
     okText: '永久删除',
     okType: 'danger',
     cancelText: '取消',
@@ -642,14 +648,14 @@ onMounted(fetchData);
               >
                 激活
               </Button>
-              <Button
-                size="small"
-                danger
-                @click="handlePermanentDelete(record as ConversationCodeItem)"
-              >
-                删除
-              </Button>
             </template>
+            <Button
+              size="small"
+              danger
+              @click="handlePermanentDelete(record as ConversationCodeItem)"
+            >
+              删除
+            </Button>
           </Space>
         </template>
       </template>
@@ -896,7 +902,7 @@ onMounted(fetchData);
                   <a
                     v-if="r.first_name"
                     :href="`tg://user?id=${r.tg_user_id}`"
-                    style=" font-weight: 500;color: #1677ff"
+                    style="font-weight: 500; color: #1677ff"
                   >
                     {{ r.first_name }}
                   </a>
