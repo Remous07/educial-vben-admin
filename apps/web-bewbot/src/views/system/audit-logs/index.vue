@@ -27,6 +27,7 @@ import {
   Table,
   Tabs,
   Tag,
+  Tooltip,
 } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
@@ -214,7 +215,7 @@ const opColumns = [
     customRender: ({ record }: { record: AuditOperationItem }) =>
       h(Tag, { color: actionColor(record.action) }, () => record.action_label),
   },
-  { title: '详情', dataIndex: 'detail', key: 'detail', ellipsis: true },
+  { title: '详情', dataIndex: 'detail', key: 'detail', width: 320 },
   { title: 'IP', dataIndex: 'ip', key: 'ip', width: 140 },
   {
     title: '国家',
@@ -293,7 +294,7 @@ const logColumns = [
       h(Tag, { color: levelColor(text) }, () => text),
   },
   { title: '来源', dataIndex: 'logger', key: 'logger', width: 200 },
-  { title: '消息', dataIndex: 'message', key: 'message' },
+  { title: '消息', dataIndex: 'message', key: 'message', width: 420 },
 ];
 
 async function fetchLogs(reset = false) {
@@ -483,6 +484,17 @@ onMounted(() => {
             <template v-if="column.key === 'time'">
               {{ formatTime((record as AuditOperationItem).created_at) }}
             </template>
+            <template v-else-if="column.key === 'detail'">
+              <Tooltip
+                v-if="(record as AuditOperationItem).detail"
+                :title="(record as AuditOperationItem).detail"
+              >
+                <span class="ellipsis-text">
+                  {{ (record as AuditOperationItem).detail }}
+                </span>
+              </Tooltip>
+              <span v-else>-</span>
+            </template>
           </template>
         </Table>
       </Tabs.TabPane>
@@ -527,6 +539,13 @@ onMounted(() => {
             <template v-if="column.key === 'time'">
               {{ formatTime((record as RuntimeLogItem).created_at) }}
             </template>
+            <template v-else-if="column.key === 'message'">
+              <Tooltip :title="(record as RuntimeLogItem).message">
+                <span class="ellipsis-text">
+                  {{ (record as RuntimeLogItem).message }}
+                </span>
+              </Tooltip>
+            </template>
           </template>
         </Table>
         <div
@@ -541,6 +560,13 @@ onMounted(() => {
 </template>
 
 <style scoped>
+.ellipsis-text {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .stat-card {
   transition:
     box-shadow 0.2s,
