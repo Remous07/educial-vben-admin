@@ -136,11 +136,6 @@ function systemSubGroups(perms: PermissionItem[]): PermSubGroup[] {
   return ordered;
 }
 
-// 子分组全部可折叠；打开模态框时默认全部展开
-function defaultExpandedSubKeys(): string[] {
-  return permissionGroups.value.flatMap((g) => g.subgroups).map((s) => s.key);
-}
-
 const permissionGroups = computed(() => {
   const groups: Record<string, PermissionItem[]> = {};
   for (const perm of permissions.value) {
@@ -218,7 +213,7 @@ function openCreateModal() {
   formRemark.value = '';
   formPermissionIds.value = [];
   activePermGroups.value = [];
-  activeSubKeys.value = defaultExpandedSubKeys();
+  activeSubKeys.value = [];
   modalVisible.value = true;
 }
 
@@ -228,7 +223,7 @@ function openEditModal(role: RoleItem) {
   formRemark.value = role.description || '';
   formPermissionIds.value = role.permissions.map((p) => p.id);
   activePermGroups.value = [];
-  activeSubKeys.value = defaultExpandedSubKeys();
+  activeSubKeys.value = [];
   modalVisible.value = true;
 }
 
