@@ -7,6 +7,7 @@ import { computed, onMounted, ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
+import { usePreferences } from '@vben/preferences';
 
 import {
   Alert,
@@ -33,6 +34,8 @@ import {
 
 defineOptions({ name: 'RoleManagement' });
 
+const { isDark } = usePreferences();
+
 const roles = ref<RoleItem[]>([]);
 const permissions = ref<PermissionItem[]>([]);
 const loading = ref(false);
@@ -46,29 +49,21 @@ const formPermissionIds = ref<number[]>([]);
 const activePermGroups = ref<string[]>([]);
 const saving = ref(false);
 
-const allGroupsExpanded = computed(() => {
-  const total = permissionGroups.value.length;
-  return total > 0 && activePermGroups.value.length === total;
-});
-
-function toggleAllGroups() {
-  activePermGroups.value = allGroupsExpanded.value
-    ? []
-    : permissionGroups.value.map(([key]) => key);
-}
-
 const isEditing = computed(() => !!editingRole.value);
+
+const dimTextStyle = computed(() => ({
+  fontSize: '13px',
+  color: isDark.value ? 'rgba(255,255,255,0.6)' : '#666',
+}));
 
 const CATEGORY_LABELS: Record<string, string> = {
   dashboard: '仪表盘',
   users: '用户',
   messages: '消息',
-  visitors: '访客',
   conversation: '对话',
   invite: '邀请码',
-  registration: '注册',
-  admin: '后台用户',
-  bot: '机器人',
+  visitors: '访客',
+  system: '系统权限',
   profile: '个人设置',
 };
 
@@ -76,21 +71,27 @@ const CATEGORY_ICONS: Record<string, string> = {
   dashboard: 'lucide:layout-dashboard',
   users: 'lucide:users',
   messages: 'lucide:message-square',
-  visitors: 'lucide:ban',
   conversation: 'lucide:message-circle',
   invite: 'lucide:gift',
-  registration: 'lucide:user-plus',
-  admin: 'lucide:shield',
-  bot: 'lucide:bot',
+  visitors: 'lucide:ban',
+  system: 'lucide:shield',
   profile: 'lucide:settings',
 };
+
+// 系统管理类权限合并为「系统权限」一组：
+// 后台用户(admin) + 注册设置(registration) + 日志审计(audit) + 机器人设置(bot)
+const SYSTEM_PREFIXES = new Set(['admin', 'audit', 'bot', 'registration']);
+
+function groupOf(code: string): string {
+  const prefix = code.split(':')[0] || 'other';
+  return SYSTEM_PREFIXES.has(prefix) ? 'system' : prefix;
+}
 
 const permissionGroups = computed(() => {
   const groups: Record<string, PermissionItem[]> = {};
   for (const perm of permissions.value) {
-    const prefix = perm.code.split(':')[0] || 'other';
-    if (!groups[prefix]) groups[prefix] = [];
-    groups[prefix].push(perm);
+    const key = groupOf(perm.code);
+    (groups[key] ??= []).push(perm);
   }
   return Object.entries(groups).toSorted(([a], [b]) => {
     const labels = Object.keys(CATEGORY_LABELS);
@@ -100,6 +101,31 @@ const permissionGroups = computed(() => {
 
 function selectedCount(perms: PermissionItem[]): number {
   return perms.filter((p) => formPermissionIds.value.includes(p.id)).length;
+}
+
+function groupTagColor(perms: PermissionItem[]): string {
+  const n = selectedCount(perms);
+  if (n === 0) return 'default';
+  return n === perms.length ? 'success' : 'processing';
+}
+
+function togglePermission(perm: PermissionItem) {
+  const idx = formPermissionIds.value.indexOf(perm.id);
+  formPermissionIds.value =
+    idx === -1
+      ? [...formPermissionIds.value, perm.id]
+      : formPermissionIds.value.filter((id) => id !== perm.id);
+}
+
+const allGroupsExpanded = computed(() => {
+  const total = permissionGroups.value.length;
+  return total > 0 && activePermGroups.value.length === total;
+});
+
+function toggleAllGroups() {
+  activePermGroups.value = allGroupsExpanded.value
+    ? []
+    : permissionGroups.value.map(([key]) => key);
 }
 
 const columns: TableColumnsType = [
@@ -278,7 +304,7 @@ onMounted(fetchData);
       </template>
 
       <div style="margin-bottom: 16px">
-        <label style="font-size: 13px; color: #666">角色名称</label>
+        <label :style="dimTextStyle">角色名称</label>
         <Input
           v-model:value="formName"
           placeholder="如：编辑"
@@ -286,7 +312,7 @@ onMounted(fetchData);
         />
       </div>
       <div style="margin-bottom: 16px">
-        <label style="font-size: 13px; color: #666">备注</label>
+        <label :style="dimTextStyle">备注</label>
         <Input.TextArea
           v-model:value="formRemark"
           placeholder="角色说明"
@@ -303,7 +329,7 @@ onMounted(fetchData);
             margin-bottom: 8px;
           "
         >
-          <label style="font-size: 13px; color: #666">
+          <label :style="dimTextStyle">
             <IconifyIcon
               icon="lucide:shield"
               style="margin-right: 4px; vertical-align: -2px"
@@ -326,11 +352,15 @@ onMounted(fetchData);
               <span style="font-weight: 500">
                 <IconifyIcon
                   :icon="CATEGORY_ICONS[prefix] || 'lucide:folder'"
-                  style="margin-right: 6px; vertical-align: -2px"
+                  style="
+                    margin-right: 6px;
+                    vertical-align: -2px;
+                    color: #1677ff;
+                  "
                 />
                 {{ CATEGORY_LABELS[prefix] || prefix }}
               </span>
-              <Tag style="margin-left: 8px">
+              <Tag :color="groupTagColor(perms)" style="margin-left: 8px">
                 {{ selectedCount(perms) }} / {{ perms.length }}
               </Tag>
             </template>
@@ -338,26 +368,18 @@ onMounted(fetchData);
               v-for="perm in perms"
               :key="perm.id"
               class="perm-item"
-              :class="{ 'is-selected': formPermissionIds.includes(perm.id) }"
+              :class="{
+                'is-selected': formPermissionIds.includes(perm.id),
+                'is-dark': isDark,
+              }"
+              @click="togglePermission(perm)"
             >
               <Checkbox
                 :checked="formPermissionIds.includes(perm.id)"
-                style="flex-shrink: 0; min-width: 170px"
-                @change="
-                  (e: any) => {
-                    if (e.target.checked) {
-                      formPermissionIds.push(perm.id);
-                    } else {
-                      formPermissionIds = formPermissionIds.filter(
-                        (id) => id !== perm.id,
-                      );
-                    }
-                  }
-                "
-              >
-                <Tag color="processing">{{ perm.code }}</Tag>
-              </Checkbox>
-              <span style="font-size: 13px; color: #666">{{ perm.name }}</span>
+                style="flex-shrink: 0; pointer-events: none"
+              />
+              <Tag class="perm-code" color="processing">{{ perm.code }}</Tag>
+              <span class="perm-name">{{ perm.name }}</span>
             </div>
           </Collapse.Panel>
         </Collapse>
@@ -387,62 +409,19 @@ onMounted(fetchData);
 
       <!-- Metric cards -->
       <div style="display: flex; gap: 12px; margin-bottom: 16px">
-        <div
-          style="
-            flex: 1;
-            padding: 12px 8px;
-            text-align: center;
-            background: #fafafa;
-            border: 1px solid #f0f0f0;
-            border-radius: 8px;
-          "
-        >
-          <div style="margin-bottom: 4px; font-size: 12px; color: #999">
-            角色名
-          </div>
-          <div
-            style="
-              font-size: 14px;
-              font-weight: 600;
-              line-height: 1.4;
-              color: #1d1d1d;
-              word-break: break-all;
-            "
-          >
-            {{ deleteTarget?.name }}
-          </div>
+        <div class="metric-card" :class="{ 'is-dark': isDark }">
+          <div class="metric-label">角色名</div>
+          <div class="metric-name">{{ deleteTarget?.name }}</div>
         </div>
-        <div
-          style="
-            flex: 1;
-            padding: 12px 8px;
-            text-align: center;
-            background: #fafafa;
-            border: 1px solid #f0f0f0;
-            border-radius: 8px;
-          "
-        >
-          <div style="margin-bottom: 4px; font-size: 12px; color: #999">
-            权限数
-          </div>
-          <div style="font-size: 20px; font-weight: 700; color: #1677ff">
+        <div class="metric-card" :class="{ 'is-dark': isDark }">
+          <div class="metric-label">权限数</div>
+          <div class="metric-num" style="color: #1677ff">
             {{ deleteTarget?.permissions?.length ?? 0 }}
           </div>
         </div>
-        <div
-          style="
-            flex: 1;
-            padding: 12px 8px;
-            text-align: center;
-            background: #fafafa;
-            border: 1px solid #f0f0f0;
-            border-radius: 8px;
-          "
-        >
-          <div style="margin-bottom: 4px; font-size: 12px; color: #999">
-            用户数
-          </div>
-          <div style="font-size: 20px; font-weight: 700; color: #fa541c">
+        <div class="metric-card" :class="{ 'is-dark': isDark }">
+          <div class="metric-label">用户数</div>
+          <div class="metric-num" style="color: #fa541c">
             {{ deleteTarget?.admin_user_count ?? 0 }}
           </div>
         </div>
@@ -467,7 +446,7 @@ onMounted(fetchData);
 
       <!-- Confirm input -->
       <div>
-        <label style="font-size: 13px; color: #666">请输入角色名确认：</label>
+        <label :style="dimTextStyle">请输入角色名确认：</label>
         <Input
           v-model:value="deleteConfirmName"
           :placeholder="deleteTarget?.name"
@@ -499,23 +478,92 @@ onMounted(fetchData);
 <style scoped>
 .perm-item {
   display: flex;
+  gap: 10px;
   align-items: center;
-  padding: 8px 6px;
-  border-radius: 6px;
+  padding: 9px 12px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: 8px;
   transition:
     background-color 0.2s,
-    transform 0.1s;
+    border-color 0.2s;
+}
+
+.perm-item + .perm-item {
+  margin-top: 4px;
 }
 
 .perm-item:hover {
   background-color: #fafafa;
 }
 
-.perm-item.is-selected {
-  background-color: #f0f5ff;
+.perm-item.is-dark:hover {
+  background-color: rgb(255 255 255 / 4%);
 }
 
-.perm-item + .perm-item {
-  margin-top: 2px;
+.perm-item.is-selected {
+  background-color: #f0f5ff;
+  border-color: #d6e4ff;
+}
+
+.perm-item.is-dark.is-selected {
+  background-color: rgb(64 128 255 / 14%);
+  border-color: rgb(64 128 255 / 30%);
+}
+
+.perm-code {
+  margin: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+}
+
+.perm-name {
+  font-size: 13px;
+  color: #333;
+}
+
+.perm-item.is-dark .perm-name {
+  color: rgb(255 255 255 / 75%);
+}
+
+.metric-card {
+  flex: 1;
+  padding: 12px 8px;
+  text-align: center;
+  background: #fafafa;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+}
+
+.metric-card.is-dark {
+  background: rgb(255 255 255 / 6%);
+  border-color: rgb(255 255 255 / 10%);
+}
+
+.metric-label {
+  margin-bottom: 4px;
+  font-size: 12px;
+  color: #999;
+}
+
+.metric-card.is-dark .metric-label {
+  color: rgb(255 255 255 / 45%);
+}
+
+.metric-name {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #1d1d1d;
+  word-break: break-all;
+}
+
+.metric-card.is-dark .metric-name {
+  color: rgb(255 255 255 / 85%);
+}
+
+.metric-num {
+  font-size: 20px;
+  font-weight: 700;
 }
 </style>
