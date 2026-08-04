@@ -542,7 +542,7 @@ onMounted(async () => {
                     </Space>
                   </div>
                 </Descriptions.Item>
-                <Descriptions.Item label="创建时间">
+                <Descriptions.Item label="注册时间">
                   {{
                     userInfo?.created_at
                       ? new Date(userInfo.created_at).toLocaleString('zh-CN')

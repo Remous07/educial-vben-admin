@@ -479,7 +479,7 @@ onMounted(fetchUsers);
             }}</code>
             <template v-else>-</template>
           </Descriptions.Item>
-          <Descriptions.Item label="创建时间">
+          <Descriptions.Item label="注册时间">
             {{
               adminModalUser.created_at
                 ? new Date(adminModalUser.created_at).toLocaleString('zh-CN')
