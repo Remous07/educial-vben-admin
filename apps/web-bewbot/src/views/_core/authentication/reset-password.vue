@@ -24,13 +24,19 @@ const [Form, formApi] = useVbenForm({
   schema: [
     {
       component: 'VbenInputPassword',
-      componentProps: { placeholder: '请输入新密码' },
+      componentProps: {
+        autocomplete: 'new-password',
+        placeholder: '请输入新密码',
+      },
       fieldName: 'new_password',
       rules: z.string().min(6, { message: '密码至少 6 个字符' }).max(128),
     },
     {
       component: 'VbenInputPassword',
-      componentProps: { placeholder: '请再次输入新密码' },
+      componentProps: {
+        autocomplete: 'new-password',
+        placeholder: '请再次输入新密码',
+      },
       fieldName: 'confirmPassword',
       rules: z.string().refine(
         async (val) => {

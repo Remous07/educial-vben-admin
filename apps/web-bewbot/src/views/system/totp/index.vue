@@ -26,7 +26,7 @@ const enabled = ref(false);
 const loading = ref(true);
 const setupVisible = ref(false);
 const disableVisible = ref(false);
-const setupData = ref<{ secret: string; uri: string } | null>(null);
+const setupData = ref<null | { secret: string; uri: string }>(null);
 const verifyCode = ref('');
 const saving = ref(false);
 
@@ -116,14 +116,13 @@ onMounted(fetchStatus);
       :footer="null"
       width="400"
     >
-      <div
-        v-if="setupData"
-        style="text-align: center"
-      >
+      <div v-if="setupData" style="text-align: center">
         <p style="margin-bottom: 12px">
           请使用身份验证器（如 Google Authenticator）扫描二维码
         </p>
-        <div style="display: flex; justify-content: center; margin-bottom: 12px">
+        <div
+          style="display: flex; justify-content: center; margin-bottom: 12px"
+        >
           <QRCode :value="setupData.uri" :size="200" />
         </div>
         <p style="margin-bottom: 12px; font-size: 12px; color: #888">
@@ -131,16 +130,13 @@ onMounted(fetchStatus);
         </p>
         <Input
           v-model:value="verifyCode"
+          autocomplete="one-time-code"
+          inputmode="numeric"
           placeholder="输入 6 位验证码"
           :maxlength="6"
           style="margin-bottom: 12px"
         />
-        <Button
-          type="primary"
-          block
-          :loading="saving"
-          @click="handleEnable"
-        >
+        <Button type="primary" block :loading="saving" @click="handleEnable">
           验证并启用
         </Button>
       </div>
@@ -155,6 +151,8 @@ onMounted(fetchStatus);
     >
       <Input
         v-model:value="verifyCode"
+        autocomplete="one-time-code"
+        inputmode="numeric"
         placeholder="输入当前验证码以确认关闭"
         :maxlength="6"
       />

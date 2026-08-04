@@ -45,7 +45,10 @@ const [Form, formApi] = useVbenForm({
   schema: [
     {
       component: 'VbenInput',
-      componentProps: { placeholder: '3-10位，字母/数字/下划线/连字符' },
+      componentProps: {
+        autocomplete: 'username',
+        placeholder: '3-10位，字母/数字/下划线/连字符',
+      },
       fieldName: 'username',
       label: '用户名',
       rules: z
@@ -58,7 +61,11 @@ const [Form, formApi] = useVbenForm({
     },
     {
       component: 'VbenInput',
-      componentProps: { placeholder: 'your@email.com', type: 'email' },
+      componentProps: {
+        autocomplete: 'email',
+        placeholder: 'your@email.com',
+        type: 'email',
+      },
       fieldName: 'email',
       label: '邮箱',
       rules: z.string().email({ message: '请输入有效的邮箱地址' }),
@@ -71,14 +78,20 @@ const [Form, formApi] = useVbenForm({
     },
     {
       component: 'VbenInputPassword',
-      componentProps: { placeholder: $t('authentication.password') },
+      componentProps: {
+        autocomplete: 'new-password',
+        placeholder: $t('authentication.password'),
+      },
       fieldName: 'password',
       label: $t('authentication.password'),
       rules: z.string().min(6, { message: '密码至少 6 个字符' }).max(128),
     },
     {
       component: 'VbenInputPassword',
-      componentProps: { placeholder: '请再次输入密码' },
+      componentProps: {
+        autocomplete: 'new-password',
+        placeholder: '请再次输入密码',
+      },
       fieldName: 'confirmPassword',
       label: '确认密码',
       dependencies: {

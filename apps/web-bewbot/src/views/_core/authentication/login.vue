@@ -59,13 +59,19 @@ const [Form, formApi] = useVbenForm({
   schema: [
     {
       component: 'VbenInput',
-      componentProps: { placeholder: '邮箱或用户名 (3-10位)' },
+      componentProps: {
+        autocomplete: 'username',
+        placeholder: '邮箱或用户名 (3-10位)',
+      },
       fieldName: 'username',
       rules: z.string().min(1, { message: '请输入邮箱或用户名' }),
     },
     {
       component: 'VbenInputPassword',
-      componentProps: { placeholder: $t('authentication.password') },
+      componentProps: {
+        autocomplete: 'current-password',
+        placeholder: $t('authentication.password'),
+      },
       fieldName: 'password',
       rules: z.string().min(1, { message: $t('authentication.passwordTip') }),
     },

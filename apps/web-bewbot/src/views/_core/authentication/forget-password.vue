@@ -29,7 +29,11 @@ const [Form, formApi] = useVbenForm({
   schema: [
     {
       component: 'VbenInput',
-      componentProps: { placeholder: 'your@email.com', type: 'email' },
+      componentProps: {
+        autocomplete: 'email',
+        placeholder: 'your@email.com',
+        type: 'email',
+      },
       fieldName: 'email',
       rules: z.string().email({ message: '请输入有效的邮箱地址' }),
     },
