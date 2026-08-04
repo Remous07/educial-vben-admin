@@ -29,7 +29,7 @@ export interface RetentionConfig {
   log_days: number;
 }
 
-/** 操作审计列表 */
+/** 操作记录列表 */
 export function getAuditOperationsApi(params: {
   action?: string;
   admin_username?: string;
@@ -66,4 +66,14 @@ export function getAuditRetentionApi() {
 /** 设置日志保留天数 */
 export function setAuditRetentionApi(payload: RetentionConfig) {
   return requestClient.put('/audit/retention', payload);
+}
+
+/** 一键清空操作记录 */
+export function clearAuditOperationsApi() {
+  return requestClient.delete('/audit/operations');
+}
+
+/** 一键清空运行日志 */
+export function clearRuntimeLogsApi() {
+  return requestClient.delete('/audit/runtime-logs');
 }

@@ -12,6 +12,7 @@ import {
   Input,
   InputNumber,
   message,
+  Popconfirm,
   Select,
   Space,
   Table,
@@ -21,6 +22,8 @@ import {
 import dayjs from 'dayjs';
 
 import {
+  clearAuditOperationsApi,
+  clearRuntimeLogsApi,
   getAuditOperationsApi,
   getAuditRetentionApi,
   getRuntimeLogsApi,
@@ -177,6 +180,18 @@ function onOpReset() {
   onOpSearch();
 }
 
+async function handleClearOperations() {
+  await clearAuditOperationsApi();
+  message.success('已清空操作记录');
+  onOpSearch();
+}
+
+async function handleClearLogs() {
+  await clearRuntimeLogsApi();
+  message.success('已清空运行日志');
+  onLogSearch();
+}
+
 function onOpTableChange(pag: any) {
   opPage.value = pag.current || 1;
   opPageSize.value = pag.pageSize || 20;
@@ -254,7 +269,7 @@ onMounted(() => {
         style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center"
       >
         <Space>
-          <span style="font-size: 13px; color: #666">操作审计保留</span>
+          <span style="font-size: 13px; color: #666">操作记录保留</span>
           <InputNumber v-model:value="auditDays" :min="1" :max="3650" />
           <span style="font-size: 13px; color: #666">天</span>
         </Space>
@@ -274,8 +289,8 @@ onMounted(() => {
     </Card>
 
     <Tabs default-active-key="operations">
-      <!-- Operation audit -->
-      <Tabs.TabPane key="operations" tab="操作审计">
+      <!-- Operation records -->
+      <Tabs.TabPane key="operations" tab="操作记录">
         <Space style="flex-wrap: wrap; margin-bottom: 16px">
           <Input
             v-model:value="opUsername"
@@ -299,6 +314,16 @@ onMounted(() => {
           />
           <Button type="primary" @click="onOpSearch">查询</Button>
           <Button @click="onOpReset">重置</Button>
+          <Popconfirm
+            title="确定清空全部操作记录？"
+            description="此操作不可恢复"
+            ok-text="清空"
+            ok-type="danger"
+            cancel-text="取消"
+            @confirm="handleClearOperations"
+          >
+            <Button danger>清空</Button>
+          </Popconfirm>
         </Space>
 
         <Table
@@ -341,6 +366,16 @@ onMounted(() => {
             @change="onLogSearch"
           />
           <Button type="primary" @click="onLogSearch">查询</Button>
+          <Popconfirm
+            title="确定清空全部运行日志？"
+            description="此操作不可恢复"
+            ok-text="清空"
+            ok-type="danger"
+            cancel-text="取消"
+            @confirm="handleClearLogs"
+          >
+            <Button danger>清空</Button>
+          </Popconfirm>
         </Space>
 
         <Table
