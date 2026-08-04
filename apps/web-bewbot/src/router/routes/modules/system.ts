@@ -34,6 +34,17 @@ const routes: RouteRecordRaw[] = [
     name: 'InviteCodes',
     path: '/system/invite-codes',
   },
+  {
+    component: () => import('#/views/system/audit-logs/index.vue'),
+    meta: {
+      authority: ['superadmin'],
+      icon: 'lucide:scroll-text',
+      title: '日志审计',
+      order: 94,
+    },
+    name: 'AuditLogs',
+    path: '/system/audit-logs',
+  },
 ];
 
 export default routes;
