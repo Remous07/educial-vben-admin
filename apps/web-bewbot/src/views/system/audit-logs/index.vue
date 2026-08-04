@@ -274,13 +274,11 @@ function onOpTableChange(pag: any) {
   fetchOperations();
 }
 
-// ── runtime log tab ────────────────────────────────────
+// ── runtime log tab (keyset / load-more) ───────────────
 
 const logs = ref<RuntimeLogItem[]>([]);
 const logLoading = ref(false);
-const logTotal = ref(0);
-const logPage = ref(1);
-const logPageSize = ref(50);
+const logNextCursor = ref<null | number>(null);
 const logLevel = ref<string | undefined>(undefined);
 const logRange = ref<[dayjs.Dayjs, dayjs.Dayjs] | undefined>(undefined);
 
@@ -298,32 +296,33 @@ const logColumns = [
   { title: '消息', dataIndex: 'message', key: 'message' },
 ];
 
-async function fetchLogs() {
+async function fetchLogs(reset = false) {
+  if (reset) {
+    logs.value = [];
+    logNextCursor.value = null;
+  }
   logLoading.value = true;
   try {
     const resp = await getRuntimeLogsApi({
-      offset: (logPage.value - 1) * logPageSize.value,
-      limit: logPageSize.value,
+      before_id: logNextCursor.value ?? undefined,
+      limit: 50,
       level: logLevel.value,
       start: toLocalIso(logRange.value?.[0]),
       end: toLocalIso(logRange.value?.[1]),
     });
-    logs.value = resp.items;
-    logTotal.value = resp.total;
+    logs.value = reset ? resp.items : [...logs.value, ...resp.items];
+    logNextCursor.value = resp.next_cursor;
   } finally {
     logLoading.value = false;
   }
 }
 
 function onLogSearch() {
-  logPage.value = 1;
-  fetchLogs();
+  fetchLogs(true);
 }
 
-function onLogTableChange(pag: any) {
-  logPage.value = pag.current || 1;
-  logPageSize.value = pag.pageSize || 50;
-  fetchLogs();
+function loadMoreLogs() {
+  fetchLogs(false);
 }
 
 function formatTime(v: null | string): string {
@@ -521,16 +520,8 @@ onMounted(() => {
           :columns="logColumns"
           :data-source="logs"
           :loading="logLoading"
-          :pagination="{
-            current: logPage,
-            pageSize: logPageSize,
-            total: logTotal,
-            showTotal: (t: number) => `共 ${t} 条`,
-            showSizeChanger: true,
-            pageSizeOptions: ['20', '50', '100'],
-          }"
+          :pagination="false"
           row-key="id"
-          @change="onLogTableChange"
         >
           <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'time'">
@@ -538,6 +529,12 @@ onMounted(() => {
             </template>
           </template>
         </Table>
+        <div
+          v-if="logNextCursor !== null"
+          style="margin-top: 12px; text-align: center"
+        >
+          <Button :loading="logLoading" @click="loadMoreLogs">加载更多</Button>
+        </div>
       </Tabs.TabPane>
     </Tabs>
   </Page>

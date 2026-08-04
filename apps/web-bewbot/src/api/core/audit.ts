@@ -24,6 +24,12 @@ export interface AuditListResponse<T> {
   total: number;
 }
 
+export interface RuntimeLogPage {
+  items: RuntimeLogItem[];
+  /** 游标：下一页从 id < next_cursor 取；null 表示没有更多 */
+  next_cursor: null | number;
+}
+
 export interface RetentionConfig {
   audit_days: number;
   log_days: number;
@@ -56,18 +62,15 @@ export function getAuditOperationsApi(params: {
   );
 }
 
-/** 运行日志列表 */
+/** 运行日志列表（keyset 游标分页） */
 export function getRuntimeLogsApi(params: {
+  before_id?: number;
   end?: string;
   level?: string;
   limit?: number;
-  offset?: number;
   start?: string;
 }) {
-  return requestClient.get<AuditListResponse<RuntimeLogItem>>(
-    '/audit/runtime-logs',
-    { params },
-  );
+  return requestClient.get<RuntimeLogPage>('/audit/runtime-logs', { params });
 }
 
 /** 获取日志保留天数 */
