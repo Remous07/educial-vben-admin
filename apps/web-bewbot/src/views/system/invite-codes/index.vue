@@ -10,6 +10,7 @@ import { IconifyIcon } from '@vben/icons';
 import { usePreferences } from '@vben/preferences';
 
 import {
+  Alert,
   AutoComplete,
   Button,
   Card,
@@ -150,6 +151,7 @@ async function saveEmailDomainSettings() {
 // Code users drawer
 const userDrawerVisible = ref(false);
 const userDrawerCode = ref('');
+const userDrawerUsedCount = ref(0);
 const userDrawerItems = ref<
   { created_at: null | string; email: string; id: number; username: string }[]
 >([]);
@@ -171,6 +173,7 @@ function avatarColor(id: number, name: string): string {
 
 async function showCodeUsers(code: InviteCodeItem) {
   userDrawerCode.value = code.code;
+  userDrawerUsedCount.value = code.used_count;
   userDrawerVisible.value = true;
   userDrawerLoading.value = true;
   try {
@@ -178,6 +181,18 @@ async function showCodeUsers(code: InviteCodeItem) {
   } finally {
     userDrawerLoading.value = false;
   }
+}
+
+// 累计使用 = 历史兑换次数（删号不递减）；在用 = 当前未删除的用户数（实时）。
+// 两数不一致时在列里标注「在用 X」，抽屉内再补充差额说明。
+function usageText(record: InviteCodeItem): string {
+  const base =
+    record.max_uses > 0
+      ? `累计 ${record.used_count} / ${record.max_uses}`
+      : `累计 ${record.used_count} / 不限`;
+  return record.live_used_count < record.used_count
+    ? `${base} · 在用 ${record.live_used_count}`
+    : base;
 }
 
 // ── roles ──
@@ -379,9 +394,9 @@ const columns: TableColumnsType = [
     },
   },
   {
-    title: '使用',
+    title: '累计使用',
     key: 'usage',
-    width: 150,
+    width: 170,
     customRender: ({ record }: { record: InviteCodeItem }) => {
       const canClick = record.used_count > 0;
       if (record.max_uses <= 0)
@@ -392,12 +407,12 @@ const columns: TableColumnsType = [
                 style: 'font-size:12px;cursor:pointer;color:#1677ff',
                 onClick: () => showCodeUsers(record),
               },
-              `${record.used_count} / 不限`,
+              usageText(record),
             )
           : h(
               'span',
               { style: 'font-size:12px;color:#999' },
-              `${record.used_count} / 不限`,
+              usageText(record),
             );
       const pct = Math.round(
         (record.used_count / Math.max(record.max_uses, 1)) * 100,
@@ -418,7 +433,7 @@ const columns: TableColumnsType = [
             h(
               'span',
               { style: 'white-space:nowrap;font-size:12px' },
-              `${record.used_count} / ${record.max_uses}`,
+              usageText(record),
             ),
             h(Progress, {
               percent: Math.min(pct, 100),
@@ -432,7 +447,7 @@ const columns: TableColumnsType = [
       return h(
         'span',
         { style: 'font-size:12px;color:#999' },
-        `${record.used_count} / ${record.max_uses}`,
+        usageText(record),
       );
     },
   },
@@ -980,6 +995,18 @@ onMounted(fetchData);
           <span style="font-weight: 600">注册的用户</span>
         </Space>
       </template>
+
+      <Alert
+        v-if="userDrawerUsedCount > userDrawerItems.length"
+        type="warning"
+        show-icon
+        style="margin-bottom: 12px"
+        :message="
+          userDrawerItems.length === 0
+            ? `该邀请码累计使用 ${userDrawerUsedCount} 次，相关用户均已被删除`
+            : `该邀请码累计使用 ${userDrawerUsedCount} 次，其中 ${userDrawerUsedCount - userDrawerItems.length} 个用户已被删除`
+        "
+      />
 
       <List
         :data-source="userDrawerItems"
