@@ -641,11 +641,15 @@ onMounted(fetchData);
                 激活
               </Button>
             </template>
-            <Tooltip :title="record.is_active ? '需先撤销' : ''">
+            <Tooltip
+              :title="
+                record.is_active && record.used_count > 0 ? '需先撤销' : ''
+              "
+            >
               <Button
                 size="small"
                 danger
-                :disabled="record.is_active"
+                :disabled="record.is_active && record.used_count > 0"
                 @click="handlePermanentDelete(record as ConversationCodeItem)"
               >
                 删除
