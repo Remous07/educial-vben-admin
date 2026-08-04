@@ -23,6 +23,9 @@ const [Form, formApi] = useVbenForm({
       componentProps: {
         placeholder: '请输入 6 位验证码',
         maxlength: 6,
+        // Lets password managers (e.g. Bitwarden) detect and auto-fill the OTP
+        autocomplete: 'one-time-code',
+        inputmode: 'numeric',
       },
       fieldName: 'code',
       rules: z.string().length(6, { message: '请输入 6 位验证码' }),
@@ -59,16 +62,15 @@ async function handleSubmit() {
 
       <Form />
 
-      <VbenButton
-        :loading="loading"
-        class="w-full"
-        @click="handleSubmit"
-      >
+      <VbenButton :loading="loading" class="w-full" @click="handleSubmit">
         验证
       </VbenButton>
 
       <div class="mt-4 text-center text-sm">
-        <a class="cursor-pointer text-blue-500" @click="router.push('/auth/login')">
+        <a
+          class="cursor-pointer text-blue-500"
+          @click="router.push('/auth/login')"
+        >
           返回登录
         </a>
       </div>
