@@ -446,14 +446,6 @@ async function handleReactivate(code: ConversationCodeItem) {
 }
 
 async function handlePermanentDelete(code: ConversationCodeItem) {
-  if (code.is_active) {
-    Modal.warning({
-      title: '需先撤销',
-      content: '该识别码仍有效，请先撤销后再永久删除。',
-      okText: '知道了',
-    });
-    return;
-  }
   Modal.confirm({
     title: `永久删除识别码「${code.code}」？`,
     content: '删除后无法恢复',
@@ -649,13 +641,16 @@ onMounted(fetchData);
                 激活
               </Button>
             </template>
-            <Button
-              size="small"
-              danger
-              @click="handlePermanentDelete(record as ConversationCodeItem)"
-            >
-              删除
-            </Button>
+            <Tooltip :title="record.is_active ? '需先撤销' : ''">
+              <Button
+                size="small"
+                danger
+                :disabled="record.is_active"
+                @click="handlePermanentDelete(record as ConversationCodeItem)"
+              >
+                删除
+              </Button>
+            </Tooltip>
           </Space>
         </template>
       </template>
