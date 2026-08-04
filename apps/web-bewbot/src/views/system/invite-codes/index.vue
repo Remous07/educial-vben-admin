@@ -10,7 +10,6 @@ import { IconifyIcon } from '@vben/icons';
 import { usePreferences } from '@vben/preferences';
 
 import {
-  Alert,
   AutoComplete,
   Button,
   Card,
@@ -996,17 +995,23 @@ onMounted(fetchData);
         </Space>
       </template>
 
-      <Alert
+      <div
         v-if="userDrawerUsedCount > userDrawerItems.length"
-        type="warning"
-        show-icon
+        class="vben-theme-warning"
         style="margin-bottom: 12px"
-        :message="
-          userDrawerItems.length === 0
-            ? `该邀请码累计使用 ${userDrawerUsedCount} 次，相关用户均已被删除`
-            : `该邀请码累计使用 ${userDrawerUsedCount} 次，其中 ${userDrawerUsedCount - userDrawerItems.length} 个用户已被删除`
-        "
-      />
+      >
+        <IconifyIcon
+          icon="lucide:triangle-alert"
+          class="vben-theme-warning-icon"
+        />
+        <span>
+          {{
+            userDrawerItems.length === 0
+              ? `该邀请码累计使用 ${userDrawerUsedCount} 次，相关用户均已被删除`
+              : `该邀请码累计使用 ${userDrawerUsedCount} 次，其中 ${userDrawerUsedCount - userDrawerItems.length} 个用户已被删除`
+          }}
+        </span>
+      </div>
 
       <List
         :data-source="userDrawerItems"
@@ -1345,3 +1350,24 @@ onMounted(fetchData);
     </Modal>
   </Page>
 </template>
+
+<style scoped>
+/* Vben 主题变量（hsl(var(--…)) 随明暗主题自动切换）渲染的警告提示条 */
+.vben-theme-warning {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: hsl(var(--foreground));
+  background: hsl(var(--warning) / 12%);
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+}
+
+.vben-theme-warning-icon {
+  flex-shrink: 0;
+  font-size: 15px;
+  color: hsl(var(--warning));
+}
+</style>
