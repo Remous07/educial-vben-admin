@@ -107,6 +107,7 @@ export interface InviteCodeItem {
   code: string;
   max_uses: number;
   used_count: number;
+  live_used_count: number;
   is_active: boolean;
   expires_at: null | string;
   remark: null | string;
