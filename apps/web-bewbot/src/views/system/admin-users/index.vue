@@ -13,16 +13,19 @@ import {
   Card,
   Checkbox,
   Col,
+  DatePicker,
   Descriptions,
   Input,
   message,
   Modal,
   Row,
+  Select,
   Space,
   Statistic,
   Table,
   Tag,
 } from 'ant-design-vue';
+import dayjs from 'dayjs';
 
 import {
   assignRolesApi,
@@ -38,16 +41,97 @@ defineOptions({ name: 'AdminUsers' });
 const users = ref<AdminUserItem[]>([]);
 const roles = ref<RoleItem[]>([]);
 const loading = ref(false);
+
+// ── filters ────────────────────────────────────────────
 const searchText = ref('');
+const statusPreset = ref<'all' | 'banned' | 'normal' | 'unverified'>('all');
+const statusFlags = ref<string[]>([]);
+const selectedRole = ref<string | undefined>(undefined);
+const registerRange = ref<[dayjs.Dayjs, dayjs.Dayjs] | undefined>(undefined);
+
+const STATUS_FLAG_OPTIONS = [
+  { label: '已封禁', value: 'banned' },
+  { label: '邮箱未验证', value: 'unverified' },
+  { label: '已开启 TOTP', value: 'totp' },
+  { label: '已绑定 TG', value: 'bound' },
+  { label: 'TG 会员', value: 'premium' },
+];
+
+const roleOptions = computed(() =>
+  roles.value.map((r) => ({ label: r.name, value: r.name })),
+);
+
+function matchesStatusPreset(u: AdminUserItem): boolean {
+  if (statusPreset.value === 'normal') return !u.is_banned && u.email_verified;
+  if (statusPreset.value === 'banned') return u.is_banned;
+  if (statusPreset.value === 'unverified') return !u.email_verified;
+  return true;
+}
+
+function matchesStatusFlags(u: AdminUserItem): boolean {
+  const flags = new Set(statusFlags.value);
+  if (flags.has('banned') && !u.is_banned) return false;
+  if (flags.has('unverified') && u.email_verified) return false;
+  if (flags.has('totp') && !u.totp_enabled) return false;
+  if (flags.has('bound') && !u.is_bound) return false;
+  if (flags.has('premium') && !u.telegram_is_premium) return false;
+  return true;
+}
 
 const filteredUsers = computed(() => {
   const q = searchText.value.trim().toLowerCase();
-  if (!q) return users.value;
-  return users.value.filter(
-    (u) =>
-      u.username.toLowerCase().includes(q) || u.email.toLowerCase().includes(q),
-  );
+  return users.value.filter((u) => {
+    // 搜索：用户名 / 邮箱 / TG 用户名 / TG 用户 ID
+    if (q) {
+      const haystack = [
+        u.username,
+        u.email,
+        u.telegram_username || '',
+        u.telegram_id ? String(u.telegram_id) : '',
+      ]
+        .join(' ')
+        .toLowerCase();
+      if (!haystack.includes(q)) return false;
+    }
+    // 状态：统计卡预设 与 状态下拉 互斥（设计约定，仅其中一者生效）
+    if (statusPreset.value !== 'all' && !matchesStatusPreset(u)) return false;
+    if (statusFlags.value.length > 0 && !matchesStatusFlags(u)) return false;
+    // 角色（单选）
+    if (selectedRole.value && !u.roles.includes(selectedRole.value))
+      return false;
+    // 注册时间范围（含起止当天）
+    if (registerRange.value) {
+      const created = u.created_at
+        ? new Date(u.created_at).getTime()
+        : Number.NaN;
+      const start = registerRange.value[0].startOf('day').valueOf();
+      const end = registerRange.value[1].endOf('day').valueOf();
+      if (Number.isNaN(created) || created < start || created > end)
+        return false;
+    }
+    return true;
+  });
 });
+
+// 点统计卡 = 设置状态预设；与状态下拉互斥（清空下拉）
+function setStatusPreset(preset: 'all' | 'banned' | 'normal' | 'unverified') {
+  statusFlags.value = [];
+  statusPreset.value =
+    statusPreset.value === preset && preset !== 'all' ? 'all' : preset;
+}
+
+// 手动改状态下拉 = 回到「全部」预设（清掉卡片高亮）
+function onStatusFlagsChange() {
+  statusPreset.value = 'all';
+}
+
+function resetFilters() {
+  searchText.value = '';
+  statusPreset.value = 'all';
+  statusFlags.value = [];
+  selectedRole.value = undefined;
+  registerRange.value = undefined;
+}
 
 const normalCount = computed(
   () => users.value.filter((u) => !u.is_banned && u.email_verified).length,
@@ -291,12 +375,20 @@ onMounted(fetchData);
   <Page>
     <Row :gutter="[16, 16]" style="margin-bottom: 16px">
       <Col :xs="12" :sm="6">
-        <Card>
+        <Card
+          class="stat-card-clickable"
+          :class="{ 'stat-card-active': statusPreset === 'all' }"
+          @click="setStatusPreset('all')"
+        >
           <Statistic title="总用户" :value="users.length" />
         </Card>
       </Col>
       <Col :xs="12" :sm="6">
-        <Card>
+        <Card
+          class="stat-card-clickable"
+          :class="{ 'stat-card-active': statusPreset === 'normal' }"
+          @click="setStatusPreset('normal')"
+        >
           <Statistic
             title="正常"
             :value="normalCount"
@@ -305,7 +397,11 @@ onMounted(fetchData);
         </Card>
       </Col>
       <Col :xs="12" :sm="6">
-        <Card>
+        <Card
+          class="stat-card-clickable"
+          :class="{ 'stat-card-active': statusPreset === 'banned' }"
+          @click="setStatusPreset('banned')"
+        >
           <Statistic
             title="已封禁"
             :value="bannedCount"
@@ -314,7 +410,11 @@ onMounted(fetchData);
         </Card>
       </Col>
       <Col :xs="12" :sm="6">
-        <Card>
+        <Card
+          class="stat-card-clickable"
+          :class="{ 'stat-card-active': statusPreset === 'unverified' }"
+          @click="setStatusPreset('unverified')"
+        >
           <Statistic
             title="未验证"
             :value="unverifiedCount"
@@ -324,13 +424,34 @@ onMounted(fetchData);
       </Col>
     </Row>
 
-    <Space style="margin-bottom: 16px">
+    <Space wrap style="margin-bottom: 16px">
+      <Select
+        v-model:value="statusFlags"
+        placeholder="状态"
+        multiple
+        allow-clear
+        style="width: 220px"
+        :options="STATUS_FLAG_OPTIONS"
+        @change="onStatusFlagsChange"
+      />
+      <Select
+        v-model:value="selectedRole"
+        placeholder="角色"
+        allow-clear
+        style="width: 150px"
+        :options="roleOptions"
+      />
+      <DatePicker.RangePicker
+        v-model:value="registerRange"
+        :allow-clear="true"
+      />
       <Input.Search
         v-model:value="searchText"
-        placeholder="搜索用户名或邮箱"
+        placeholder="搜索用户名 / 邮箱 / TG用户名 / TG ID"
         allow-clear
-        style="width: 280px"
+        style="width: 300px"
       />
+      <Button @click="resetFilters">重置</Button>
     </Space>
 
     <Table
@@ -484,3 +605,21 @@ onMounted(fetchData);
     </Modal>
   </Page>
 </template>
+
+<style scoped>
+.stat-card-clickable {
+  cursor: pointer;
+  transition:
+    box-shadow 0.2s,
+    border-color 0.2s;
+}
+
+.stat-card-clickable:hover {
+  box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
+}
+
+.stat-card-active {
+  border-color: #1677ff;
+  box-shadow: 0 0 0 1px #1677ff;
+}
+</style>
