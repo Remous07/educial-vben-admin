@@ -20,7 +20,6 @@ export interface AdminUserItem {
   username: string;
   email: string;
   roles: string[];
-  permissions: string[];
   created_at: null | string;
   conversation_code: null | string;
   is_banned: boolean;
