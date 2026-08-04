@@ -58,7 +58,6 @@ const dimTextStyle = computed(() => ({
 }));
 
 const CATEGORY_LABELS: Record<string, string> = {
-  dashboard: '仪表盘',
   messages: '消息',
   conversation: '对话',
   invite: '邀请码',
@@ -68,7 +67,6 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 
 const CATEGORY_ICONS: Record<string, string> = {
-  dashboard: 'lucide:layout-dashboard',
   messages: 'lucide:message-square',
   conversation: 'lucide:message-circle',
   invite: 'lucide:gift',
@@ -78,11 +76,13 @@ const CATEGORY_ICONS: Record<string, string> = {
 };
 
 // 系统管理类权限合并为「系统权限」一组：
-// 后台用户(admin) + TG用户(users) + 注册设置(registration) + 日志审计(audit) + 机器人设置(bot)
+// 仪表盘(dashboard) + 后台用户(admin) + TG用户(users) + 注册设置(registration)
+// + 日志审计(audit) + 机器人设置(bot)
 const SYSTEM_PREFIXES = new Set([
   'admin',
   'audit',
   'bot',
+  'dashboard',
   'registration',
   'users',
 ]);
@@ -97,6 +97,7 @@ const SUB_LABELS: Record<string, string> = {
   admin: '后台用户',
   audit: '日志审计',
   bot: '机器人设置',
+  dashboard: '仪表盘',
   registration: '注册设置',
   users: 'TG用户',
 };
@@ -105,12 +106,20 @@ const SUB_ICONS: Record<string, string> = {
   admin: 'lucide:shield',
   audit: 'lucide:scroll-text',
   bot: 'lucide:bot',
+  dashboard: 'lucide:layout-dashboard',
   registration: 'lucide:user-plus',
   users: 'lucide:users',
 };
 
-// 系统权限组内子分组显示顺序：后台用户 → TG用户 → 注册设置 → 日志审计 → 机器人设置
-const SYSTEM_SUB_ORDER = ['admin', 'users', 'registration', 'audit', 'bot'];
+// 系统权限组内子分组显示顺序：仪表盘 → 后台用户 → TG用户 → 注册设置 → 日志审计 → 机器人设置
+const SYSTEM_SUB_ORDER = [
+  'dashboard',
+  'admin',
+  'users',
+  'registration',
+  'audit',
+  'bot',
+];
 
 interface PermSubGroup {
   icon: string;
