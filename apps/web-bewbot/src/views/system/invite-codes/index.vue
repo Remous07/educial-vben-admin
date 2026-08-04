@@ -182,15 +182,15 @@ async function showCodeUsers(code: InviteCodeItem) {
   }
 }
 
-// 累计使用 = 历史兑换次数（删号不递减）；在用 = 当前未删除的用户数（实时）。
-// 两数不一致时在列里标注「在用 X」，抽屉内再补充差额说明。
+// 累计使用 = 历史兑换次数（删号不递减）；使用中 = 当前未删除的用户数（实时）。
+// 两数不一致时在列里标注「使用中 X」，抽屉内再补充差额说明。
 function usageText(record: InviteCodeItem): string {
   const base =
     record.max_uses > 0
       ? `累计 ${record.used_count} / ${record.max_uses}`
       : `累计 ${record.used_count} / 不限`;
   return record.live_used_count < record.used_count
-    ? `${base} · 在用 ${record.live_used_count}`
+    ? `${base} · 使用中 ${record.live_used_count}`
     : base;
 }
 
