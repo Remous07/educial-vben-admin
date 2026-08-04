@@ -7,6 +7,7 @@ export interface AuditOperationItem {
   action_label: string;
   detail: null | string;
   ip: null | string;
+  country: null | string;
   created_at: null | string;
 }
 

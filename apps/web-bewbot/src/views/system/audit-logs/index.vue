@@ -71,6 +71,16 @@ function toLocalIso(d?: dayjs.Dayjs): string | undefined {
   return d ? d.format('YYYY-MM-DDTHH:mm:ss') : undefined;
 }
 
+function flagEmoji(code: null | string): string {
+  if (!code || code.length !== 2 || !/^[A-Z]{2}$/.test(code)) {
+    return '';
+  }
+  // Regional indicator symbol: 0x1F1E6 - 'A'(65) = 127397
+  return String.fromCodePoint(
+    ...[...code].map((c) => 127_397 + (c.codePointAt(0) ?? 0)),
+  );
+}
+
 // ── retention config ───────────────────────────────────
 
 const auditDays = ref(90);
@@ -127,6 +137,14 @@ const opColumns = [
   },
   { title: '详情', dataIndex: 'detail', key: 'detail', ellipsis: true },
   { title: 'IP', dataIndex: 'ip', key: 'ip', width: 140 },
+  {
+    title: '国家',
+    dataIndex: 'country',
+    key: 'country',
+    width: 90,
+    customRender: ({ text }: { text: null | string }) =>
+      text ? `${flagEmoji(text)} ${text}` : '-',
+  },
 ];
 
 async function fetchOperations() {
