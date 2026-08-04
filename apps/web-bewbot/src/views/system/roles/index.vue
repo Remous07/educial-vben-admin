@@ -10,7 +10,6 @@ import { IconifyIcon } from '@vben/icons';
 import { usePreferences } from '@vben/preferences';
 
 import {
-  Alert,
   Button,
   Checkbox,
   Collapse,
@@ -574,22 +573,29 @@ onMounted(fetchData);
         </div>
       </div>
 
-      <!-- Consequence alert -->
-      <Alert
-        type="error"
-        show-icon
-        style="margin-bottom: 16px"
-        :message="
-          (deleteTarget?.admin_user_count ?? 0) > 0
-            ? `删除后 ${deleteTarget?.admin_user_count} 个用户将失去该角色的全部权限`
-            : '该角色当前无用户使用，可以安全删除'
-        "
-        :description="
-          (deleteTarget?.admin_user_count ?? 0) > 0
-            ? '这些用户不会从系统中移除，仅被赋予降级注册角色。'
-            : '此操作不可恢复。'
-        "
-      />
+      <!-- Consequence banner (Vben 主题 token 渲染) -->
+      <div class="vben-theme-danger" style="margin-bottom: 16px">
+        <IconifyIcon
+          icon="lucide:circle-alert"
+          class="vben-theme-danger-icon"
+        />
+        <div class="vben-theme-danger-body">
+          <div class="vben-theme-danger-title">
+            {{
+              (deleteTarget?.admin_user_count ?? 0) > 0
+                ? `删除后 ${deleteTarget?.admin_user_count} 个用户将失去该角色的全部权限`
+                : '该角色当前无用户使用，可以安全删除'
+            }}
+          </div>
+          <div class="vben-theme-danger-desc">
+            {{
+              (deleteTarget?.admin_user_count ?? 0) > 0
+                ? '这些用户不会从系统中移除，仅被赋予降级注册角色。'
+                : '此操作不可恢复。'
+            }}
+          </div>
+        </div>
+      </div>
 
       <!-- Confirm input -->
       <div>
@@ -721,5 +727,42 @@ onMounted(fetchData);
 .metric-num {
   font-size: 20px;
   font-weight: 700;
+}
+
+/* Vben 主题 token（hsl(var(--…)) 随明暗主题自动切换）渲染的危险提示横幅 */
+.vben-theme-danger {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  font-size: 13px;
+  color: hsl(var(--foreground));
+  background: hsl(var(--destructive) / 12%);
+  border: 1px solid hsl(var(--destructive) / 25%);
+  border-radius: var(--radius);
+}
+
+.vben-theme-danger-icon {
+  flex-shrink: 0;
+  margin-top: 1px;
+  font-size: 16px;
+  color: hsl(var(--destructive));
+}
+
+.vben-theme-danger-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.vben-theme-danger-title {
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+
+.vben-theme-danger-desc {
+  font-size: 12px;
+  color: hsl(var(--muted-foreground));
 }
 </style>
