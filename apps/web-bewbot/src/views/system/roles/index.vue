@@ -59,7 +59,6 @@ const dimTextStyle = computed(() => ({
 
 const CATEGORY_LABELS: Record<string, string> = {
   dashboard: '仪表盘',
-  users: '用户',
   messages: '消息',
   conversation: '对话',
   invite: '邀请码',
@@ -70,7 +69,6 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 const CATEGORY_ICONS: Record<string, string> = {
   dashboard: 'lucide:layout-dashboard',
-  users: 'lucide:users',
   messages: 'lucide:message-square',
   conversation: 'lucide:message-circle',
   invite: 'lucide:gift',
@@ -80,8 +78,14 @@ const CATEGORY_ICONS: Record<string, string> = {
 };
 
 // 系统管理类权限合并为「系统权限」一组：
-// 后台用户(admin) + 注册设置(registration) + 日志审计(audit) + 机器人设置(bot)
-const SYSTEM_PREFIXES = new Set(['admin', 'audit', 'bot', 'registration']);
+// 后台用户(admin) + TG用户(users) + 注册设置(registration) + 日志审计(audit) + 机器人设置(bot)
+const SYSTEM_PREFIXES = new Set([
+  'admin',
+  'audit',
+  'bot',
+  'registration',
+  'users',
+]);
 
 function groupOf(code: string): string {
   const prefix = code.split(':')[0] || 'other';
@@ -94,6 +98,7 @@ const SUB_LABELS: Record<string, string> = {
   audit: '日志审计',
   bot: '机器人设置',
   registration: '注册设置',
+  users: 'TG用户',
 };
 
 const SUB_ICONS: Record<string, string> = {
@@ -101,10 +106,11 @@ const SUB_ICONS: Record<string, string> = {
   audit: 'lucide:scroll-text',
   bot: 'lucide:bot',
   registration: 'lucide:user-plus',
+  users: 'lucide:users',
 };
 
-// 系统权限组内子分组显示顺序：后台用户 → 注册设置 → 日志审计 → 机器人设置
-const SYSTEM_SUB_ORDER = ['admin', 'registration', 'audit', 'bot'];
+// 系统权限组内子分组显示顺序：后台用户 → TG用户 → 注册设置 → 日志审计 → 机器人设置
+const SYSTEM_SUB_ORDER = ['admin', 'users', 'registration', 'audit', 'bot'];
 
 interface PermSubGroup {
   icon: string;
