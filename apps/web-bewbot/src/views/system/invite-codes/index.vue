@@ -440,6 +440,7 @@ const columns: TableColumnsType = [
               strokeColor,
               showInfo: false,
               style: 'flex:1',
+              class: 'cell-progress',
             }),
           ],
         );
@@ -1369,5 +1370,14 @@ onMounted(fetchData);
   flex-shrink: 0;
   font-size: 15px;
   color: hsl(var(--warning));
+}
+
+/* 让 antd Progress 小号轨道与相邻文字垂直居中对齐：
+   根节点 antd 默认 line-height 会撑出行框、轨道 baseline 贴底，
+   改为 inline-flex 容器后轨道作为 flex item 被 align-items:center 居中。 */
+.cell-progress {
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
 }
 </style>
