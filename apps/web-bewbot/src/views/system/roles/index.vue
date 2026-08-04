@@ -57,71 +57,71 @@ const dimTextStyle = computed(() => ({
   color: isDark.value ? 'rgba(255,255,255,0.6)' : '#666',
 }));
 
+// 顶层分组及其子分组划分。多子分组的分组（机器人功能/系统权限）渲染为
+// 可折叠子分组；其余单子分组（个人设置等）平铺展示。
+const GROUP_SUB_PREFIXES: Record<string, string[]> = {
+  system: [
+    'dashboard',
+    'admin',
+    'users',
+    'registration',
+    'invite',
+    'audit',
+    'bot',
+  ],
+  bot_features: ['messages', 'conversation', 'visitors'],
+};
+
+const PREFIX_TO_GROUP: Record<string, string> = {};
+for (const [group, prefixes] of Object.entries(GROUP_SUB_PREFIXES)) {
+  for (const prefix of prefixes) {
+    PREFIX_TO_GROUP[prefix] = group;
+  }
+}
+
+function groupOf(code: string): string {
+  const prefix = code.split(':')[0] || 'other';
+  return PREFIX_TO_GROUP[prefix] || prefix;
+}
+
 const CATEGORY_LABELS: Record<string, string> = {
-  messages: '消息',
-  conversation: '对话',
-  visitors: '访客',
+  bot_features: '机器人功能',
   system: '系统权限',
   profile: '个人设置',
 };
 
 const CATEGORY_ICONS: Record<string, string> = {
-  messages: 'lucide:message-square',
-  conversation: 'lucide:message-circle',
-  visitors: 'lucide:ban',
+  bot_features: 'lucide:bot',
   system: 'lucide:shield',
   profile: 'lucide:settings',
 };
 
-// 系统管理类权限合并为「系统权限」一组：
-// 仪表盘(dashboard) + 后台用户(admin) + TG用户(users) + 注册设置(registration)
-// + 邀请码(invite) + 日志审计(audit) + 机器人设置(bot)
-const SYSTEM_PREFIXES = new Set([
-  'admin',
-  'audit',
-  'bot',
-  'dashboard',
-  'invite',
-  'registration',
-  'users',
-]);
-
-function groupOf(code: string): string {
-  const prefix = code.split(':')[0] || 'other';
-  return SYSTEM_PREFIXES.has(prefix) ? 'system' : prefix;
-}
-
-// 系统权限组内的子分组标签与图标（其余分组为单子分组、不显示子分组标题）
+// 子分组标签与图标
 const SUB_LABELS: Record<string, string> = {
   admin: '后台用户',
   audit: '日志审计',
   bot: '机器人设置',
+  conversation: '对话',
   dashboard: '仪表盘',
   invite: '邀请码',
+  messages: '消息',
   registration: '注册设置',
   users: 'TG用户',
+  visitors: '访客',
 };
 
 const SUB_ICONS: Record<string, string> = {
   admin: 'lucide:shield',
   audit: 'lucide:scroll-text',
   bot: 'lucide:bot',
+  conversation: 'lucide:message-circle',
   dashboard: 'lucide:layout-dashboard',
   invite: 'lucide:gift',
+  messages: 'lucide:message-square',
   registration: 'lucide:user-plus',
   users: 'lucide:users',
+  visitors: 'lucide:ban',
 };
-
-// 系统权限组内子分组显示顺序：仪表盘 → 后台用户 → TG用户 → 注册设置 → 邀请码 → 日志审计 → 机器人设置
-const SYSTEM_SUB_ORDER = [
-  'dashboard',
-  'admin',
-  'users',
-  'registration',
-  'invite',
-  'audit',
-  'bot',
-];
 
 interface PermSubGroup {
   icon: string;
@@ -139,16 +139,20 @@ function toSubGroup(key: string, perms: PermissionItem[]): PermSubGroup {
   };
 }
 
-function systemSubGroups(perms: PermissionItem[]): PermSubGroup[] {
+function subGroupsFor(
+  perms: PermissionItem[],
+  groupKey: string,
+): PermSubGroup[] {
+  const prefixes = GROUP_SUB_PREFIXES[groupKey] || [];
   const groups: Record<string, PermissionItem[]> = {};
   for (const perm of perms) {
     const prefix = perm.code.split(':')[0] || 'other';
     (groups[prefix] ??= []).push(perm);
   }
   const ordered: PermSubGroup[] = [];
-  for (const key of SYSTEM_SUB_ORDER) {
-    const subPerms = groups[key];
-    if (subPerms) ordered.push(toSubGroup(key, subPerms));
+  for (const prefix of prefixes) {
+    const subPerms = groups[prefix];
+    if (subPerms) ordered.push(toSubGroup(prefix, subPerms));
   }
   return ordered;
 }
@@ -169,8 +173,9 @@ const permissionGroups = computed(() => {
       label: CATEGORY_LABELS[key] || key,
       icon: CATEGORY_ICONS[key] || 'lucide:folder',
       perms,
-      subgroups:
-        key === 'system' ? systemSubGroups(perms) : [toSubGroup(key, perms)],
+      subgroups: GROUP_SUB_PREFIXES[key]
+        ? subGroupsFor(perms, key)
+        : [toSubGroup(key, perms)],
     }));
 });
 
