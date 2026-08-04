@@ -149,11 +149,9 @@ export async function refreshTokenApi() {
   });
 }
 
-/** 退出登录 */
+/** 退出登录 — use requestClient so the JWT is sent and the audit records the actor */
 export async function logoutApi() {
-  return baseRequestClient.post('/auth/logout', {
-    withCredentials: true,
-  });
+  return requestClient.post('/auth/logout');
 }
 
 /** 获取用户权限码 */
