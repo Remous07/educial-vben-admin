@@ -366,7 +366,7 @@ const columns: TableColumnsType = [
     sorter: (a: InviteCodeItem, b: InviteCodeItem) => a.id - b.id,
     sortDirections: ['ascend', 'descend'],
   },
-  { title: '邀请码', dataIndex: 'code', key: 'code', width: 180 },
+  { title: '邀请码', dataIndex: 'code', key: 'code', width: 140 },
   {
     title: '状态',
     key: 'status',
@@ -395,7 +395,7 @@ const columns: TableColumnsType = [
   {
     title: '累计使用',
     key: 'usage',
-    width: 170,
+    width: 220,
     customRender: ({ record }: { record: InviteCodeItem }) => {
       const canClick = record.used_count > 0;
       if (record.max_uses <= 0)
@@ -454,7 +454,7 @@ const columns: TableColumnsType = [
   {
     title: '过期时间',
     key: 'expiry',
-    width: 160,
+    width: 180,
     customRender: ({ record }: { record: InviteCodeItem }) => {
       if (!record.expires_at) return '永不过期';
       const created = new Date(
@@ -502,7 +502,7 @@ const columns: TableColumnsType = [
     title: '创建时间',
     dataIndex: 'created_at',
     key: 'created_at',
-    width: 180,
+    width: 150,
     customRender: ({ text }: { text: null | string }) =>
       text ? new Date(text).toLocaleString('zh-CN') : '-',
     sorter: (a: InviteCodeItem, b: InviteCodeItem) =>
