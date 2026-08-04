@@ -87,16 +87,73 @@ function groupOf(code: string): string {
   return SYSTEM_PREFIXES.has(prefix) ? 'system' : prefix;
 }
 
+// 系统权限组内的子分组标签与图标（其余分组为单子分组、不显示子分组标题）
+const SUB_LABELS: Record<string, string> = {
+  admin: '后台用户',
+  audit: '日志审计',
+  bot: '机器人设置',
+  registration: '注册设置',
+};
+
+const SUB_ICONS: Record<string, string> = {
+  admin: 'lucide:shield',
+  audit: 'lucide:scroll-text',
+  bot: 'lucide:bot',
+  registration: 'lucide:user-plus',
+};
+
+// 系统权限组内子分组显示顺序：后台用户 → 注册设置 → 日志审计 → 机器人设置
+const SYSTEM_SUB_ORDER = ['admin', 'registration', 'audit', 'bot'];
+
+interface PermSubGroup {
+  icon: string;
+  key: string;
+  label: string;
+  perms: PermissionItem[];
+}
+
+function toSubGroup(key: string, perms: PermissionItem[]): PermSubGroup {
+  return {
+    key,
+    label: SUB_LABELS[key] || key,
+    icon: SUB_ICONS[key] || 'lucide:folder',
+    perms,
+  };
+}
+
+function systemSubGroups(perms: PermissionItem[]): PermSubGroup[] {
+  const groups: Record<string, PermissionItem[]> = {};
+  for (const perm of perms) {
+    const prefix = perm.code.split(':')[0] || 'other';
+    (groups[prefix] ??= []).push(perm);
+  }
+  const ordered: PermSubGroup[] = [];
+  for (const key of SYSTEM_SUB_ORDER) {
+    const subPerms = groups[key];
+    if (subPerms) ordered.push(toSubGroup(key, subPerms));
+  }
+  return ordered;
+}
+
 const permissionGroups = computed(() => {
   const groups: Record<string, PermissionItem[]> = {};
   for (const perm of permissions.value) {
     const key = groupOf(perm.code);
     (groups[key] ??= []).push(perm);
   }
-  return Object.entries(groups).toSorted(([a], [b]) => {
-    const labels = Object.keys(CATEGORY_LABELS);
-    return labels.indexOf(a) - labels.indexOf(b);
-  });
+  return Object.entries(groups)
+    .toSorted(([a], [b]) => {
+      const labels = Object.keys(CATEGORY_LABELS);
+      return labels.indexOf(a) - labels.indexOf(b);
+    })
+    .map(([key, perms]) => ({
+      key,
+      label: CATEGORY_LABELS[key] || key,
+      icon: CATEGORY_ICONS[key] || 'lucide:folder',
+      perms,
+      subgroups:
+        key === 'system' ? systemSubGroups(perms) : [toSubGroup(key, perms)],
+    }));
 });
 
 function selectedCount(perms: PermissionItem[]): number {
@@ -125,7 +182,7 @@ const allGroupsExpanded = computed(() => {
 function toggleAllGroups() {
   activePermGroups.value = allGroupsExpanded.value
     ? []
-    : permissionGroups.value.map(([key]) => key);
+    : permissionGroups.value.map((g) => g.key);
 }
 
 const columns: TableColumnsType = [
@@ -344,42 +401,68 @@ onMounted(fetchData);
           v-if="permissions.length"
           v-model:active-key="activePermGroups"
         >
-          <Collapse.Panel
-            v-for="[prefix, perms] in permissionGroups"
-            :key="prefix"
-          >
+          <Collapse.Panel v-for="group in permissionGroups" :key="group.key">
             <template #header>
               <span style="font-weight: 500">
                 <IconifyIcon
-                  :icon="CATEGORY_ICONS[prefix] || 'lucide:folder'"
+                  :icon="group.icon"
                   style="
                     margin-right: 6px;
                     vertical-align: -2px;
                     color: #1677ff;
                   "
                 />
-                {{ CATEGORY_LABELS[prefix] || prefix }}
+                {{ group.label }}
               </span>
-              <Tag :color="groupTagColor(perms)" style="margin-left: 8px">
-                {{ selectedCount(perms) }} / {{ perms.length }}
+              <Tag :color="groupTagColor(group.perms)" style="margin-left: 8px">
+                {{ selectedCount(group.perms) }} / {{ group.perms.length }}
               </Tag>
             </template>
             <div
-              v-for="perm in perms"
-              :key="perm.id"
-              class="perm-item"
-              :class="{
-                'is-selected': formPermissionIds.includes(perm.id),
-                'is-dark': isDark,
-              }"
-              @click="togglePermission(perm)"
+              v-for="sub in group.subgroups"
+              :key="sub.key"
+              class="perm-subgroup"
             >
-              <Checkbox
-                :checked="formPermissionIds.includes(perm.id)"
-                style="flex-shrink: 0; pointer-events: none"
-              />
-              <Tag class="perm-code" color="processing">{{ perm.code }}</Tag>
-              <span class="perm-name">{{ perm.name }}</span>
+              <div
+                v-if="group.subgroups.length > 1"
+                class="perm-subgroup-header"
+              >
+                <IconifyIcon
+                  :icon="sub.icon"
+                  style="
+                    margin-right: 4px;
+                    font-size: 14px;
+                    vertical-align: -2px;
+                    color: #1677ff;
+                  "
+                />
+                <span class="perm-subgroup-name" :style="dimTextStyle">
+                  {{ sub.label }}
+                </span>
+                <Tag
+                  :color="groupTagColor(sub.perms)"
+                  class="perm-subgroup-tag"
+                >
+                  {{ selectedCount(sub.perms) }} / {{ sub.perms.length }}
+                </Tag>
+              </div>
+              <div
+                v-for="perm in sub.perms"
+                :key="perm.id"
+                class="perm-item"
+                :class="{
+                  'is-selected': formPermissionIds.includes(perm.id),
+                  'is-dark': isDark,
+                }"
+                @click="togglePermission(perm)"
+              >
+                <Checkbox
+                  :checked="formPermissionIds.includes(perm.id)"
+                  style="flex-shrink: 0; pointer-events: none"
+                />
+                <Tag class="perm-code" color="processing">{{ perm.code }}</Tag>
+                <span class="perm-name">{{ perm.name }}</span>
+              </div>
             </div>
           </Collapse.Panel>
         </Collapse>
@@ -476,6 +559,29 @@ onMounted(fetchData);
 </template>
 
 <style scoped>
+.perm-subgroup {
+  margin-bottom: 8px;
+}
+
+.perm-subgroup:last-child {
+  margin-bottom: 0;
+}
+
+.perm-subgroup-header {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding: 2px 6px 6px;
+}
+
+.perm-subgroup-name {
+  font-weight: 500;
+}
+
+.perm-subgroup-tag {
+  margin: 0;
+}
+
 .perm-item {
   display: flex;
   gap: 10px;
