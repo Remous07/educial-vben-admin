@@ -136,12 +136,9 @@ function systemSubGroups(perms: PermissionItem[]): PermSubGroup[] {
   return ordered;
 }
 
-// 子分组权限数 >1 时才可折叠；打开模态框时默认全部展开
+// 子分组全部可折叠；打开模态框时默认全部展开
 function defaultExpandedSubKeys(): string[] {
-  return permissionGroups.value
-    .flatMap((g) => g.subgroups)
-    .filter((s) => s.perms.length > 1)
-    .map((s) => s.key);
+  return permissionGroups.value.flatMap((g) => g.subgroups).map((s) => s.key);
 }
 
 const permissionGroups = computed(() => {
@@ -438,8 +435,8 @@ onMounted(fetchData);
               :key="sub.key"
               class="perm-subgroup"
             >
-              <!-- 子分组权限数 >1 时嵌入一层可折叠面板（如后台用户） -->
-              <template v-if="sub.perms.length > 1">
+              <!-- 组内有多个子分组时，每个子分组均可折叠（不限于权限数量） -->
+              <template v-if="group.subgroups.length > 1">
                 <Collapse
                   v-model:active-key="activeSubKeys"
                   :bordered="false"
@@ -491,31 +488,8 @@ onMounted(fetchData);
                   </Collapse.Panel>
                 </Collapse>
               </template>
-              <!-- 单权限子分组保持平铺 -->
+              <!-- 单子分组（非系统权限组）保持平铺 -->
               <template v-else>
-                <div
-                  v-if="group.subgroups.length > 1"
-                  class="perm-subgroup-header"
-                >
-                  <IconifyIcon
-                    :icon="sub.icon"
-                    style="
-                      margin-right: 4px;
-                      font-size: 14px;
-                      vertical-align: -2px;
-                      color: #1677ff;
-                    "
-                  />
-                  <span class="perm-subgroup-name" :style="dimTextStyle">
-                    {{ sub.label }}
-                  </span>
-                  <Tag
-                    :color="groupTagColor(sub.perms)"
-                    class="perm-subgroup-tag"
-                  >
-                    {{ selectedCount(sub.perms) }} / {{ sub.perms.length }}
-                  </Tag>
-                </div>
                 <div
                   v-for="perm in sub.perms"
                   :key="perm.id"
@@ -640,15 +614,7 @@ onMounted(fetchData);
   margin-bottom: 0;
 }
 
-.perm-subgroup-header {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  padding: 2px 6px 6px;
-}
-
 .perm-subgroup-collapse {
-  margin-bottom: 8px;
   background: transparent;
   border: none;
 }
