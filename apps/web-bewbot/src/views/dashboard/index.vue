@@ -106,6 +106,13 @@ const QUICK_LINKS: QuickLink[] = [
     desc: '配置角色与权限',
     color: '#13c2c2',
   },
+  {
+    path: '/system/audit-logs',
+    icon: 'lucide:scroll-text',
+    title: '日志审计',
+    desc: '查看操作记录与运行日志',
+    color: '#f5222d',
+  },
 ];
 
 // Visible paths come from the backend menu endpoint — the same source the
