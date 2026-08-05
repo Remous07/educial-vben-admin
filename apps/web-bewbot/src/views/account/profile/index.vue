@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router';
 
 import { Page } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
+import { usePreferences } from '@vben/preferences';
 import { useUserStore } from '@vben/stores';
 
 import {
@@ -46,6 +47,7 @@ defineOptions({ name: 'Profile' });
 const router = useRouter();
 const userStore = useUserStore();
 const authStore = useAuthStore();
+const { isDark } = usePreferences();
 const userInfo = userStore.userInfo;
 const loading = ref(false);
 
@@ -404,14 +406,19 @@ onMounted(async () => {
       <div style="max-width: 920px">
         <!-- Profile header -->
         <div
+          :style="{
+            background: isDark
+              ? 'linear-gradient(120deg, #1e293b 0%, #312e81 100%)'
+              : 'linear-gradient(120deg, #e6f4ff 0%, #f9f0ff 100%)',
+            borderColor: isDark ? '#334155' : '#f0f0f0',
+          }"
           style="
             display: flex;
             gap: 16px;
             align-items: center;
             padding: 20px 24px;
             margin-bottom: 16px;
-            background: linear-gradient(120deg, #e6f4ff 0%, #f9f0ff 100%);
-            border: 1px solid #f0f0f0;
+            border: 1px solid;
             border-radius: 12px;
           "
         >
@@ -438,18 +445,24 @@ onMounted(async () => {
             {{ avatarChar(userInfo?.username || '') }}
           </div>
           <div style="flex: 1; min-width: 0">
-            <div style="font-size: 18px; font-weight: 600; color: #1d1d1d">
+            <div
+              :style="{
+                fontSize: '18px',
+                fontWeight: 600,
+                color: isDark ? '#e5e7eb' : '#1d1d1d',
+              }"
+            >
               {{ userInfo?.username }}
             </div>
             <div
-              style="
-                margin-top: 2px;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                font-size: 13px;
-                color: #666;
-                white-space: nowrap;
-              "
+              :style="{
+                marginTop: '2px',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                fontSize: '13px',
+                color: isDark ? '#94a3b8' : '#666',
+                whiteSpace: 'nowrap',
+              }"
             >
               {{ userInfo?.email || '-' }}
             </div>
@@ -610,7 +623,8 @@ onMounted(async () => {
                       padding: 4px 10px;
                       font-size: 20px;
                       font-weight: bold;
-                      background: #f5f5f5;
+                      color: hsl(var(--foreground));
+                      background: hsl(var(--muted));
                       border-radius: 6px;
                     "
                   >
@@ -984,8 +998,9 @@ onMounted(async () => {
                 flex: 1;
                 padding: 6px 10px;
                 font-size: 14px;
+                color: hsl(var(--foreground));
                 word-break: break-all;
-                background: #f5f5f5;
+                background: hsl(var(--muted));
                 border-radius: 6px;
               "
             >
@@ -1048,10 +1063,10 @@ onMounted(async () => {
           padding: 12px;
           margin-bottom: 16px;
           font-size: 13px;
-          color: #cf1322;
-          background: #fff2f0;
-          border: 1px solid #ffccc7;
-          border-radius: 6px;
+          color: hsl(var(--foreground));
+          background: hsl(var(--destructive) / 12%);
+          border: 1px solid hsl(var(--destructive) / 25%);
+          border-radius: var(--radius);
         "
       >
         <div>
