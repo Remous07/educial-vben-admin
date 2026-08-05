@@ -46,26 +46,91 @@ defineOptions({ name: 'AuditLogs' });
 const { isDark } = usePreferences();
 
 const ACTION_OPTIONS = [
-  { label: '登录', value: 'auth.login' },
-  { label: '登录失败', value: 'auth.login.failed' },
-  { label: '两步验证登录', value: 'auth.login_totp' },
-  { label: '登出', value: 'auth.logout' },
-  { label: '注册账号', value: 'auth.register' },
-  { label: '请求重置密码', value: 'auth.reset_password_request' },
-  { label: '重置密码', value: 'auth.reset_password' },
-  { label: '拉黑 TG 用户', value: 'user.ban' },
-  { label: '解除拉黑 TG 用户', value: 'user.unban' },
-  { label: '删除 TG 用户', value: 'user.delete' },
-  { label: '封禁系统用户', value: 'admin.ban' },
-  { label: '解封系统用户', value: 'admin.unban' },
-  { label: '删除系统用户', value: 'admin.delete' },
-  { label: '分配角色', value: 'admin.roles' },
-  { label: '邀请码操作', value: 'invite.create' },
-  { label: '识别码操作', value: 'code.create' },
-  { label: '修改系统设置', value: 'settings.update' },
-  { label: '修改密码', value: 'profile.password' },
-  { label: '两步验证', value: 'profile.totp_enable' },
-  { label: '绑定 Telegram', value: 'profile.bind' },
+  {
+    label: '认证',
+    options: [
+      { label: '登录', value: 'auth.login' },
+      { label: '登录失败', value: 'auth.login.failed' },
+      { label: '两步验证登录', value: 'auth.login_totp' },
+      { label: '两步验证失败', value: 'auth.login_totp.failed' },
+      { label: '登出', value: 'auth.logout' },
+      { label: '注册账号', value: 'auth.register' },
+      { label: '请求重置密码', value: 'auth.reset_password_request' },
+      { label: '重置密码', value: 'auth.reset_password' },
+    ],
+  },
+  {
+    label: 'TG 用户操作',
+    options: [
+      { label: '拉黑 TG 用户', value: 'user.ban' },
+      { label: '解除拉黑 TG 用户', value: 'user.unban' },
+      { label: '删除 TG 用户', value: 'user.delete' },
+      { label: '解绑 TG 用户', value: 'user.unbind' },
+    ],
+  },
+  {
+    label: '系统用户操作',
+    options: [
+      { label: '封禁系统用户', value: 'admin.ban' },
+      { label: '解封系统用户', value: 'admin.unban' },
+      { label: '删除系统用户', value: 'admin.delete' },
+      { label: '分配角色', value: 'admin.roles' },
+    ],
+  },
+  {
+    label: '角色管理',
+    options: [
+      { label: '创建角色', value: 'role.create' },
+      { label: '编辑角色', value: 'role.edit' },
+      { label: '删除角色', value: 'role.delete' },
+    ],
+  },
+  {
+    label: '邀请码操作',
+    options: [
+      { label: '生成邀请码', value: 'invite.create' },
+      { label: '编辑邀请码', value: 'invite.edit' },
+      { label: '撤销邀请码', value: 'invite.revoke' },
+      { label: '重新激活邀请码', value: 'invite.reactivate' },
+      { label: '永久删除邀请码', value: 'invite.delete' },
+    ],
+  },
+  {
+    label: '识别码操作',
+    options: [
+      { label: '创建临时识别码', value: 'code.create' },
+      { label: '编辑临时识别码', value: 'code.edit' },
+      { label: '撤销临时识别码', value: 'code.revoke' },
+      { label: '激活临时识别码', value: 'code.reactivate' },
+      { label: '永久删除识别码', value: 'code.delete' },
+      { label: '轮换默认识别码', value: 'code.rotate' },
+      { label: '设置默认识别码', value: 'code.set' },
+    ],
+  },
+  {
+    label: '个人设置',
+    options: [
+      { label: '修改密码', value: 'profile.password' },
+      { label: '修改邮箱', value: 'profile.email' },
+      { label: '修改用户名', value: 'profile.username' },
+      { label: '开启两步验证', value: 'profile.totp_enable' },
+      { label: '关闭两步验证', value: 'profile.totp_disable' },
+      { label: '绑定 Telegram', value: 'profile.bind' },
+      { label: '解绑 Telegram', value: 'profile.unbind' },
+    ],
+  },
+  {
+    label: '账户',
+    options: [{ label: '注销账号', value: 'account.delete' }],
+  },
+  {
+    label: '系统设置',
+    options: [{ label: '修改系统设置', value: 'settings.update' }],
+  },
+  {
+    label: '审计',
+    options: [{ label: '清空运行日志', value: 'audit.clear_runtime_logs' }],
+  },
 ];
 
 const LEVEL_OPTIONS = [
