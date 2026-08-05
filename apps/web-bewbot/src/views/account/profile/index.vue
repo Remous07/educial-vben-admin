@@ -808,37 +808,42 @@ onMounted(async () => {
         </Space>
       </template>
 
-      <div style="margin-bottom: 16px">
-        <label style="font-size: 13px; color: #666">当前密码</label>
-        <Input
-          v-model:value="emailCurrentPwd"
-          type="password"
-          autocomplete="current-password"
-          placeholder="请输入当前密码"
-          style="margin-top: 6px"
-        />
-      </div>
-      <div v-if="totpEnabled" style="margin-bottom: 16px">
-        <label style="font-size: 13px; color: #666">两步验证码</label>
-        <Input
-          v-model:value="emailTotpCode"
-          autocomplete="one-time-code"
-          inputmode="numeric"
-          placeholder="请输入 6 位验证码"
-          :maxlength="6"
-          style="margin-top: 6px"
-        />
-      </div>
-      <div>
-        <label style="font-size: 13px; color: #666">新邮箱</label>
-        <Input
-          v-model:value="newEmail"
-          type="email"
-          autocomplete="email"
-          placeholder="请输入新邮箱"
-          style="margin-top: 6px"
-        />
-      </div>
+      <form @submit.prevent="handleChangeEmail">
+        <div style="margin-bottom: 16px">
+          <label style="font-size: 13px; color: #666">当前密码</label>
+          <Input
+            v-model:value="emailCurrentPwd"
+            type="password"
+            name="currentPassword"
+            autocomplete="current-password"
+            placeholder="请输入当前密码"
+            style="margin-top: 6px"
+          />
+        </div>
+        <div v-if="totpEnabled" style="margin-bottom: 16px">
+          <label style="font-size: 13px; color: #666">两步验证码</label>
+          <Input
+            v-model:value="emailTotpCode"
+            name="totp"
+            autocomplete="one-time-code"
+            inputmode="numeric"
+            placeholder="请输入 6 位验证码"
+            :maxlength="6"
+            style="margin-top: 6px"
+          />
+        </div>
+        <div>
+          <label style="font-size: 13px; color: #666">新邮箱</label>
+          <Input
+            v-model:value="newEmail"
+            type="email"
+            name="newEmail"
+            autocomplete="email"
+            placeholder="请输入新邮箱"
+            style="margin-top: 6px"
+          />
+        </div>
+      </form>
     </Modal>
 
     <!-- Change Username Modal -->
@@ -1056,29 +1061,33 @@ onMounted(async () => {
           冷静期结束后账号将被永久删除，所有数据不可恢复。
         </div>
       </div>
-      <div>
-        <label style="font-size: 13px; color: #666">请输入密码确认</label>
-        <Input
-          v-model:value="deletePassword"
-          type="password"
-          autocomplete="current-password"
-          placeholder="请输入当前密码"
-          style="margin-top: 6px"
-        />
-      </div>
-      <template v-if="totpEnabled">
-        <div style="margin-top: 12px">
-          <label style="font-size: 13px; color: #666">两步验证码</label>
+      <form @submit.prevent="handleDeleteAccount">
+        <div>
+          <label style="font-size: 13px; color: #666">请输入密码确认</label>
           <Input
-            v-model:value="deleteTotpCode"
-            autocomplete="one-time-code"
-            inputmode="numeric"
-            placeholder="请输入 6 位验证码"
-            :maxlength="6"
+            v-model:value="deletePassword"
+            type="password"
+            name="currentPassword"
+            autocomplete="current-password"
+            placeholder="请输入当前密码"
             style="margin-top: 6px"
           />
         </div>
-      </template>
+        <template v-if="totpEnabled">
+          <div style="margin-top: 12px">
+            <label style="font-size: 13px; color: #666">两步验证码</label>
+            <Input
+              v-model:value="deleteTotpCode"
+              name="totp"
+              autocomplete="one-time-code"
+              inputmode="numeric"
+              placeholder="请输入 6 位验证码"
+              :maxlength="6"
+              style="margin-top: 6px"
+            />
+          </div>
+        </template>
+      </form>
     </Modal>
 
     <!-- TOTP Disable Modal -->
