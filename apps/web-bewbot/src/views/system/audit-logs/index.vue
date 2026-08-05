@@ -51,6 +51,8 @@ const ACTION_OPTIONS = [
   { label: '两步验证登录', value: 'auth.login_totp' },
   { label: '登出', value: 'auth.logout' },
   { label: '注册账号', value: 'auth.register' },
+  { label: '请求重置密码', value: 'auth.reset_password_request' },
+  { label: '重置密码', value: 'auth.reset_password' },
   { label: '拉黑 TG 用户', value: 'user.ban' },
   { label: '解除拉黑 TG 用户', value: 'user.unban' },
   { label: '删除 TG 用户', value: 'user.delete' },
@@ -63,6 +65,7 @@ const ACTION_OPTIONS = [
   { label: '修改系统设置', value: 'settings.update' },
   { label: '修改密码', value: 'profile.password' },
   { label: '两步验证', value: 'profile.totp_enable' },
+  { label: '绑定 Telegram', value: 'profile.bind' },
 ];
 
 const LEVEL_OPTIONS = [
