@@ -410,7 +410,10 @@ const columns: TableColumnsType = [
             )
           : h(
               'span',
-              { style: 'font-size:12px;color:#999' },
+              {
+                style:
+                  'font-size:12px;color:hsl(var(--muted-foreground) / 80%)',
+              },
               usageText(record),
             );
       const pct = Math.round(
@@ -446,7 +449,7 @@ const columns: TableColumnsType = [
         );
       return h(
         'span',
-        { style: 'font-size:12px;color:#999' },
+        { style: 'font-size:12px;color:hsl(var(--muted-foreground) / 80%)' },
         usageText(record),
       );
     },
@@ -856,7 +859,7 @@ onMounted(fetchData);
       </template>
 
       <div style="margin-bottom: 16px">
-        <label style="font-size: 13px; color: #666">默认角色</label>
+        <label style="font-size: 13px; color: hsl(var(--muted-foreground))">默认角色</label>
         <Select
           v-model:value="defaultRoleId"
           placeholder="请选择角色"
@@ -865,7 +868,7 @@ onMounted(fetchData);
         />
       </div>
       <div style="margin-bottom: 16px">
-        <label style="font-size: 13px; color: #666">
+        <label style="font-size: 13px; color: hsl(var(--muted-foreground))">
           最大使用次数（0 = 不限）
         </label>
         <InputNumber
@@ -875,7 +878,7 @@ onMounted(fetchData);
         />
       </div>
       <div>
-        <label style="font-size: 13px; color: #666">过期时间</label>
+        <label style="font-size: 13px; color: hsl(var(--muted-foreground))">过期时间</label>
         <div style="display: flex; gap: 8px; margin-top: 6px">
           <DatePicker
             v-model:value="expiresAt"
@@ -898,7 +901,7 @@ onMounted(fetchData);
         </div>
       </div>
       <div style="margin-top: 16px">
-        <label style="font-size: 13px; color: #666">备注</label>
+        <label style="font-size: 13px; color: hsl(var(--muted-foreground))">备注</label>
         <Input
           v-model:value="remark"
           placeholder="可选"
@@ -924,11 +927,11 @@ onMounted(fetchData);
       </template>
 
       <div style="margin-bottom: 16px">
-        <label style="font-size: 13px; color: #666">邀请码</label>
+        <label style="font-size: 13px; color: hsl(var(--muted-foreground))">邀请码</label>
         <Input :value="editingCode?.code" disabled style="margin-top: 6px" />
       </div>
       <div style="margin-bottom: 16px">
-        <label style="font-size: 13px; color: #666">默认角色</label>
+        <label style="font-size: 13px; color: hsl(var(--muted-foreground))">默认角色</label>
         <Select
           v-model:value="editDefaultRoleId"
           placeholder="请选择角色"
@@ -938,13 +941,13 @@ onMounted(fetchData);
         />
         <span
           v-if="(editingCode?.used_count ?? 0) > 0"
-          style="font-size: 12px; color: #999"
+          style="font-size: 12px; color: hsl(var(--muted-foreground) / 80%)"
         >
           已有用户使用，不可修改默认角色
         </span>
       </div>
       <div style="margin-bottom: 16px">
-        <label style="font-size: 13px; color: #666">
+        <label style="font-size: 13px; color: hsl(var(--muted-foreground))">
           最大使用次数（0 = 不限）
         </label>
         <InputNumber
@@ -954,7 +957,7 @@ onMounted(fetchData);
         />
       </div>
       <div>
-        <label style="font-size: 13px; color: #666">过期时间</label>
+        <label style="font-size: 13px; color: hsl(var(--muted-foreground))">过期时间</label>
         <div style="display: flex; gap: 8px; margin-top: 6px">
           <DatePicker
             v-model:value="editExpiresAt"
@@ -976,7 +979,7 @@ onMounted(fetchData);
         </div>
       </div>
       <div style="margin-top: 16px">
-        <label style="font-size: 13px; color: #666">备注</label>
+        <label style="font-size: 13px; color: hsl(var(--muted-foreground))">备注</label>
         <Input
           v-model:value="editRemark"
           placeholder="可选"
@@ -1055,7 +1058,7 @@ onMounted(fetchData);
                     overflow: hidden;
                     text-overflow: ellipsis;
                     font-size: 12px;
-                    color: #999;
+                    color: hsl(var(--muted-foreground) / 80%);
                     white-space: nowrap;
                   "
                 >
@@ -1218,7 +1221,7 @@ onMounted(fetchData);
       </template>
 
       <div style="margin-bottom: 16px">
-        <label style="font-size: 13px; color: #666">过滤模式</label>
+        <label style="font-size: 13px; color: hsl(var(--muted-foreground))">过滤模式</label>
         <Select
           v-model:value="emailDomainModalMode"
           style="width: 100%; margin-top: 6px"
@@ -1231,14 +1234,14 @@ onMounted(fetchData);
         />
       </div>
       <div v-if="emailDomainModalMode !== 'off'">
-        <label style="font-size: 13px; color: #666">域名列表</label>
+        <label style="font-size: 13px; color: hsl(var(--muted-foreground))">域名列表</label>
         <Input.TextArea
           v-model:value="emailDomainModalList"
           :rows="6"
           placeholder="gmail.com&#10;outlook.com"
           style="margin-top: 6px"
         />
-        <span style="font-size: 12px; color: #999">每行一个域名，如 gmail.com</span>
+        <span style="font-size: 12px; color: hsl(var(--muted-foreground) / 80%)">每行一个域名，如 gmail.com</span>
       </div>
     </Modal>
 
@@ -1259,7 +1262,7 @@ onMounted(fetchData);
       </template>
 
       <div style="margin-bottom: 16px">
-        <label style="font-size: 13px; color: #666">启用审核</label>
+        <label style="font-size: 13px; color: hsl(var(--muted-foreground))">启用审核</label>
         <Switch
           :checked="auditEnabled"
           @change="auditEnabled = $event as boolean"
@@ -1283,7 +1286,7 @@ onMounted(fetchData);
           allow-clear
           style="margin-top: 4px"
         />
-        <span style="font-size: 12px; color: #999">兼容 OpenAI 接口格式</span>
+        <span style="font-size: 12px; color: hsl(var(--muted-foreground) / 80%)">兼容 OpenAI 接口格式</span>
       </div>
       <div style="margin-bottom: 12px">
         <label>API Key</label>
@@ -1321,7 +1324,7 @@ onMounted(fetchData);
         style="
           padding-top: 12px;
           margin-top: 8px;
-          border-top: 1px solid #f0f0f0;
+          border-top: 1px solid hsl(var(--border));
         "
       >
         <label>测试审核</label>
@@ -1343,7 +1346,7 @@ onMounted(fetchData);
           <Tag :color="testAuditResult.approved ? 'green' : 'red'">
             {{ testAuditResult.approved ? '通过' : '拒绝' }}
           </Tag>
-          <span style="margin-left: 8px; color: #666">
+          <span style="margin-left: 8px; color: hsl(var(--muted-foreground))">
             {{ testAuditResult.reason || '审核完成' }}
           </span>
         </div>

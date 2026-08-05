@@ -202,7 +202,10 @@ const columns: TableColumnsType = [
             )
           : h(
               'span',
-              { style: 'font-size:12px;color:#999' },
+              {
+                style:
+                  'font-size:12px;color:hsl(var(--muted-foreground) / 80%)',
+              },
               `${record.used_count} 次`,
             );
       if (record.max_uses <= 0)
@@ -217,7 +220,10 @@ const columns: TableColumnsType = [
             )
           : h(
               'span',
-              { style: 'font-size:12px;color:#999' },
+              {
+                style:
+                  'font-size:12px;color:hsl(var(--muted-foreground) / 80%)',
+              },
               `${record.used_count} 次`,
             );
       // Temp code with max_uses > 0
@@ -253,7 +259,7 @@ const columns: TableColumnsType = [
         );
       return h(
         'span',
-        { style: 'font-size:12px;color:#999' },
+        { style: 'font-size:12px;color:hsl(var(--muted-foreground) / 80%)' },
         `${record.used_count} / ${record.max_uses}`,
       );
     },
@@ -679,7 +685,7 @@ onMounted(fetchData);
       </template>
 
       <div style="margin-bottom: 16px">
-        <label style="font-size: 13px; color: #666">识别码</label>
+        <label style="font-size: 13px; color: hsl(var(--muted-foreground))">识别码</label>
         <Input
           v-model:value="codeInput"
           :maxlength="16"
@@ -693,7 +699,7 @@ onMounted(fetchData);
         </span>
       </div>
       <div style="margin-bottom: 16px">
-        <label style="font-size: 13px; color: #666">使用次数上限</label>
+        <label style="font-size: 13px; color: hsl(var(--muted-foreground))">使用次数上限</label>
         <InputNumber
           v-model:value="maxUses"
           :min="1"
@@ -702,7 +708,7 @@ onMounted(fetchData);
         />
       </div>
       <div>
-        <label style="font-size: 13px; color: #666">过期时间</label>
+        <label style="font-size: 13px; color: hsl(var(--muted-foreground))">过期时间</label>
         <div style="display: flex; gap: 8px; margin-top: 6px">
           <DatePicker
             v-model:value="expiresAt"
@@ -725,7 +731,7 @@ onMounted(fetchData);
         </div>
       </div>
       <div style="margin-top: 16px">
-        <label style="font-size: 13px; color: #666">备注</label>
+        <label style="font-size: 13px; color: hsl(var(--muted-foreground))">备注</label>
         <Input
           v-model:value="remark"
           placeholder="如：给张三的临时码"
@@ -753,7 +759,7 @@ onMounted(fetchData);
       </template>
 
       <div style="margin-bottom: 16px">
-        <label style="font-size: 13px; color: #666">识别码</label>
+        <label style="font-size: 13px; color: hsl(var(--muted-foreground))">识别码</label>
         <Input
           v-model:value="editCode"
           :maxlength="16"
@@ -764,7 +770,7 @@ onMounted(fetchData);
         />
         <span
           v-if="(editingCode?.active_session_count ?? 0) > 0"
-          style="font-size: 12px; color: #999"
+          style="font-size: 12px; color: hsl(var(--muted-foreground) / 80%)"
         >
           有活跃会话，暂不可修改识别码
         </span>
@@ -773,7 +779,7 @@ onMounted(fetchData);
         </span>
       </div>
       <div style="margin-bottom: 16px">
-        <label style="font-size: 13px; color: #666">使用次数上限</label>
+        <label style="font-size: 13px; color: hsl(var(--muted-foreground))">使用次数上限</label>
         <InputNumber
           v-model:value="editMaxUses"
           :min="0"
@@ -782,7 +788,7 @@ onMounted(fetchData);
         />
       </div>
       <div>
-        <label style="font-size: 13px; color: #666">过期时间</label>
+        <label style="font-size: 13px; color: hsl(var(--muted-foreground))">过期时间</label>
         <div style="display: flex; gap: 8px; margin-top: 6px">
           <DatePicker
             v-model:value="editExpiresAt"
@@ -805,7 +811,7 @@ onMounted(fetchData);
         </div>
       </div>
       <div style="margin-top: 16px">
-        <label style="font-size: 13px; color: #666">备注</label>
+        <label style="font-size: 13px; color: hsl(var(--muted-foreground))">备注</label>
         <Input
           v-model:value="editRemark"
           placeholder="如：给张三的临时码"
@@ -832,7 +838,7 @@ onMounted(fetchData);
         </Space>
       </template>
 
-      <label style="font-size: 13px; color: #666">
+      <label style="font-size: 13px; color: hsl(var(--muted-foreground))">
         新识别码（8-16位字母、数字、-、_）
       </label>
       <Input
@@ -913,7 +919,10 @@ onMounted(fetchData);
                   >
                     @{{ r.username }}
                   </a>
-                  <span v-if="!r.first_name && !r.username" style="color: #999">
+                  <span
+                    v-if="!r.first_name && !r.username"
+                    style="color: hsl(var(--muted-foreground) / 80%)"
+                  >
                     未知用户
                   </span>
                   <Tag v-if="r.is_premium" color="gold" style="font-size: 10px">
@@ -931,15 +940,18 @@ onMounted(fetchData);
                     align-items: center;
                     margin-top: 2px;
                     font-size: 12px;
-                    color: #888;
+                    color: hsl(var(--muted-foreground) / 80%);
                   "
                 >
                   <code style="font-size: 11px">{{ r.tg_user_id }}</code>
-                  <span v-if="r.last_active_at" style="color: #d9d9d9">·</span>
+                  <span
+                    v-if="r.last_active_at"
+                    style="color: hsl(var(--muted-foreground) / 50%)"
+                    >·</span>
                   <span v-if="r.last_active_at">
                     {{ dayjs(r.last_active_at).format('MM-DD HH:mm') }}
                   </span>
-                  <span style="color: #d9d9d9">·</span>
+                  <span style="color: hsl(var(--muted-foreground) / 50%)">·</span>
                   <span>{{ r.message_count }} 条消息</span>
                 </div>
               </div>

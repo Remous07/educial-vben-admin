@@ -404,8 +404,8 @@ onMounted(fetchUsers);
             align-items: center;
             padding: 12px;
             margin-bottom: 16px;
-            background: #fafafa;
-            border: 1px solid #f0f0f0;
+            background: hsl(var(--muted));
+            border: 1px solid hsl(var(--border));
             border-radius: 8px;
           "
         >
@@ -439,7 +439,7 @@ onMounted(fetchUsers);
                 overflow: hidden;
                 text-overflow: ellipsis;
                 font-size: 13px;
-                color: #888;
+                color: hsl(var(--muted-foreground) / 80%);
                 white-space: nowrap;
               "
             >

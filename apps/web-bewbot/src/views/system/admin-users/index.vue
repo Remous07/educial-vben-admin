@@ -402,7 +402,7 @@ onMounted(fetchData);
       </template>
 
       <div style="margin-bottom: 16px">
-        <label style="font-size: 13px; color: #666">用户名</label>
+        <label style="font-size: 13px; color: hsl(var(--muted-foreground))">用户名</label>
         <Input
           :value="selectedUser?.username"
           disabled
@@ -410,11 +410,11 @@ onMounted(fetchData);
         />
       </div>
       <div style="margin-bottom: 16px">
-        <label style="font-size: 13px; color: #666">邮箱</label>
+        <label style="font-size: 13px; color: hsl(var(--muted-foreground))">邮箱</label>
         <Input :value="selectedUser?.email" disabled style="margin-top: 6px" />
       </div>
       <div>
-        <label style="font-size: 13px; color: #666">权限组</label>
+        <label style="font-size: 13px; color: hsl(var(--muted-foreground))">权限组</label>
         <div
           style="
             display: flex;

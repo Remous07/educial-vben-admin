@@ -149,28 +149,28 @@ const statCards = computed(() => [
     value: stats.value.user_count,
     icon: 'lucide:users',
     color: '#1677ff',
-    bg: '#e6f4ff',
+    bg: isDark.value ? '#1e3a5f' : '#e6f4ff',
   },
   {
     title: '系统用户',
     value: stats.value.admin_count,
     icon: 'lucide:shield',
     color: '#52c41a',
-    bg: '#f6ffed',
+    bg: isDark.value ? '#1f3d2a' : '#f6ffed',
   },
   {
     title: '活跃会话',
     value: stats.value.active_session_count,
     icon: 'lucide:message-circle',
     color: '#fa8c16',
-    bg: '#fff7e6',
+    bg: isDark.value ? '#3d2f1a' : '#fff7e6',
   },
   {
     title: '会话总数',
     value: stats.value.message_count,
     icon: 'lucide:file-text',
     color: '#722ed1',
-    bg: '#f9f0ff',
+    bg: isDark.value ? '#2a1f52' : '#f9f0ff',
   },
 ]);
 

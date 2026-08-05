@@ -125,7 +125,13 @@ onMounted(fetchStatus);
         >
           <QRCode :value="setupData.uri" :size="200" />
         </div>
-        <p style="margin-bottom: 12px; font-size: 12px; color: #888">
+        <p
+          style="
+            margin-bottom: 12px;
+            font-size: 12px;
+            color: hsl(var(--muted-foreground) / 80%);
+          "
+        >
           或手动输入密钥：<code>{{ setupData.secret }}</code>
         </p>
         <Input
