@@ -593,9 +593,16 @@ function isCodeInvalid(code: InviteCodeItem) {
 
 async function handlePermanentDelete(code: InviteCodeItem) {
   const invalid = isCodeInvalid(code);
+  const live = code.live_used_count ?? 0;
+  const title = invalid ? '确定删除该邀请码？' : '该邀请码仍在有效期内';
+  let content = '该邀请码仍然有效，确定要删除吗？';
+  if (invalid) content = '删除后不可恢复';
+  if (live > 0) {
+    content = `删除后不可恢复，使用过该邀请码的 ${live} 个用户将显示「已删除」，邀请人保留`;
+  }
   Modal.confirm({
-    title: invalid ? '确定删除该邀请码？' : '该邀请码仍在有效期内',
-    content: invalid ? '删除后不可恢复' : '该邀请码仍然有效，确定要删除吗？',
+    title,
+    content,
     okText: '删除',
     okType: 'danger',
     cancelText: '取消',
@@ -895,14 +902,7 @@ onMounted(fetchData);
             >
               激活
             </Button>
-            <Tooltip
-              v-if="(record as InviteCodeItem).live_used_count > 0"
-              title="仍有用户使用该邀请码注册，无法删除"
-            >
-              <Button size="small" danger type="text" disabled> 删除 </Button>
-            </Tooltip>
             <Button
-              v-else
               size="small"
               danger
               type="text"

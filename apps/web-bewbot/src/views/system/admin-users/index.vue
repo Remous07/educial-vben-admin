@@ -139,8 +139,14 @@ const columns: TableColumnsType = [
     dataIndex: 'invite_code',
     key: 'invite_code',
     width: 160,
-    customRender: ({ text }: { text: null | string }) =>
-      text ? h('code', { style: { fontSize: '13px' } }, text) : '-',
+    customRender: ({ record }: { record: AdminUserItem }) => {
+      if (record.invite_code_deleted) {
+        return h(Tag, { color: 'default' }, () => '已删除');
+      }
+      return record.invite_code
+        ? h('code', { style: { fontSize: '13px' } }, record.invite_code)
+        : '-';
+    },
   },
   {
     title: '邀请人',

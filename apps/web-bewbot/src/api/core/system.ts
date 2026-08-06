@@ -26,6 +26,7 @@ export interface AdminUserItem {
   email_verified: boolean;
   totp_enabled: boolean;
   invite_code: null | string;
+  invite_code_deleted: boolean;
   invited_by: null | string;
   is_bound: boolean;
   telegram_id: null | number;
