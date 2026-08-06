@@ -111,7 +111,7 @@ function generateCode(): string {
 }
 
 function validateCode(code: string): string {
-  if (!code) return '请输入识别码';
+  if (!code) return ''; // 留空 = 后端自动生成
   if (code.length < 8) return '至少 8 个字符';
   if (code.length > 16) return '最多 16 个字符';
   if (!CODE_PATTERN.test(code)) return '仅支持字母、数字、-、_';
@@ -373,7 +373,7 @@ async function handleCreate() {
   saving.value = true;
   try {
     await createConversationCodeApi({
-      code: codeInput.value,
+      code: codeInput.value.trim() || undefined,
       expires_at: expiresAt.value?.toISOString?.() ?? undefined,
       max_uses: maxUses.value,
       remark: remark.value || undefined,
@@ -700,7 +700,7 @@ onMounted(fetchData);
           <Input
             v-model:value="codeInput"
             :maxlength="16"
-            placeholder="8-16位字母、数字、-、_"
+            placeholder="留空自动生成，或点「随机」"
             :status="codeError ? 'error' : ''"
             style="flex: 1"
             @change="onCodeInputChange"
