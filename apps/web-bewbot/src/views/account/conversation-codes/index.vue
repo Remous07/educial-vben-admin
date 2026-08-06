@@ -344,12 +344,22 @@ function copyCode(code: string) {
 }
 
 function onCreateModalOpen() {
-  codeInput.value = generateCode();
   codeError.value = '';
   maxUses.value = 1;
   remark.value = '';
   expiresAt.value = dayjs().add(7, 'day');
   expiresDays.value = 7;
+}
+
+// 随机生成一个识别码填入创建/编辑弹窗的输入框（并清除校验错误）。
+function randomizeCode() {
+  codeInput.value = generateCode();
+  codeError.value = '';
+}
+
+function randomizeEditCode() {
+  editCode.value = generateCode();
+  editCodeError.value = '';
 }
 
 async function handleCreate() {
@@ -686,14 +696,23 @@ onMounted(fetchData);
 
       <div style="margin-bottom: 16px">
         <label style="font-size: 13px; color: hsl(var(--muted-foreground))">识别码</label>
-        <Input
-          v-model:value="codeInput"
-          :maxlength="16"
-          placeholder="8-16位字母、数字、-、_"
-          :status="codeError ? 'error' : ''"
-          style="margin-top: 6px"
-          @change="onCodeInputChange"
-        />
+        <div style="display: flex; gap: 8px; margin-top: 6px">
+          <Input
+            v-model:value="codeInput"
+            :maxlength="16"
+            placeholder="8-16位字母、数字、-、_"
+            :status="codeError ? 'error' : ''"
+            style="flex: 1"
+            @change="onCodeInputChange"
+          />
+          <Button size="small" @click="randomizeCode">
+            <IconifyIcon
+              icon="lucide:dices"
+              style="margin-right: 4px; vertical-align: -2px"
+            />
+            随机
+          </Button>
+        </div>
         <span v-if="codeError" style="font-size: 12px; color: #ff4d4f">
           {{ codeError }}
         </span>
@@ -760,14 +779,27 @@ onMounted(fetchData);
 
       <div style="margin-bottom: 16px">
         <label style="font-size: 13px; color: hsl(var(--muted-foreground))">识别码</label>
-        <Input
-          v-model:value="editCode"
-          :maxlength="16"
-          :disabled="(editingCode?.active_session_count ?? 0) > 0"
-          :status="editCodeError ? 'error' : ''"
-          style="margin-top: 6px"
-          @change="onEditCodeChange"
-        />
+        <div style="display: flex; gap: 8px; margin-top: 6px">
+          <Input
+            v-model:value="editCode"
+            :maxlength="16"
+            :disabled="(editingCode?.active_session_count ?? 0) > 0"
+            :status="editCodeError ? 'error' : ''"
+            style="flex: 1"
+            @change="onEditCodeChange"
+          />
+          <Button
+            size="small"
+            :disabled="(editingCode?.active_session_count ?? 0) > 0"
+            @click="randomizeEditCode"
+          >
+            <IconifyIcon
+              icon="lucide:dices"
+              style="margin-right: 4px; vertical-align: -2px"
+            />
+            随机
+          </Button>
+        </div>
         <span
           v-if="(editingCode?.active_session_count ?? 0) > 0"
           style="font-size: 12px; color: hsl(var(--muted-foreground) / 80%)"
