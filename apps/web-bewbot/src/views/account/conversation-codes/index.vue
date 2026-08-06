@@ -103,11 +103,9 @@ function avatarColor(tgUserId: number, firstName: null | string): string {
 const CODE_PATTERN = /^[a-zA-Z0-9_-]{8,16}$/;
 
 function generateCode(): string {
-  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-  const bytes = crypto.getRandomValues(new Uint8Array(10));
-  let result = '';
-  for (const b of bytes) result += chars[b % chars.length];
-  return result;
+  // 与后端 token_hex(5) 一致：5 字节 → 10 位小写 hex
+  const bytes = crypto.getRandomValues(new Uint8Array(5));
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
 }
 
 function validateCode(code: string): string {

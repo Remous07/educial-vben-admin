@@ -380,13 +380,10 @@ function validateInviteCode(code: string): string {
   return INVITE_CODE_RE.test(code) ? '' : '邀请码需为 8-32 位字母、数字、-、_';
 }
 
-// 随机生成一个邀请码（10 位字母数字，符合 8-32 位校验）
+// 随机生成一个邀请码（与后端 token_hex(8) 一致：8 字节 → 16 位小写 hex）
 function generateCode(): string {
-  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-  const bytes = crypto.getRandomValues(new Uint8Array(10));
-  let result = '';
-  for (const b of bytes) result += chars[b % chars.length];
-  return result;
+  const bytes = crypto.getRandomValues(new Uint8Array(8));
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
 }
 
 function randomizeCode() {
