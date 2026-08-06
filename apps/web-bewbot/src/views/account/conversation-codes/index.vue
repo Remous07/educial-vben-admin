@@ -705,7 +705,7 @@ onMounted(fetchData);
             style="flex: 1"
             @change="onCodeInputChange"
           />
-          <Button size="small" @click="randomizeCode">
+          <Button @click="randomizeCode">
             <IconifyIcon
               icon="lucide:dices"
               style="margin-right: 4px; vertical-align: -2px"
@@ -789,7 +789,6 @@ onMounted(fetchData);
             @change="onEditCodeChange"
           />
           <Button
-            size="small"
             :disabled="(editingCode?.active_session_count ?? 0) > 0"
             @click="randomizeEditCode"
           >
