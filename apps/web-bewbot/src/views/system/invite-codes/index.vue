@@ -317,17 +317,32 @@ function openAuditModal() {
 }
 
 async function _saveAuditSettings(closeModal: boolean) {
-  await Promise.all([
-    setSystemSettingApi('username_audit_enabled', String(auditEnabled.value)),
-    setSystemSettingApi('username_audit_provider', auditProvider.value),
-    setSystemSettingApi('username_audit_base_url', auditBaseUrl.value),
-    setSystemSettingApi('username_audit_model', auditModel.value),
-    setSystemSettingApi('username_audit_api_key', auditApiKey.value),
-    setSystemSettingApi(
-      'username_audit_fail_open',
-      String(auditFailOpen.value),
-    ),
-  ]);
+  // Only persist settings that actually changed, so the audit log records
+  // just the edited keys instead of a full save of every setting.
+  const updates: Array<[string, string]> = [];
+  if (String(auditEnabled.value) !== auditSettings.value.enabled) {
+    updates.push(['username_audit_enabled', String(auditEnabled.value)]);
+  }
+  if (auditProvider.value !== auditSettings.value.provider) {
+    updates.push(['username_audit_provider', auditProvider.value]);
+  }
+  if (auditBaseUrl.value !== auditSettings.value.base_url) {
+    updates.push(['username_audit_base_url', auditBaseUrl.value]);
+  }
+  if (auditModel.value !== auditSettings.value.model) {
+    updates.push(['username_audit_model', auditModel.value]);
+  }
+  if (auditApiKey.value !== auditSettings.value.api_key) {
+    updates.push(['username_audit_api_key', auditApiKey.value]);
+  }
+  if (String(auditFailOpen.value) !== auditSettings.value.fail_open) {
+    updates.push(['username_audit_fail_open', String(auditFailOpen.value)]);
+  }
+  if (updates.length > 0) {
+    await Promise.all(
+      updates.map(([key, value]) => setSystemSettingApi(key, value)),
+    );
+  }
   auditSettings.value.enabled = String(auditEnabled.value);
   auditSettings.value.provider = auditProvider.value;
   auditSettings.value.base_url = auditBaseUrl.value;
