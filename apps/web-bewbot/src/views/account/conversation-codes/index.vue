@@ -479,6 +479,10 @@ function openDefaultEdit(_code: string) {
   defaultEditVisible.value = true;
 }
 
+function randomizeDefaultCode() {
+  newDefaultCode.value = generateCode();
+}
+
 async function handleDefaultEditSave() {
   savingDefault.value = true;
   try {
@@ -870,12 +874,21 @@ onMounted(fetchData);
       <label style="font-size: 13px; color: hsl(var(--muted-foreground))">
         新识别码（8-16位字母、数字、-、_）
       </label>
-      <Input
-        v-model:value="newDefaultCode"
-        placeholder="输入新的识别码"
-        :maxlength="16"
-        style="margin-top: 6px"
-      />
+      <div style="display: flex; gap: 8px; margin-top: 6px">
+        <Input
+          v-model:value="newDefaultCode"
+          placeholder="输入新的识别码"
+          :maxlength="16"
+          style="flex: 1"
+        />
+        <Button @click="randomizeDefaultCode">
+          <IconifyIcon
+            icon="lucide:dices"
+            style="margin-right: 4px; vertical-align: -2px"
+          />
+          随机
+        </Button>
+      </div>
     </Modal>
 
     <!-- User List Drawer -->
