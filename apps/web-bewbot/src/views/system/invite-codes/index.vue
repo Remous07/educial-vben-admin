@@ -1027,14 +1027,10 @@ onMounted(fetchData);
           <Input
             v-model:value="editCode"
             :maxlength="32"
-            :disabled="(editingCode?.used_count ?? 0) > 0"
             :status="editCodeError ? 'error' : ''"
             style="flex: 1"
           />
-          <Button
-            :disabled="(editingCode?.used_count ?? 0) > 0"
-            @click="randomizeEditCode"
-          >
+          <Button @click="randomizeEditCode">
             <IconifyIcon
               icon="lucide:dices"
               style="margin-right: 4px; vertical-align: -2px"
@@ -1042,13 +1038,7 @@ onMounted(fetchData);
             随机
           </Button>
         </div>
-        <span
-          v-if="(editingCode?.used_count ?? 0) > 0"
-          style="font-size: 12px; color: hsl(var(--muted-foreground) / 80%)"
-        >
-          已有用户使用，不可修改邀请码
-        </span>
-        <span v-else-if="editCodeError" style="font-size: 12px; color: #ff4d4f">
+        <span v-if="editCodeError" style="font-size: 12px; color: #ff4d4f">
           {{ editCodeError }}
         </span>
       </div>
@@ -1057,16 +1047,9 @@ onMounted(fetchData);
         <Select
           v-model:value="editDefaultRoleId"
           placeholder="请选择角色"
-          :disabled="(editingCode?.used_count ?? 0) > 0"
           style="width: 100%; margin-top: 6px"
           :options="availableRoles.map((r) => ({ label: r.name, value: r.id }))"
         />
-        <span
-          v-if="(editingCode?.used_count ?? 0) > 0"
-          style="font-size: 12px; color: hsl(var(--muted-foreground) / 80%)"
-        >
-          已有用户使用，不可修改默认角色
-        </span>
       </div>
       <div style="margin-bottom: 16px">
         <label style="font-size: 13px; color: hsl(var(--muted-foreground))">
