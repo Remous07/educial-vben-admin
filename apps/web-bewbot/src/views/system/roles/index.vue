@@ -196,15 +196,32 @@ function togglePermission(perm: PermissionItem) {
       : formPermissionIds.value.filter((id) => id !== perm.id);
 }
 
+// Sub-group keys for groups that render a nested Collapse (>1 subgroups).
+function collapsibleSubKeys(): string[] {
+  return permissionGroups.value
+    .filter((g) => g.subgroups.length > 1)
+    .flatMap((g) => g.subgroups.map((s) => s.key));
+}
+
+// "全部展开" considers both the top-level groups and any nested sub-groups,
+// so the toggle reflects the real depth of the tree.
 const allGroupsExpanded = computed(() => {
   const total = permissionGroups.value.length;
-  return total > 0 && activePermGroups.value.length === total;
+  const subKeys = collapsibleSubKeys();
+  const topExpanded = total > 0 && activePermGroups.value.length === total;
+  const subExpanded =
+    subKeys.length === 0 || activeSubKeys.value.length === subKeys.length;
+  return topExpanded && subExpanded;
 });
 
 function toggleAllGroups() {
-  activePermGroups.value = allGroupsExpanded.value
-    ? []
-    : permissionGroups.value.map((g) => g.key);
+  if (allGroupsExpanded.value) {
+    activePermGroups.value = [];
+    activeSubKeys.value = [];
+  } else {
+    activePermGroups.value = permissionGroups.value.map((g) => g.key);
+    activeSubKeys.value = collapsibleSubKeys();
+  }
 }
 
 const columns: TableColumnsType = [
