@@ -136,6 +136,7 @@ export function getInviteCodesApi() {
 
 /** 生成邀请码 */
 export function createInviteCodeApi(payload: {
+  code?: string;
   default_role_id: number;
   expires_at?: string;
   expires_days?: number;
@@ -149,6 +150,7 @@ export function createInviteCodeApi(payload: {
 export function editInviteCodeApi(
   id: number,
   payload: {
+    code?: string;
     default_role_id?: number;
     expires_at?: string;
     expires_days?: null | number;

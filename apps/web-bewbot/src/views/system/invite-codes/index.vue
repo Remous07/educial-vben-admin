@@ -364,12 +364,35 @@ const auditSettings = ref<Record<string, string>>({});
 // ── create modal ──
 
 const modalVisible = ref(false);
+const codeInput = ref('');
+const codeError = ref('');
 const defaultRoleId = ref<number | undefined>(undefined);
 const maxUses = ref(1);
 const expiresAt = ref<any>(dayjs().add(7, 'day'));
 const expiresDays = ref(7);
 const remark = ref('');
 const saving = ref(false);
+
+const INVITE_CODE_RE = /^[A-Za-z0-9_-]{8,32}$/;
+
+function validateInviteCode(code: string): string {
+  if (!code) return '';
+  return INVITE_CODE_RE.test(code) ? '' : '邀请码需为 8-32 位字母、数字、-、_';
+}
+
+// 随机生成一个邀请码（10 位字母数字，符合 8-32 位校验）
+function generateCode(): string {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  const bytes = crypto.getRandomValues(new Uint8Array(10));
+  let result = '';
+  for (const b of bytes) result += chars[b % chars.length];
+  return result;
+}
+
+function randomizeCode() {
+  codeInput.value = generateCode();
+  codeError.value = '';
+}
 
 function onExpiresAtChange(d: any) {
   expiresDays.value = d
@@ -587,6 +610,8 @@ async function handlePermanentDelete(code: InviteCodeItem) {
 // Edit modal
 const editModalVisible = ref(false);
 const editingCode = ref<InviteCodeItem | null>(null);
+const editCode = ref('');
+const editCodeError = ref('');
 const editDefaultRoleId = ref<number | undefined>(undefined);
 const editMaxUses = ref(1);
 const editExpiresAt = ref<any>(null);
@@ -621,6 +646,8 @@ function openEditModal(code: InviteCodeItem) {
     return;
   }
   editingCode.value = code;
+  editCode.value = code.code;
+  editCodeError.value = '';
   editDefaultRoleId.value = code.default_role_id ?? undefined;
   editMaxUses.value = code.max_uses;
   editExpiresAt.value = code.expires_at ? dayjs(code.expires_at) : null;
@@ -631,11 +658,24 @@ function openEditModal(code: InviteCodeItem) {
   editModalVisible.value = true;
 }
 
+function randomizeEditCode() {
+  editCode.value = generateCode();
+  editCodeError.value = '';
+}
+
 async function handleEditSave() {
   if (!editingCode.value) return;
+  const codeErr = validateInviteCode(editCode.value);
+  if (codeErr) {
+    editCodeError.value = codeErr;
+    return;
+  }
+  editCodeError.value = '';
   saving.value = true;
   try {
     await editInviteCodeApi(editingCode.value.id, {
+      code:
+        editCode.value === editingCode.value.code ? undefined : editCode.value,
       default_role_id:
         editDefaultRoleId.value === editingCode.value.default_role_id
           ? undefined
@@ -655,6 +695,12 @@ async function handleEditSave() {
 }
 
 async function handleCreate() {
+  const codeErr = validateInviteCode(codeInput.value);
+  if (codeErr) {
+    codeError.value = codeErr;
+    return;
+  }
+  codeError.value = '';
   if (!defaultRoleId.value) {
     message.error('请选择默认角色');
     return;
@@ -662,6 +708,7 @@ async function handleCreate() {
   saving.value = true;
   try {
     await createInviteCodeApi({
+      code: codeInput.value.trim() || undefined,
       default_role_id: defaultRoleId.value,
       expires_at: expiresAt.value?.toISOString?.() ?? undefined,
       max_uses: maxUses.value,
@@ -669,6 +716,8 @@ async function handleCreate() {
     });
     message.success('邀请码已生成');
     modalVisible.value = false;
+    codeInput.value = '';
+    codeError.value = '';
     defaultRoleId.value = undefined;
     maxUses.value = 1;
     expiresAt.value = dayjs().add(7, 'day');
@@ -883,6 +932,28 @@ onMounted(fetchData);
       </template>
 
       <div style="margin-bottom: 16px">
+        <label style="font-size: 13px; color: hsl(var(--muted-foreground))">邀请码</label>
+        <div style="display: flex; gap: 8px; margin-top: 6px">
+          <Input
+            v-model:value="codeInput"
+            :maxlength="32"
+            placeholder="留空自动生成，或点「随机」"
+            :status="codeError ? 'error' : ''"
+            style="flex: 1"
+          />
+          <Button @click="randomizeCode">
+            <IconifyIcon
+              icon="lucide:dices"
+              style="margin-right: 4px; vertical-align: -2px"
+            />
+            随机
+          </Button>
+        </div>
+        <span v-if="codeError" style="font-size: 12px; color: #ff4d4f">
+          {{ codeError }}
+        </span>
+      </div>
+      <div style="margin-bottom: 16px">
         <label style="font-size: 13px; color: hsl(var(--muted-foreground))">默认角色</label>
         <Select
           v-model:value="defaultRoleId"
@@ -952,7 +1023,34 @@ onMounted(fetchData);
 
       <div style="margin-bottom: 16px">
         <label style="font-size: 13px; color: hsl(var(--muted-foreground))">邀请码</label>
-        <Input :value="editingCode?.code" disabled style="margin-top: 6px" />
+        <div style="display: flex; gap: 8px; margin-top: 6px">
+          <Input
+            v-model:value="editCode"
+            :maxlength="32"
+            :disabled="(editingCode?.used_count ?? 0) > 0"
+            :status="editCodeError ? 'error' : ''"
+            style="flex: 1"
+          />
+          <Button
+            :disabled="(editingCode?.used_count ?? 0) > 0"
+            @click="randomizeEditCode"
+          >
+            <IconifyIcon
+              icon="lucide:dices"
+              style="margin-right: 4px; vertical-align: -2px"
+            />
+            随机
+          </Button>
+        </div>
+        <span
+          v-if="(editingCode?.used_count ?? 0) > 0"
+          style="font-size: 12px; color: hsl(var(--muted-foreground) / 80%)"
+        >
+          已有用户使用，不可修改邀请码
+        </span>
+        <span v-else-if="editCodeError" style="font-size: 12px; color: #ff4d4f">
+          {{ editCodeError }}
+        </span>
       </div>
       <div style="margin-bottom: 16px">
         <label style="font-size: 13px; color: hsl(var(--muted-foreground))">默认角色</label>
