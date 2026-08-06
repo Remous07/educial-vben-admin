@@ -215,26 +215,35 @@ function openSettingsModal() {
 }
 
 async function saveSettings() {
+  // Only persist settings that actually changed, so the audit log records
+  // just the edited keys instead of a full save of every setting.
+  const updates: Array<[string, string]> = [];
+  if (draftOpenRegistration.value !== openRegistration.value) {
+    updates.push(['open_registration', String(draftOpenRegistration.value)]);
+  }
+  if (draftInviteRequired.value !== inviteRequired.value) {
+    updates.push(['require_invite_code', String(draftInviteRequired.value)]);
+  }
+  // The role Select has no allow-clear, so a changed draft is always a role id.
+  if (
+    draftFallbackRoleId.value !== fallbackRoleId.value &&
+    draftFallbackRoleId.value !== undefined
+  ) {
+    updates.push([
+      'default_registration_role',
+      String(draftFallbackRoleId.value),
+    ]);
+  }
+  if (updates.length === 0) {
+    message.info('没有修改任何设置');
+    settingsModalVisible.value = false;
+    return;
+  }
   savingSettings.value = true;
   try {
-    await Promise.all([
-      setSystemSettingApi(
-        'open_registration',
-        String(draftOpenRegistration.value),
-      ),
-      setSystemSettingApi(
-        'require_invite_code',
-        String(draftInviteRequired.value),
-      ),
-      ...(draftFallbackRoleId.value === undefined
-        ? []
-        : [
-            setSystemSettingApi(
-              'default_registration_role',
-              String(draftFallbackRoleId.value),
-            ),
-          ]),
-    ]);
+    await Promise.all(
+      updates.map(([key, value]) => setSystemSettingApi(key, value)),
+    );
     openRegistration.value = draftOpenRegistration.value;
     inviteRequired.value = draftInviteRequired.value;
     if (draftFallbackRoleId.value !== undefined) {
