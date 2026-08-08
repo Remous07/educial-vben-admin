@@ -405,9 +405,11 @@ function openEditModal(code: ConversationCodeItem) {
 
 async function handleEditSave() {
   if (!editingCode.value) return;
+  const target = editingCode.value;
 
   // Validate code if changed
-  if (editCode.value !== editingCode.value.code) {
+  const codeChanged = editCode.value !== target.code;
+  if (codeChanged) {
     const err = validateCode(editCode.value);
     if (err) {
       editCodeError.value = err;
@@ -415,23 +417,40 @@ async function handleEditSave() {
     }
   }
   editCodeError.value = '';
-  saving.value = true;
-  try {
-    await editConversationCodeApi(editingCode.value.id, {
-      code:
-        editCode.value === editingCode.value.code ? undefined : editCode.value,
-      expires_at: editExpiresAt.value?.toISOString?.() ?? '',
-      max_uses: editMaxUses.value,
-      remark: editRemark.value || '',
+
+  const active = target.active_session_count ?? 0;
+  const doSave = async () => {
+    saving.value = true;
+    try {
+      await editConversationCodeApi(target.id, {
+        code: codeChanged ? editCode.value : undefined,
+        expires_at: editExpiresAt.value?.toISOString?.() ?? '',
+        max_uses: editMaxUses.value,
+        remark: editRemark.value || '',
+      });
+      message.success('保存成功');
+      editModalVisible.value = false;
+      fetchData();
+    } catch {
+      // error handled by interceptor
+    } finally {
+      saving.value = false;
+    }
+  };
+
+  // Changing the code kicks active sessions using it (backend behavior).
+  if (codeChanged && active > 0) {
+    Modal.confirm({
+      title: '修改识别码将踢出活跃会话',
+      content: `该识别码有 ${active} 个活跃会话，修改后它们将被终止，访客需用新识别码重新进入。确定修改？`,
+      okText: '确定修改',
+      okType: 'danger',
+      cancelText: '取消',
+      onOk: doSave,
     });
-    message.success('保存成功');
-    editModalVisible.value = false;
-    fetchData();
-  } catch {
-    // error handled by interceptor
-  } finally {
-    saving.value = false;
+    return;
   }
+  await doSave();
 }
 
 async function handleRevoke(code: ConversationCodeItem) {
@@ -785,15 +804,11 @@ onMounted(fetchData);
           <Input
             v-model:value="editCode"
             :maxlength="16"
-            :disabled="(editingCode?.active_session_count ?? 0) > 0"
             :status="editCodeError ? 'error' : ''"
             style="flex: 1"
             @change="onEditCodeChange"
           />
-          <Button
-            :disabled="(editingCode?.active_session_count ?? 0) > 0"
-            @click="randomizeEditCode"
-          >
+          <Button @click="randomizeEditCode">
             <IconifyIcon
               icon="lucide:dices"
               style="margin-right: 4px; vertical-align: -2px"
@@ -801,13 +816,7 @@ onMounted(fetchData);
             随机
           </Button>
         </div>
-        <span
-          v-if="(editingCode?.active_session_count ?? 0) > 0"
-          style="font-size: 12px; color: hsl(var(--muted-foreground) / 80%)"
-        >
-          有活跃会话，暂不可修改识别码
-        </span>
-        <span v-else-if="editCodeError" style="font-size: 12px; color: #ff4d4f">
+        <span v-if="editCodeError" style="font-size: 12px; color: #ff4d4f">
           {{ editCodeError }}
         </span>
       </div>
