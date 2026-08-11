@@ -318,10 +318,9 @@ function browserIcon(browser: null | string): string {
   if (b.includes('chrome')) return 'mdi:google-chrome';
   if (b.includes('edge')) return 'mdi:microsoft-edge';
   if (b.includes('firefox')) return 'mdi:firefox';
-  if (b.includes('safari')) return 'mdi:safari';
+  // mdi 无 Safari 品牌图标，用罗盘（Safari 图标的通用替代）
+  if (b.includes('safari')) return 'mdi:compass-outline';
   if (b.includes('opera')) return 'mdi:opera';
-  if (b.includes('internet explorer') || b === 'ie')
-    return 'mdi:internet-explorer';
   return 'mdi:web';
 }
 

@@ -16,6 +16,9 @@ import { initSetupVbenForm } from './adapter/form';
 import App from './app.vue';
 import { router } from './router';
 
+// 副作用导入：应用启动时离线注册审计日志用到的精简 mdi 图标集
+import './adapter/mdi-icons';
+
 async function bootstrap(namespace: string) {
   await initComponentAdapter();
   await initSetupVbenForm();
