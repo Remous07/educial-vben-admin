@@ -619,38 +619,49 @@ onMounted(() => {
     <Tabs default-active-key="operations">
       <!-- Operation records -->
       <Tabs.TabPane key="operations" tab="操作记录">
-        <Space style="flex-wrap: wrap; margin-bottom: 16px">
-          <Input
-            v-model:value="opUsername"
-            placeholder="按操作人搜索"
-            allow-clear
-            style="width: 160px"
-            @press-enter="onOpSearch"
-          />
-          <Select
-            v-model:value="opAction"
-            placeholder="动作类型"
-            allow-clear
-            style="width: 180px"
-            :options="ACTION_OPTIONS"
-            @change="onOpSearch"
-          />
-          <Select
-            v-model:value="opDevice"
-            placeholder="设备类型"
-            allow-clear
-            style="width: 120px"
-            :options="DEVICE_OPTIONS"
-            @change="onOpSearch"
-          />
-          <DatePicker.RangePicker
-            v-model:value="opRange"
-            :allow-clear="true"
-            @change="onOpSearch"
-          />
-          <Button type="primary" @click="onOpSearch">查询</Button>
-          <Button @click="onOpReset">重置</Button>
+        <div
+          style="
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 16px;
+          "
+        >
+          <Space style="flex-wrap: wrap">
+            <Input
+              v-model:value="opUsername"
+              placeholder="按操作人搜索"
+              allow-clear
+              style="width: 160px"
+              @press-enter="onOpSearch"
+            />
+            <Select
+              v-model:value="opAction"
+              placeholder="动作类型"
+              allow-clear
+              style="width: 180px"
+              :options="ACTION_OPTIONS"
+              @change="onOpSearch"
+            />
+            <Select
+              v-model:value="opDevice"
+              placeholder="设备类型"
+              allow-clear
+              style="width: 120px"
+              :options="DEVICE_OPTIONS"
+              @change="onOpSearch"
+            />
+            <DatePicker.RangePicker
+              v-model:value="opRange"
+              :allow-clear="true"
+              @change="onOpSearch"
+            />
+            <Button type="primary" @click="onOpSearch">查询</Button>
+            <Button @click="onOpReset">重置</Button>
+          </Space>
           <Popconfirm
+            style="margin-left: auto"
             title="确定清空全部操作记录？"
             description="此操作不可恢复"
             ok-text="清空"
@@ -660,7 +671,7 @@ onMounted(() => {
           >
             <Button danger>清空</Button>
           </Popconfirm>
-        </Space>
+        </div>
 
         <Table
           :columns="opColumns"
@@ -699,22 +710,33 @@ onMounted(() => {
 
       <!-- Runtime logs -->
       <Tabs.TabPane key="runtime" tab="运行日志">
-        <Space style="flex-wrap: wrap; margin-bottom: 16px">
-          <Select
-            v-model:value="logLevel"
-            placeholder="日志级别"
-            allow-clear
-            style="width: 150px"
-            :options="LEVEL_OPTIONS"
-            @change="onLogSearch"
-          />
-          <DatePicker.RangePicker
-            v-model:value="logRange"
-            :allow-clear="true"
-            @change="onLogSearch"
-          />
-          <Button type="primary" @click="onLogSearch">查询</Button>
+        <div
+          style="
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 16px;
+          "
+        >
+          <Space style="flex-wrap: wrap">
+            <Select
+              v-model:value="logLevel"
+              placeholder="日志级别"
+              allow-clear
+              style="width: 150px"
+              :options="LEVEL_OPTIONS"
+              @change="onLogSearch"
+            />
+            <DatePicker.RangePicker
+              v-model:value="logRange"
+              :allow-clear="true"
+              @change="onLogSearch"
+            />
+            <Button type="primary" @click="onLogSearch">查询</Button>
+          </Space>
           <Popconfirm
+            style="margin-left: auto"
             title="确定清空全部运行日志？"
             description="此操作不可恢复"
             ok-text="清空"
@@ -724,7 +746,7 @@ onMounted(() => {
           >
             <Button danger>清空</Button>
           </Popconfirm>
-        </Space>
+        </div>
 
         <Table
           :columns="logColumns"
