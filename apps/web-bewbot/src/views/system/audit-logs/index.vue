@@ -660,17 +660,19 @@ onMounted(() => {
             <Button type="primary" @click="onOpSearch">查询</Button>
             <Button @click="onOpReset">重置</Button>
           </Space>
-          <Popconfirm
-            style="margin-left: auto"
-            title="确定清空全部操作记录？"
-            description="此操作不可恢复"
-            ok-text="清空"
-            ok-type="danger"
-            cancel-text="取消"
-            @confirm="handleClearOperations"
-          >
-            <Button danger>清空</Button>
-          </Popconfirm>
+          <!-- 用普通 span 承载右对齐 margin：antd Popconfirm 不一定把 style 透传给 flex 项 -->
+          <span style="margin-left: auto">
+            <Popconfirm
+              title="确定清空全部操作记录？"
+              description="此操作不可恢复"
+              ok-text="清空"
+              ok-type="danger"
+              cancel-text="取消"
+              @confirm="handleClearOperations"
+            >
+              <Button danger>清空</Button>
+            </Popconfirm>
+          </span>
         </div>
 
         <Table
@@ -735,17 +737,19 @@ onMounted(() => {
             />
             <Button type="primary" @click="onLogSearch">查询</Button>
           </Space>
-          <Popconfirm
-            style="margin-left: auto"
-            title="确定清空全部运行日志？"
-            description="此操作不可恢复"
-            ok-text="清空"
-            ok-type="danger"
-            cancel-text="取消"
-            @confirm="handleClearLogs"
-          >
-            <Button danger>清空</Button>
-          </Popconfirm>
+          <!-- 用普通 span 承载右对齐 margin：antd Popconfirm 不一定把 style 透传给 flex 项 -->
+          <span style="margin-left: auto">
+            <Popconfirm
+              title="确定清空全部运行日志？"
+              description="此操作不可恢复"
+              ok-text="清空"
+              ok-type="danger"
+              cancel-text="取消"
+              @confirm="handleClearLogs"
+            >
+              <Button danger>清空</Button>
+            </Popconfirm>
+          </span>
         </div>
 
         <Table
