@@ -313,6 +313,19 @@ function osIcon(os: null | string): string {
   return 'mdi:monitor';
 }
 
+// 展示层归一化 ua_os（后端存的是 family + 主版本，个别系统不美观/有歧义）：
+//   - macOS：ua-parser 只给 "Mac OS X 10"，UA 分不清具体版本 → 统一 "macOS"
+//   - ChromeOS：major 是 build 号不是版本号 → 只留 "Chrome OS"
+//   - Windows 10/11：UA 都是 NT 10.0，无法区分 → 诚实显示 "Windows 10/11"
+//     （Windows 7/8 的 major 不同，仍正常显示）
+function osLabel(os: null | string): string {
+  const o = (os ?? '').toLowerCase();
+  if (o.startsWith('mac os x')) return 'macOS';
+  if (o.startsWith('chrome os')) return 'Chrome OS';
+  if (o.startsWith('windows 10')) return 'Windows 10/11';
+  return os ?? '';
+}
+
 function browserIcon(browser: null | string): string {
   const b = (browser ?? '').toLowerCase();
   if (b.includes('chrome')) return 'mdi:google-chrome';
@@ -384,7 +397,7 @@ const opColumns = [
     key: 'ua_os',
     width: 150,
     customRender: ({ text }: { text: null | string }) =>
-      text ? withIcon(osIcon(text), text) : '-',
+      text ? withIcon(osIcon(text), osLabel(text)) : '-',
   },
   {
     title: '设备',
