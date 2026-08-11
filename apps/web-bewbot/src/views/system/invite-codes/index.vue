@@ -965,7 +965,7 @@ onMounted(fetchData);
         </label>
         <InputNumber
           v-model:value="maxUses"
-          :min="0"
+          :min="1"
           style="width: 100%; margin-top: 6px"
         />
       </div>
