@@ -279,6 +279,61 @@ const DEVICE_OPTIONS = Object.entries(DEVICE_LABELS).map(([value, label]) => ({
   value,
 }));
 
+// mdi 系图标经 Iconify 在线加载（与应用现有 mdi 图标一致）；Linux 用企鹅 Tux。
+const DEVICE_ICONS: Record<string, string> = {
+  desktop: 'mdi:desktop-tower-monitor',
+  smartphone: 'mdi:cellphone',
+  tablet: 'mdi:tablet',
+};
+
+// ua-parser 把多数发行版解析为独立 family（Ubuntu/Debian/…），一并归入企鹅图标
+const LINUX_OS_MARKERS = [
+  'linux',
+  'ubuntu',
+  'debian',
+  'fedora',
+  'arch',
+  'centos',
+  'red hat',
+  'mint',
+  'manjaro',
+  'suse',
+  'kali',
+  'alpine',
+  'chrome os',
+];
+
+function osIcon(os: null | string): string {
+  const o = (os ?? '').toLowerCase();
+  if (o.includes('ios')) return 'mdi:apple-ios';
+  if (o.includes('windows')) return 'mdi:microsoft-windows';
+  if (o.includes('android')) return 'mdi:android';
+  if (o.includes('mac')) return 'mdi:apple';
+  if (LINUX_OS_MARKERS.some((m) => o.includes(m))) return 'mdi:linux';
+  return 'mdi:monitor';
+}
+
+function browserIcon(browser: null | string): string {
+  const b = (browser ?? '').toLowerCase();
+  if (b.includes('chrome')) return 'mdi:google-chrome';
+  if (b.includes('edge')) return 'mdi:microsoft-edge';
+  if (b.includes('firefox')) return 'mdi:firefox';
+  if (b.includes('safari')) return 'mdi:safari';
+  if (b.includes('opera')) return 'mdi:opera';
+  if (b.includes('internet explorer') || b === 'ie')
+    return 'mdi:internet-explorer';
+  return 'mdi:web';
+}
+
+// 表格单元格通用渲染：图标 + 文字（inline-flex 对齐）
+function withIcon(icon: string, text: string) {
+  return h(
+    'span',
+    { style: 'display: inline-flex; align-items: center; gap: 4px' },
+    [h(IconifyIcon, { icon, style: 'font-size: 16px' }), text],
+  );
+}
+
 const opColumns = [
   { title: '时间', dataIndex: 'created_at', key: 'time', width: 180 },
   {
@@ -314,30 +369,36 @@ const opColumns = [
     title: '浏览器',
     dataIndex: 'ua_browser',
     key: 'ua_browser',
-    width: 150,
-    customRender: ({ record }: { record: AuditOperationItem }) =>
-      record.ua_browser
-        ? h(
-            Tooltip,
-            { title: record.user_agent || record.ua_browser },
-            () => record.ua_browser,
+    width: 160,
+    customRender: ({ record }: { record: AuditOperationItem }) => {
+      const browser = record.ua_browser;
+      return browser
+        ? h(Tooltip, { title: record.user_agent || browser }, () =>
+            withIcon(browserIcon(browser), browser),
           )
-        : '-',
+        : '-';
+    },
   },
   {
     title: '操作系统',
     dataIndex: 'ua_os',
     key: 'ua_os',
-    width: 130,
-    customRender: ({ text }: { text: null | string }) => text || '-',
+    width: 150,
+    customRender: ({ text }: { text: null | string }) =>
+      text ? withIcon(osIcon(text), text) : '-',
   },
   {
     title: '设备',
     dataIndex: 'ua_device',
     key: 'ua_device',
-    width: 80,
+    width: 90,
     customRender: ({ text }: { text: null | string }) =>
-      text ? DEVICE_LABELS[text] || text : '-',
+      text
+        ? withIcon(
+            DEVICE_ICONS[text] || 'mdi:help-circle',
+            DEVICE_LABELS[text] || text,
+          )
+        : '-',
   },
 ];
 
