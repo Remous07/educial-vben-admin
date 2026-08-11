@@ -666,6 +666,7 @@ onMounted(() => {
           :columns="opColumns"
           :data-source="operations"
           :loading="opLoading"
+          :scroll="{ x: 'max-content' }"
           :pagination="{
             current: opPage,
             pageSize: opPageSize,
@@ -729,6 +730,7 @@ onMounted(() => {
           :columns="logColumns"
           :data-source="logs"
           :loading="logLoading"
+          :scroll="{ x: 'max-content' }"
           :pagination="false"
           row-key="id"
         >

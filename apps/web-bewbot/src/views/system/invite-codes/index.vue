@@ -51,7 +51,7 @@ import {
 
 defineOptions({ name: 'InviteCodes' });
 
-const { isDark } = usePreferences();
+const { isDark, isMobile } = usePreferences();
 
 const codes = ref<InviteCodeItem[]>([]);
 const loading = ref(false);
@@ -860,6 +860,7 @@ onMounted(fetchData);
       :columns="columns"
       :data-source="filteredCodes"
       :loading="loading"
+      :scroll="{ x: 'max-content' }"
       :pagination="{
         defaultPageSize: 20,
         showSizeChanger: true,
@@ -1091,7 +1092,7 @@ onMounted(fetchData);
     </Modal>
 
     <!-- Users by code drawer -->
-    <Drawer v-model:open="userDrawerVisible" :width="500">
+    <Drawer v-model:open="userDrawerVisible" :width="isMobile ? '100%' : 500">
       <template #title>
         <Space align="center" :size="6" :wrap="true">
           <IconifyIcon icon="lucide:users" style="color: #1677ff" />

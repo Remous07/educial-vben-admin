@@ -8,6 +8,7 @@ import { computed, h, onMounted, ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
+import { usePreferences } from '@vben/preferences';
 
 import {
   Button,
@@ -46,6 +47,8 @@ import {
 } from '#/api/core';
 
 defineOptions({ name: 'ConversationCodes' });
+
+const { isMobile } = usePreferences();
 
 const codes = ref<ConversationCodeItem[]>([]);
 const loading = ref(false);
@@ -630,6 +633,7 @@ onMounted(fetchData);
       :columns="columns"
       :data-source="filteredCodes"
       :loading="loading"
+      :scroll="{ x: 'max-content' }"
       :pagination="{
         defaultPageSize: 20,
         showSizeChanger: true,
@@ -901,7 +905,7 @@ onMounted(fetchData);
     </Modal>
 
     <!-- User List Drawer -->
-    <Drawer v-model:open="userListVisible" :width="640">
+    <Drawer v-model:open="userListVisible" :width="isMobile ? '100%' : 640">
       <template #title>
         <Space align="center" :size="6" :wrap="true">
           <IconifyIcon icon="lucide:key-round" style="color: #1677ff" />

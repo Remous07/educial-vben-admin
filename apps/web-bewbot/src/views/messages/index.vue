@@ -284,6 +284,7 @@ onMounted(fetchConversations);
       :columns="columns"
       :data-source="filteredConversations"
       :loading="loading"
+      :scroll="{ x: 'max-content' }"
       :pagination="{
         defaultPageSize: 20,
         showSizeChanger: true,

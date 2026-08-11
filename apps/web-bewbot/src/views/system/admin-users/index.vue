@@ -343,6 +343,7 @@ onMounted(fetchData);
       :columns="columns"
       :data-source="filteredUsers"
       :loading="loading"
+      :scroll="{ x: 'max-content' }"
       :pagination="{
         defaultPageSize: 20,
         showSizeChanger: true,

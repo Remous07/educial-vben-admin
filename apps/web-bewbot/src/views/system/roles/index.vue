@@ -350,6 +350,7 @@ onMounted(fetchData);
       :columns="columns"
       :data-source="roles"
       :loading="loading"
+      :scroll="{ x: 'max-content' }"
       :pagination="{
         defaultPageSize: 20,
         showSizeChanger: true,
