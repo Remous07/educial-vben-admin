@@ -265,7 +265,19 @@ const opPage = ref(1);
 const opPageSize = ref(20);
 const opAction = ref<string | undefined>(undefined);
 const opUsername = ref('');
+const opDevice = ref<string | undefined>(undefined);
 const opRange = ref<[dayjs.Dayjs, dayjs.Dayjs] | undefined>(undefined);
+
+// ua_device 列存的是稳定英文码（desktop/smartphone/tablet），前端映射中文
+const DEVICE_LABELS: Record<string, string> = {
+  desktop: '桌面',
+  smartphone: '手机',
+  tablet: '平板',
+};
+const DEVICE_OPTIONS = Object.entries(DEVICE_LABELS).map(([value, label]) => ({
+  label,
+  value,
+}));
 
 const opColumns = [
   { title: '时间', dataIndex: 'created_at', key: 'time', width: 180 },
@@ -284,14 +296,48 @@ const opColumns = [
       h(Tag, { color: actionColor(record.action) }, () => record.action_label),
   },
   { title: '详情', dataIndex: 'detail', key: 'detail', width: 320 },
-  { title: 'IP', dataIndex: 'ip', key: 'ip', width: 140 },
   {
-    title: '国家',
-    dataIndex: 'country',
-    key: 'country',
-    width: 90,
+    // IP + 国家合并为一列（后端仍分别返回，这里是展示层合并）
+    title: '位置',
+    key: 'location',
+    width: 180,
+    customRender: ({ record }: { record: AuditOperationItem }) => {
+      const country = record.country
+        ? `${flagEmoji(record.country)} ${record.country}`
+        : null;
+      const ip = record.ip || null;
+      if (country && ip) return `${country} · ${ip}`;
+      return country || ip || '-';
+    },
+  },
+  {
+    title: '浏览器',
+    dataIndex: 'ua_browser',
+    key: 'ua_browser',
+    width: 150,
+    customRender: ({ record }: { record: AuditOperationItem }) =>
+      record.ua_browser
+        ? h(
+            Tooltip,
+            { title: record.user_agent || record.ua_browser },
+            () => record.ua_browser,
+          )
+        : '-',
+  },
+  {
+    title: '操作系统',
+    dataIndex: 'ua_os',
+    key: 'ua_os',
+    width: 130,
+    customRender: ({ text }: { text: null | string }) => text || '-',
+  },
+  {
+    title: '设备',
+    dataIndex: 'ua_device',
+    key: 'ua_device',
+    width: 80,
     customRender: ({ text }: { text: null | string }) =>
-      text ? `${flagEmoji(text)} ${text}` : '-',
+      text ? DEVICE_LABELS[text] || text : '-',
   },
 ];
 
@@ -303,6 +349,7 @@ async function fetchOperations() {
       limit: opPageSize.value,
       action: opAction.value,
       admin_username: opUsername.value.trim() || undefined,
+      ua_device: opDevice.value,
       start: toLocalIso(opRange.value?.[0]),
       end: toLocalIso(opRange.value?.[1]),
     });
@@ -321,6 +368,7 @@ function onOpSearch() {
 function onOpReset() {
   opUsername.value = '';
   opAction.value = undefined;
+  opDevice.value = undefined;
   opRange.value = undefined;
   onOpSearch();
 }
@@ -512,6 +560,14 @@ onMounted(() => {
             allow-clear
             style="width: 180px"
             :options="ACTION_OPTIONS"
+            @change="onOpSearch"
+          />
+          <Select
+            v-model:value="opDevice"
+            placeholder="设备类型"
+            allow-clear
+            style="width: 120px"
+            :options="DEVICE_OPTIONS"
             @change="onOpSearch"
           />
           <DatePicker.RangePicker

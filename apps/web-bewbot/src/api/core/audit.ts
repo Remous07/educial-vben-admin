@@ -8,6 +8,10 @@ export interface AuditOperationItem {
   detail: null | string;
   ip: null | string;
   country: null | string;
+  user_agent: null | string;
+  ua_browser: null | string;
+  ua_os: null | string;
+  ua_device: null | string;
   created_at: null | string;
 }
 
@@ -55,6 +59,7 @@ export function getAuditOperationsApi(params: {
   limit?: number;
   offset?: number;
   start?: string;
+  ua_device?: string;
 }) {
   return requestClient.get<AuditListResponse<AuditOperationItem>>(
     '/audit/operations',
