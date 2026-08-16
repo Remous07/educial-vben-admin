@@ -149,9 +149,12 @@ export async function refreshTokenApi() {
   });
 }
 
-/** 退出登录 — use requestClient so the JWT is sent and the audit records the actor */
-export async function logoutApi() {
-  return requestClient.post('/auth/logout');
+/** 退出登录 — use requestClient so the JWT is sent and the audit records the actor.
+ * username：token 过期自动登出时 Authorization 已缺失，前端从 userStore 兜底传用户名 */
+export async function logoutApi(username?: string) {
+  return requestClient.post('/auth/logout', undefined, {
+    params: { username },
+  });
 }
 
 /** 获取用户权限码 */

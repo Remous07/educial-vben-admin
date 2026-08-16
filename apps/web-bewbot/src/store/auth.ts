@@ -97,7 +97,8 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function logout(redirect: boolean = true) {
     try {
-      await logoutApi();
+      // token 过期自动登出时后端拿不到 JWT 里的用户名，从 userStore 兜底传
+      await logoutApi(userStore.userInfo?.username);
     } catch {
       // 不做任何处理
     }
