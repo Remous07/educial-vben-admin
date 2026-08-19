@@ -22,6 +22,16 @@ import {
 } from '#/api';
 import { $t } from '#/locales';
 
+// 持久化最近一次登录的系统用户名：页面刷新后 userStore.userInfo 为空，
+// token 过期自动登出时用它兜底传给后端，审计记录才能显示操作人。
+const LAST_USERNAME_KEY = 'bewbot:last-username';
+
+function persistUsername(username: string | undefined) {
+  if (username) {
+    localStorage.setItem(LAST_USERNAME_KEY, username);
+  }
+}
+
 export const useAuthStore = defineStore('auth', () => {
   const accessStore = useAccessStore();
   const userStore = useUserStore();
@@ -68,6 +78,7 @@ export const useAuthStore = defineStore('auth', () => {
 
         userInfo = fetchUserInfoResult;
         userStore.setUserInfo(userInfo);
+        persistUsername(userInfo.username);
         accessStore.setAccessCodes(accessCodes);
 
         if (accessStore.loginExpired) {
@@ -97,11 +108,16 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function logout(redirect: boolean = true) {
     try {
-      // token 过期自动登出时后端拿不到 JWT 里的用户名，从 userStore 兜底传
-      await logoutApi(userStore.userInfo?.username);
+      // token 过期自动登出时后端拿不到 JWT 里的用户名，从内存/持久化兜底传
+      const username =
+        userStore.userInfo?.username ??
+        localStorage.getItem(LAST_USERNAME_KEY) ??
+        undefined;
+      await logoutApi(username);
     } catch {
       // 不做任何处理
     }
+    localStorage.removeItem(LAST_USERNAME_KEY);
     resetAllStores();
     accessStore.setLoginExpired(false);
 
@@ -116,6 +132,7 @@ export const useAuthStore = defineStore('auth', () => {
   async function fetchUserInfo() {
     const userInfo = await getUserInfoApi();
     userStore.setUserInfo(userInfo);
+    persistUsername(userInfo.username);
     return userInfo;
   }
 
