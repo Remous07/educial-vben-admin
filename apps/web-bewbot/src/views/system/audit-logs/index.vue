@@ -129,7 +129,27 @@ const ACTION_OPTIONS = [
   },
   {
     label: '审计',
-    options: [{ label: '清空运行日志', value: 'audit.clear_runtime_logs' }],
+    options: [
+      { label: '修改审计保留设置', value: 'audit.retention' },
+      { label: '清空操作记录', value: 'audit.clear_operations' },
+      { label: '清空运行日志', value: 'audit.clear_runtime_logs' },
+      { label: '查看运行日志', value: 'audit.runtime_logs_view' },
+    ],
+  },
+  {
+    label: '消息与会话',
+    options: [
+      { label: '查看访客消息', value: 'messages.view' },
+      { label: '访客进入会话', value: 'conversation.session_start' },
+      { label: '访客离开会话', value: 'conversation.session_leave' },
+    ],
+  },
+  {
+    label: '安全事件',
+    options: [
+      { label: 'Webhook 校验失败', value: 'security.webhook_reject' },
+      { label: '内部接口密钥校验失败', value: 'security.api_key_reject' },
+    ],
   },
 ];
 
