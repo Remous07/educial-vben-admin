@@ -133,7 +133,6 @@ const ACTION_OPTIONS = [
       { label: '修改审计保留设置', value: 'audit.retention' },
       { label: '清空操作记录', value: 'audit.clear_operations' },
       { label: '清空运行日志', value: 'audit.clear_runtime_logs' },
-      { label: '查看运行日志', value: 'audit.runtime_logs_view' },
     ],
   },
   {
