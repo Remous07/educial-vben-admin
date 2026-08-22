@@ -126,6 +126,7 @@ const modalVisible = ref(false);
 const codeInput = ref('');
 const codeError = ref('');
 const maxUses = ref(1);
+const createUnlimited = ref(false);
 const expiresAt = ref<any>(dayjs().add(7, 'day'));
 const expiresDays = ref(7);
 const remark = ref('');
@@ -140,9 +141,10 @@ function onExpiresAtChange(d: any) {
     ? Math.max(0, Math.round(d.diff(dayjs(), 'day', true)))
     : 0;
 }
-function onExpiresDaysChange() {
-  expiresAt.value =
-    expiresDays.value > 0 ? dayjs().add(expiresDays.value, 'day') : null;
+function onExpiresDaysChange(v: unknown) {
+  const n = Math.max(0, Number(v ?? 0));
+  expiresDays.value = n;
+  expiresAt.value = n > 0 ? dayjs().add(n, 'day') : null;
 }
 
 // Edit modal (temp codes)
@@ -165,11 +167,10 @@ function onEditExpiresAtChange(d: any) {
     ? Math.max(0, Math.round(d.diff(dayjs(), 'day', true)))
     : 0;
 }
-function onEditExpiresDaysChange() {
-  editExpiresAt.value =
-    editExpiresDays.value > 0
-      ? dayjs().add(editExpiresDays.value, 'day')
-      : null;
+function onEditExpiresDaysChange(v: unknown) {
+  const n = Math.max(0, Number(v ?? 0));
+  editExpiresDays.value = n;
+  editExpiresAt.value = n > 0 ? dayjs().add(n, 'day') : null;
 }
 
 // Edit default code modal
@@ -349,6 +350,7 @@ function copyCode(code: string) {
 function onCreateModalOpen() {
   codeError.value = '';
   maxUses.value = 1;
+  createUnlimited.value = false;
   remark.value = '';
   expiresAt.value = dayjs().add(7, 'day');
   expiresDays.value = 7;
@@ -378,7 +380,7 @@ async function handleCreate() {
     await createConversationCodeApi({
       code: codeInput.value.trim() || undefined,
       expires_at: expiresAt.value?.toISOString?.() ?? undefined,
-      max_uses: maxUses.value,
+      max_uses: createUnlimited.value ? 0 : maxUses.value,
       remark: remark.value || undefined,
     });
     message.success('识别码已生成');
@@ -746,12 +748,29 @@ onMounted(fetchData);
         </span>
       </div>
       <div style="margin-bottom: 16px">
-        <label style="font-size: 13px; color: hsl(var(--muted-foreground))">使用次数上限</label>
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+          "
+        >
+          <label style="font-size: 13px; color: hsl(var(--muted-foreground))">
+            使用次数上限
+          </label>
+          <Space align="center" :size="6">
+            <Switch v-model:checked="createUnlimited" size="small" />
+            <span style="font-size: 13px">不限</span>
+          </Space>
+        </div>
         <InputNumber
-          v-model:value="maxUses"
+          :value="createUnlimited ? undefined : maxUses"
           :min="1"
           :max="999"
+          :disabled="createUnlimited"
+          :placeholder="createUnlimited ? '∞' : ''"
           style="width: 100%; margin-top: 6px"
+          @update:value="(v: unknown) => (maxUses = Number(v ?? 1))"
         />
       </div>
       <div>
@@ -768,12 +787,13 @@ onMounted(fetchData);
             @change="onExpiresAtChange"
           />
           <InputNumber
-            v-model:value="expiresDays"
+            :value="expiresDays || undefined"
             :min="0"
             :max="365"
-            addon-after="天后过期"
+            placeholder="永不过期"
+            :addon-after="expiresDays > 0 ? '天后过期' : ''"
             style="width: 140px"
-            @change="onExpiresDaysChange"
+            @update:value="onExpiresDaysChange"
           />
         </div>
       </div>
@@ -844,11 +864,13 @@ onMounted(fetchData);
           </Space>
         </div>
         <InputNumber
-          v-model:value="editMaxUses"
+          :value="editUnlimited ? undefined : editMaxUses"
           :min="1"
           :max="999"
           :disabled="editUnlimited"
+          :placeholder="editUnlimited ? '∞' : ''"
           style="width: 100%; margin-top: 6px"
+          @update:value="(v: unknown) => (editMaxUses = Number(v ?? 1))"
         />
       </div>
       <div>
@@ -865,12 +887,13 @@ onMounted(fetchData);
             @change="onEditExpiresAtChange"
           />
           <InputNumber
-            v-model:value="editExpiresDays"
+            :value="editExpiresDays || undefined"
             :min="0"
             :max="365"
-            addon-after="天后过期"
+            placeholder="永不过期"
+            :addon-after="editExpiresDays > 0 ? '天后过期' : ''"
             style="width: 140px"
-            @change="onEditExpiresDaysChange"
+            @update:value="onEditExpiresDaysChange"
           />
         </div>
       </div>
