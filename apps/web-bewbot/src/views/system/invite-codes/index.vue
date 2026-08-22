@@ -188,7 +188,7 @@ function usageText(record: InviteCodeItem): string {
   const base =
     record.max_uses > 0
       ? `累计 ${record.used_count} / ${record.max_uses}`
-      : `累计 ${record.used_count} / 不限`;
+      : `累计 ${record.used_count} / ∞`;
   return record.live_used_count < record.used_count
     ? `${base} · 使用中 ${record.live_used_count}`
     : base;
@@ -618,6 +618,7 @@ const editCode = ref('');
 const editCodeError = ref('');
 const editDefaultRoleId = ref<number | undefined>(undefined);
 const editMaxUses = ref(1);
+const editUnlimited = ref(false);
 const editExpiresAt = ref<any>(null);
 const editExpiresDays = ref(0);
 const editRemark = ref('');
@@ -653,7 +654,8 @@ function openEditModal(code: InviteCodeItem) {
   editCode.value = code.code;
   editCodeError.value = '';
   editDefaultRoleId.value = code.default_role_id ?? undefined;
-  editMaxUses.value = code.max_uses;
+  editMaxUses.value = code.max_uses > 0 ? code.max_uses : 1;
+  editUnlimited.value = code.max_uses <= 0;
   editExpiresAt.value = code.expires_at ? dayjs(code.expires_at) : null;
   editExpiresDays.value = code.expires_at
     ? Math.max(0, Math.round(dayjs(code.expires_at).diff(dayjs(), 'day', true)))
@@ -685,7 +687,7 @@ async function handleEditSave() {
           ? undefined
           : editDefaultRoleId.value,
       expires_at: editExpiresAt.value?.toISOString?.() ?? '',
-      max_uses: editMaxUses.value,
+      max_uses: editUnlimited.value ? 0 : editMaxUses.value,
       remark: editRemark.value || '',
     });
     message.success('保存成功');
@@ -962,7 +964,7 @@ onMounted(fetchData);
       </div>
       <div style="margin-bottom: 16px">
         <label style="font-size: 13px; color: hsl(var(--muted-foreground))">
-          最大使用次数（0 = 不限）
+          最大使用次数
         </label>
         <InputNumber
           v-model:value="maxUses"
@@ -1050,12 +1052,25 @@ onMounted(fetchData);
         />
       </div>
       <div style="margin-bottom: 16px">
-        <label style="font-size: 13px; color: hsl(var(--muted-foreground))">
-          最大使用次数（0 = 不限）
-        </label>
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+          "
+        >
+          <label style="font-size: 13px; color: hsl(var(--muted-foreground))">
+            最大使用次数
+          </label>
+          <Space align="center" :size="6">
+            <Switch v-model:checked="editUnlimited" size="small" />
+            <span style="font-size: 13px">不限</span>
+          </Space>
+        </div>
         <InputNumber
           v-model:value="editMaxUses"
-          :min="0"
+          :min="1"
+          :disabled="editUnlimited"
           style="width: 100%; margin-top: 6px"
         />
       </div>

@@ -26,6 +26,7 @@ import {
   Row,
   Space,
   Statistic,
+  Switch,
   Table,
   Tag,
   Tooltip,
@@ -150,6 +151,7 @@ const editingCode = ref<ConversationCodeItem | null>(null);
 const editCode = ref('');
 const editCodeError = ref('');
 const editMaxUses = ref(0);
+const editUnlimited = ref(false);
 const editExpiresAt = ref<any>(null);
 const editExpiresDays = ref(0);
 const editRemark = ref('');
@@ -199,7 +201,7 @@ const columns: TableColumnsType = [
                 style: 'font-size:12px;cursor:pointer;color:#1677ff',
                 onClick: () => showCodeUsers(record.code),
               },
-              `${record.used_count} 次`,
+              `${record.used_count} / ∞`,
             )
           : h(
               'span',
@@ -207,7 +209,7 @@ const columns: TableColumnsType = [
                 style:
                   'font-size:12px;color:hsl(var(--muted-foreground) / 80%)',
               },
-              `${record.used_count} 次`,
+              `${record.used_count} / ∞`,
             );
       if (record.max_uses <= 0)
         return canClick
@@ -217,7 +219,7 @@ const columns: TableColumnsType = [
                 style: 'font-size:12px;cursor:pointer;color:#1677ff',
                 onClick: () => showCodeUsers(record.code),
               },
-              `${record.used_count} 次`,
+              `${record.used_count} / ∞`,
             )
           : h(
               'span',
@@ -225,7 +227,7 @@ const columns: TableColumnsType = [
                 style:
                   'font-size:12px;color:hsl(var(--muted-foreground) / 80%)',
               },
-              `${record.used_count} 次`,
+              `${record.used_count} / ∞`,
             );
       // Temp code with max_uses > 0
       const pct = Math.round(
@@ -397,7 +399,8 @@ function openEditModal(code: ConversationCodeItem) {
   editingCode.value = code;
   editCode.value = code.code;
   editCodeError.value = '';
-  editMaxUses.value = code.max_uses;
+  editMaxUses.value = code.max_uses > 0 ? code.max_uses : 1;
+  editUnlimited.value = code.max_uses <= 0;
   editExpiresAt.value = code.expires_at ? dayjs(code.expires_at) : null;
   editExpiresDays.value = code.expires_at
     ? Math.max(0, Math.round(dayjs(code.expires_at).diff(dayjs(), 'day', true)))
@@ -428,7 +431,7 @@ async function handleEditSave() {
       await editConversationCodeApi(target.id, {
         code: codeChanged ? editCode.value : undefined,
         expires_at: editExpiresAt.value?.toISOString?.() ?? '',
-        max_uses: editMaxUses.value,
+        max_uses: editUnlimited.value ? 0 : editMaxUses.value,
         remark: editRemark.value || '',
       });
       message.success('保存成功');
@@ -825,11 +828,26 @@ onMounted(fetchData);
         </span>
       </div>
       <div style="margin-bottom: 16px">
-        <label style="font-size: 13px; color: hsl(var(--muted-foreground))">使用次数上限</label>
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+          "
+        >
+          <label style="font-size: 13px; color: hsl(var(--muted-foreground))">
+            使用次数上限
+          </label>
+          <Space align="center" :size="6">
+            <Switch v-model:checked="editUnlimited" size="small" />
+            <span style="font-size: 13px">不限</span>
+          </Space>
+        </div>
         <InputNumber
           v-model:value="editMaxUses"
-          :min="0"
+          :min="1"
           :max="999"
+          :disabled="editUnlimited"
           style="width: 100%; margin-top: 6px"
         />
       </div>
