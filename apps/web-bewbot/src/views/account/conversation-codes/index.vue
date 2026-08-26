@@ -5,12 +5,14 @@ import type { ConversationCodeItem } from '#/api/core';
 import type { CodeUserItem } from '#/api/core/auth';
 
 import { computed, h, onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
 
 import { Page } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
 import { usePreferences } from '@vben/preferences';
 
 import {
+  Alert,
   Button,
   Card,
   Col,
@@ -39,6 +41,7 @@ import {
   editConversationCodeApi,
   getCodeUsersApi,
   getConversationCodesApi,
+  getTelegramBindStatusApi,
   permanentlyDeleteConversationCodeApi,
   reactivateConversationCodeApi,
   revokeConversationCodeApi,
@@ -49,7 +52,11 @@ import {
 
 defineOptions({ name: 'ConversationCodes' });
 
+const router = useRouter();
 const { isMobile } = usePreferences();
+
+// 未绑定 Telegram 时提示：识别码建了也用不上（访客消息转发不到）。
+const isBound = ref(true);
 
 const codes = ref<ConversationCodeItem[]>([]);
 const loading = ref(false);
@@ -584,11 +591,31 @@ async function fetchData() {
   }
 }
 
-onMounted(fetchData);
+onMounted(async () => {
+  fetchData();
+  try {
+    const s = await getTelegramBindStatusApi();
+    isBound.value = s.is_bound;
+  } catch {
+    // 拿不到绑定状态时默认视为已绑定，避免误报
+  }
+});
 </script>
 
 <template>
   <Page>
+    <Alert
+      v-if="!isBound"
+      type="warning"
+      show-icon
+      message="尚未绑定 Telegram"
+      description="识别码需要绑定 Telegram 账号后，访客进入会话的消息才能转发到你。"
+      style="margin-bottom: 16px"
+    >
+      <template #action>
+        <Button size="small" @click="router.push('/profile')">去绑定</Button>
+      </template>
+    </Alert>
     <Row :gutter="[16, 16]" style="margin-bottom: 16px">
       <Col :xs="12" :sm="6">
         <Card>
