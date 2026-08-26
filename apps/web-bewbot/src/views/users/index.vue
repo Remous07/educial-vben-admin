@@ -40,6 +40,9 @@ interface User {
   admin_username: null | string;
   admin_id: null | number;
   is_bound: boolean;
+  rate_limited: boolean;
+  rate_limited_count: number;
+  rate_limited_remaining: number;
 }
 
 const accessStore = useAccessStore();
@@ -164,6 +167,31 @@ const columns: TableColumnsType = [
         : h(Tag, { color: 'green' }, () => '正常'),
   },
   {
+    title: '限频',
+    key: 'rate_limited',
+    width: 120,
+    align: 'center',
+    customRender: ({ record }: { record: User }) => {
+      const count = record.rate_limited_count ?? 0;
+      if (record.rate_limited) {
+        return h(
+          Tooltip,
+          {
+            title: `剩余 ${formatRemaining(record.rate_limited_remaining ?? 0)}`,
+          },
+          () => h(Tag, { color: 'red' }, () => `限频中 · ${count} 次`),
+        );
+      }
+      return count > 0
+        ? h(
+            'span',
+            { style: 'color:hsl(var(--muted-foreground) / 80%)' },
+            `${count} 次`,
+          )
+        : '-';
+    },
+  },
+  {
     title: '注册时间',
     dataIndex: 'created_at',
     key: 'created_at',
@@ -173,6 +201,13 @@ const columns: TableColumnsType = [
   },
   { title: '操作', key: 'action', width: 220 },
 ];
+
+function formatRemaining(seconds: number): string {
+  const s = Math.max(0, Math.round(seconds));
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return m > 0 ? `${m} 分 ${sec} 秒` : `${sec} 秒`;
+}
 
 function avatarChar(name: string): string {
   const match = name.match(/\p{L}/u);

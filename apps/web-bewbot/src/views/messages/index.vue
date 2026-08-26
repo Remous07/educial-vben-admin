@@ -17,6 +17,7 @@ import {
   Statistic,
   Table,
   Tag,
+  Tooltip,
 } from 'ant-design-vue';
 
 import { blockVisitorApi, unblockVisitorApi } from '#/api/core';
@@ -37,6 +38,9 @@ interface Conversation {
   is_active: boolean;
   conv_timeout_remaining: null | number;
   is_blocked: boolean;
+  rate_limited: boolean;
+  rate_limited_count: number;
+  rate_limited_remaining: number;
 }
 
 function avatarChar(name: string): string {
@@ -60,6 +64,13 @@ function timeoutTip(r: Conversation): string {
   if (s < 60) return '剩余不到 1 分钟';
   if (s < 3600) return `剩余约 ${Math.ceil(s / 60)} 分钟`;
   return `剩余约 ${Math.ceil(s / 3600)} 小时`;
+}
+
+function formatRemaining(seconds: number): string {
+  const s = Math.max(0, Math.round(seconds));
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return m > 0 ? `${m} 分 ${sec} 秒` : `${sec} 秒`;
 }
 
 const conversations = ref<Conversation[]>([]);
@@ -196,6 +207,31 @@ const columns: TableColumnsType = [
     align: 'center',
     customRender: ({ text }: { text: null | string }) =>
       text ? h('code', { style: { fontSize: '12px' } }, text) : '-',
+  },
+  {
+    title: '限频',
+    key: 'rate_limited',
+    width: 110,
+    align: 'center',
+    customRender: ({ record }: { record: Conversation }) => {
+      const count = record.rate_limited_count ?? 0;
+      if (record.rate_limited) {
+        return h(
+          Tooltip,
+          {
+            title: `剩余 ${formatRemaining(record.rate_limited_remaining ?? 0)}`,
+          },
+          () => h(Tag, { color: 'red' }, () => `限频中 · ${count} 次`),
+        );
+      }
+      return count > 0
+        ? h(
+            'span',
+            { style: 'color:hsl(var(--muted-foreground) / 80%)' },
+            `${count} 次`,
+          )
+        : '-';
+    },
   },
   {
     title: '消息数',
