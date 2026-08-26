@@ -150,6 +150,10 @@ const ACTION_OPTIONS = [
       { label: '内部接口密钥校验失败', value: 'security.api_key_reject' },
     ],
   },
+  {
+    label: '限频',
+    options: [{ label: '触发限频静默', value: 'rate_limit.silenced' }],
+  },
 ];
 
 const LEVEL_OPTIONS = [
@@ -176,6 +180,7 @@ function actionColor(action: string): string {
   if (action.includes('role')) return 'purple';
   if (action.includes('invite') || action.includes('code')) return 'geekblue';
   if (action.includes('settings') || action.includes('rotate')) return 'orange';
+  if (action.includes('rate_limit')) return 'volcano';
   if (
     action.includes('profile') ||
     action.includes('account') ||
