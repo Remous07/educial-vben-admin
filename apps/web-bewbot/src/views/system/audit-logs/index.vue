@@ -383,11 +383,13 @@ const opColumns = [
   },
   { title: '详情', dataIndex: 'detail', key: 'detail', width: 320 },
   {
-    // IP + 国家合并为一列（后端仍分别返回，这里是展示层合并）
+    // IP + 国家合并为一列（后端仍分别返回，这里是展示层合并）。
+    // bot 内部调用没有真实浏览器/IP 语境，直接显示来源「bot」。
     title: '位置',
     key: 'location',
     width: 180,
     customRender: ({ record }: { record: AuditOperationItem }) => {
+      if (record.source === 'bot') return withIcon('mdi:robot', 'bot');
       const country = record.country
         ? `${flagEmoji(record.country)} ${record.country}`
         : null;

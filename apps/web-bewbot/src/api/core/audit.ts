@@ -12,6 +12,7 @@ export interface AuditOperationItem {
   ua_browser: null | string;
   ua_os: null | string;
   ua_device: null | string;
+  source: null | string;
   created_at: null | string;
 }
 
