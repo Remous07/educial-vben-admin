@@ -375,6 +375,11 @@ function randomizeEditCode() {
 }
 
 async function handleCreate() {
+  // 未绑定 Telegram 时创建的识别码访客用不了（消息转发不到），直接阻止
+  if (!isBound.value) {
+    message.warning('请先在个人设置绑定 Telegram，再创建识别码');
+    return;
+  }
   // Validate code before submitting
   const err = validateCode(codeInput.value);
   if (err) {
