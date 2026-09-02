@@ -35,7 +35,9 @@ interface Conversation {
   message_count: number;
   last_message_at: null | string;
   last_message_preview: string;
-  is_active: boolean;
+  is_active: boolean; // 会话 DB 标记：是否还有未结束的会话
+  // 会话超时剩余（三态）：>0 窗口内倒计时；0 空闲已超过有限超时（休眠）；
+  // null 永不超时（或无活跃会话，用 is_active 区分）
   conv_timeout_remaining: null | number;
   is_blocked: boolean;
   rate_limited: boolean;
@@ -60,10 +62,17 @@ function avatarColor(tgUserId: number, name: string): string {
 function timeoutTip(r: Conversation): string {
   if (!r.is_active) return '';
   const s = r.conv_timeout_remaining;
-  if (s === null || s === undefined || s <= 0) return '活跃中';
+  if (s === null || s === undefined) return '永不超时';
+  if (s <= 0) return '已空闲超过对话超时';
   if (s < 60) return '剩余不到 1 分钟';
   if (s < 3600) return `剩余约 ${Math.ceil(s / 60)} 分钟`;
   return `剩余约 ${Math.ceil(s / 3600)} 小时`;
+}
+
+// 状态点颜色：绿=对话中/永不超时；橙=空闲已超过对话超时（休眠）；灰=无活跃会话
+function statusColor(r: Conversation): string {
+  if (!r.is_active) return '#d9d9d9';
+  return r.conv_timeout_remaining === 0 ? '#fa8c16' : '#52c41a';
 }
 
 function formatRemaining(seconds: number): string {
@@ -88,8 +97,13 @@ const filteredConversations = computed(() => {
   );
 });
 
+// 活跃中 = 会话 active 且未空闲超过超时窗口（窗口内 / 永不超时）。
+// conv_timeout_remaining===0 表示空闲已超过有限超时（休眠），不计活跃。
 const activeCount = computed(
-  () => conversations.value.filter((c) => c.is_active).length,
+  () =>
+    conversations.value.filter(
+      (c) => c.is_active && c.conv_timeout_remaining !== 0,
+    ).length,
 );
 const blockedCount = computed(
   () => conversations.value.filter((c) => c.is_blocked).length,
@@ -125,7 +139,7 @@ const columns: TableColumnsType = [
           width: '10px',
           height: '10px',
           borderRadius: '50%',
-          backgroundColor: record.is_active ? '#52c41a' : '#d9d9d9',
+          backgroundColor: statusColor(record),
           verticalAlign: 'middle',
         },
       });
