@@ -117,7 +117,7 @@ const columns: TableColumnsType = [
         : '-',
   },
   {
-    title: 'Pre',
+    title: '会员',
     dataIndex: 'is_premium',
     key: 'is_premium',
     width: 55,
@@ -336,7 +336,7 @@ onMounted(fetchUsers);
         <Tooltip title="基于当前页数据">
           <Card>
             <Statistic
-              title="Pre"
+              title="会员"
               :value="premiumCount"
               :value-style="{ color: '#faad14' }"
             />

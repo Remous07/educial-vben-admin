@@ -209,9 +209,7 @@ const columns: TableColumnsType = [
     width: 55,
     align: 'center',
     customRender: ({ text }: { text: boolean }) =>
-      text
-        ? h(Tag, { color: 'gold' }, () => 'Pre')
-        : h(Tag, { color: 'default' }, () => '否'),
+      text ? h(Tag, { color: 'gold' }, () => 'Pre') : '-',
   },
   {
     title: '识别码',

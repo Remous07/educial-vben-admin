@@ -476,9 +476,9 @@ onMounted(fetchData);
           </template>
           <template v-else>-</template>
         </Descriptions.Item>
-        <Descriptions.Item label="Pre">
+        <Descriptions.Item label="会员">
           <Tag v-if="botModalUser.telegram_is_premium" color="gold"> Pre </Tag>
-          <template v-else>否</template>
+          <template v-else>-</template>
         </Descriptions.Item>
         <Descriptions.Item label="绑定时间">
           {{
