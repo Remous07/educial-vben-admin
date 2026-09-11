@@ -51,6 +51,9 @@ onMounted(async () => {
   }
 });
 const rememberMe = ref(false);
+// 勾选后的免登录时长。需与后端 ACCESS_TOKEN_EXPIRE_MINUTES_REMEMBER
+// （默认 30 天）一致——前端拿不到后端配置，故在此显式标注。
+const REMEMBER_ME_DAYS = 30;
 
 const siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY || '';
 
@@ -113,6 +116,9 @@ async function handleSubmit() {
     <div class="mb-6 flex justify-between">
       <VbenCheckbox v-model="rememberMe">
         {{ $t('authentication.rememberMe') }}
+        <span class="text-xs text-gray-400">
+          （{{ REMEMBER_ME_DAYS }} 天内免登录）
+        </span>
       </VbenCheckbox>
       <a
         class="cursor-pointer text-sm text-blue-500"
