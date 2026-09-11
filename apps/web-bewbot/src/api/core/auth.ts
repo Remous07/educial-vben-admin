@@ -150,19 +150,21 @@ export async function registerApi(data: AuthApi.RegisterParams) {
 /** 刷新 token（滑动续期）— 返回新的 accessToken 字符串。
  *
  * 用 baseRequestClient 是为了避开 requestClient 的 401 刷新拦截器造成递归，
- * 但它是裸客户端，不会自动带 Authorization；后端 /auth/refresh 需要有效 token，
- * 所以这里手动附上。响应形如 { code, data: { accessToken }, message }。
+ * 但它是裸客户端：既不会自动带 Authorization，也没有响应拦截器（默认
+ * responseReturn: 'raw'，返回原始 AxiosResponse），所以要手动附 token、
+ * 并显式按 resp.data.data 取值（响应体为 { code, data: { accessToken }, message }）。
  */
 export async function refreshTokenApi(): Promise<string> {
   const accessStore = useAccessStore();
   const token = accessStore.accessToken;
+  // 泛型即返回类型（裸客户端的 request() 直接 `return response as T`），
+  // 故按 AxiosResponse 形状声明，与 getRegistrationStatusApi 的写法一致。
   const resp = await baseRequestClient.post<{
-    code: number;
-    data: null | { accessToken: string };
+    data: { data: { accessToken: string } };
   }>('/auth/refresh', undefined, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
-  return (resp as any)?.data?.accessToken ?? '';
+  return resp?.data?.data?.accessToken ?? '';
 }
 
 /** 退出登录 — use requestClient so the JWT is sent and the audit records the actor.
