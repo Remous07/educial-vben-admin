@@ -9,6 +9,7 @@ import '@vben/styles/antd';
 
 import { useTitle } from '@vueuse/core';
 
+import { startSessionKeepAlive } from '#/api/session-keepalive';
 import { $t, setupI18n } from '#/locales';
 
 import { initComponentAdapter } from './adapter/component';
@@ -33,6 +34,9 @@ async function bootstrap(namespace: string) {
   await setupI18n(app);
   await initStores(app, { namespace });
   registerAccessDirective(app);
+
+  // 登录态滑动续期：有 token 就续期，使「一直在用」的会话不过期
+  startSessionKeepAlive();
 
   const { initTippy } = await import('@vben/common-ui/es/tippy');
   initTippy(app);

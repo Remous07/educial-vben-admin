@@ -5,7 +5,7 @@ import { useRouter } from 'vue-router';
 import { Page } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
 import { usePreferences } from '@vben/preferences';
-import { useUserStore } from '@vben/stores';
+import { useAccessStore, useUserStore } from '@vben/stores';
 
 import {
   Button,
@@ -166,11 +166,16 @@ function openChangePassword() {
 async function handleChangePassword() {
   savingPwd.value = true;
   try {
-    await changePasswordApi(
+    const resp: any = await changePasswordApi(
       currentPwd.value,
       newPwd.value,
       pwdTotpCode.value || undefined,
     );
+    // 改密码会使该账号所有旧 token 失效（其他设备被登出）；后端同时为当前
+    // 设备换发了新 token，这里存下来，避免把自己也踢到登录页。
+    if (resp?.accessToken) {
+      useAccessStore().setAccessToken(resp.accessToken);
+    }
     message.success('密码已修改');
     passwordVisible.value = false;
   } catch {

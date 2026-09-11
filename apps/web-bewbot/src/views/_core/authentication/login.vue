@@ -91,6 +91,8 @@ async function handleSubmit() {
   const values = await formApi.getValues();
   await authStore.authLogin({
     ...values,
+    // 勾选「记住我」→ 后端用更长的闲置窗口（30 天 vs 1 天）
+    remember_me: rememberMe.value,
     turnstile_token: turnstileToken.value || undefined,
   });
   turnstileToken.value = '';

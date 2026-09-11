@@ -1,9 +1,14 @@
+import { useAccessStore } from '@vben/stores';
+
 import { baseRequestClient, requestClient } from '#/api/request';
 
 export namespace AuthApi {
   export interface LoginParams {
     password?: string;
     username?: string;
+    turnstile_token?: string;
+    /** 勾选「记住我」→ 后端用更长的闲置窗口 */
+    remember_me?: boolean;
   }
 
   export interface LoginResult {
@@ -142,11 +147,22 @@ export async function registerApi(data: AuthApi.RegisterParams) {
   return requestClient.post<AuthApi.RegisterResult>('/auth/register', data);
 }
 
-/** 刷新 token */
-export async function refreshTokenApi() {
-  return baseRequestClient.post<AuthApi.RefreshTokenResult>('/auth/refresh', {
-    withCredentials: true,
+/** 刷新 token（滑动续期）— 返回新的 accessToken 字符串。
+ *
+ * 用 baseRequestClient 是为了避开 requestClient 的 401 刷新拦截器造成递归，
+ * 但它是裸客户端，不会自动带 Authorization；后端 /auth/refresh 需要有效 token，
+ * 所以这里手动附上。响应形如 { code, data: { accessToken }, message }。
+ */
+export async function refreshTokenApi(): Promise<string> {
+  const accessStore = useAccessStore();
+  const token = accessStore.accessToken;
+  const resp = await baseRequestClient.post<{
+    code: number;
+    data: null | { accessToken: string };
+  }>('/auth/refresh', undefined, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
+  return (resp as any)?.data?.accessToken ?? '';
 }
 
 /** 退出登录 — use requestClient so the JWT is sent and the audit records the actor.
